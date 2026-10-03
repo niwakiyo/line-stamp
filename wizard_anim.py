@@ -17,7 +17,7 @@ import math
 import zipfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 import anim_stamps as an
 import pixel_stamps as ps
@@ -376,7 +376,38 @@ def render_grid(p, phase=0, trail=()):
     return gimg
 
 
-def render(p, text, style, phase=0, trail=()):
+# 擬音 (音の代わりの文字) の色: (文字の色, 縁の色)
+SFX_STYLES = {
+    "impact": ("#FFE14D", "#7A1F1F"),   # ドーン! ビシッ! など勢いのある音
+    "magic":  ("#BFF6FF", "#3A2A7A"),   # キラーン シャラーン など魔法の音
+    "cute":   ("#FFB3D9", "#5A1F3F"),   # ペコリ キュン など かわいい音
+    "calm":   ("#FFFFFF", "#2A3A4A"),   # スヤァ ふぁ〜 など静かな音
+}
+
+
+def sfx_image(text, style, k):
+    """擬音の文字を 1 文字ずつ上下に揺らして並べ、太い縁取りを付けた画像を返す。"""
+    fill, edge = SFX_STYLES[style]
+    chars = []
+    for c in text:
+        g = ps.pixel_text(c, fill, fill)
+        alpha = g.getchannel("A")
+        outline = alpha.filter(ImageFilter.MaxFilter(3))
+        cell = Image.new("RGBA", (g.width + 2, g.height + 2), (0, 0, 0, 0))
+        cell.paste(Image.new("RGBA", cell.size, col(edge)), (0, 0), outline.point(lambda v: 255 if v else 0)
+                   .crop((-1, -1, g.width + 1, g.height + 1)))
+        cell.alpha_composite(g, (1, 1))
+        chars.append(cell)
+    w = sum(c.width - 1 for c in chars) + 1
+    img = Image.new("RGBA", (w, max(c.height for c in chars) + 2), (0, 0, 0, 0))
+    x = 0
+    for i, c in enumerate(chars):
+        img.alpha_composite(c, (x, 0 if i % 2 else 2))  # 1 文字ずつ上下にずらして勢いを出す
+        x += c.width - 1
+    return ps.scaled(img, k)
+
+
+def render(p, text, style, phase=0, trail=(), sfx=()):
     img = Image.new("RGBA", (GW * S, GH * S), (0, 0, 0, 0))
     ps.draw_window(img, style)
     x0, y0, x1, y1 = WINDOW
@@ -385,7 +416,24 @@ def render(p, text, style, phase=0, trail=()):
     t = ps.scaled(t, k)
     img.alpha_composite(t, ((x0 + x1 - t.width) // 2, (y0 + y1 - t.height) // 2 + 2))
     img.alpha_composite(ps.scaled(render_grid(p, phase, trail), S))
+    for s in sfx:  # 擬音は拡大後の画像に重ねる (位置はドット単位で指定)
+        im = sfx_image(s["text"], s.get("style", "impact"), s["k"])
+        cx, cy = s["x"] * S + s["w"] // 2, s["y"] * S + s["h"] // 2  # 大きく出るコマも同じ中心にそろえる
+        img.alpha_composite(im, (max(0, min(GW * S - im.width, cx - im.width // 2)),
+                                 max(0, min(WINDOW[1] - im.height, cy - im.height // 2))))
     return img
+
+
+def frame_sfx(item, n):
+    """設定ファイルの sfx から、コマごとに出す擬音のリストを作る。範囲の最初のコマは一回り大きく出す。"""
+    per = [[] for _ in range(n)]
+    for s in item.get("sfx", []):
+        base = sfx_image(s["text"], s.get("style", "impact"), 2)
+        for a, b in s["frames"]:
+            for i in range(a, min(b, n - 1) + 1):
+                pop = i == a and i != 0
+                per[i].append({**s, "k": 3 if pop else 2, "w": base.width, "h": base.height})
+    return per
 
 
 # --- エフェクトの部品 --------------------------------------------------------
@@ -657,13 +705,13 @@ def m_wahaha():   # わはは!: 大きくのけぞって、前に折れて、足
 
 def m_eh():       # えっ!?: 跳び上がって帽子も杖も吹っ飛ぶ → 落ちてきて元どおり
     final = pose(y=-10, squash=1.15, expr="surprised", lh=(-10, -24), rh=(10, -24), hat=(-15, 3, 35),
-                 staff=dict(free=True, gx=46, gy=8, ang=135), fx=[spr("exclaim_q", 52, 18), spr("sweats", 34, 14)])
+                 staff=dict(free=True, gx=46, gy=8, ang=135), fx=[spr("exclaim_q", 3, 26), spr("sweats", 34, 14)])
     seq = [final, pose(expr="normal")]
     path = [(34, 22, 30, -4), (40, 13, 80, -9), (46, 8, 135, -14), (50, 5, 200, -16), (48, 9, 270, -12), (42, 16, 330, -6)]
     for i, (gx, gy, a, hx) in enumerate(path):
         seq.append(pose(y=-10 + max(0, i - 2) * 2, squash=1.15, expr="surprised", lh=(-10, -24), rh=(10, -24),
                         hat=(hx, 2 + abs(hx) // 4, 20 + 25 * i),
-                        staff=dict(free=True, gx=gx, gy=gy, ang=a), fx=[spr("exclaim_q", 52, 18)]))
+                        staff=dict(free=True, gx=gx, gy=gy, ang=a), fx=[spr("exclaim_q", 3, 26)]))
     seq += [pose(squash=0.75, expr="surprised", staff=dict(ang=0, grip=0.5), fx=[spr("sweats", 36, 8), puff(24)]),
             pose(expr="surprised", fx=[spr("sweats", 36, 8)]), final]
     return seq, an.split(2000, len(seq)), 2
@@ -730,9 +778,10 @@ MOTIONS = {
 }
 
 
-def render_sequence(poses, text, style):
+def render_sequence(poses, text, style, item=None):
     """コマを順に描く。杖が大きく動いたコマには、直前の宝玉の位置から光の軌跡を付ける。"""
     imgs, tips = [], []
+    sfx = frame_sfx(item or {}, len(poses))
     for i, p in enumerate(poses):
         orb = geometry(p)["orb"]
         trail = ()
@@ -740,7 +789,7 @@ def render_sequence(poses, text, style):
             prev = [t for t in tips[-2:] if t is not None]
             if prev and math.hypot(orb[0] - prev[-1][0], orb[1] - prev[-1][1]) > 3:
                 trail = prev
-        imgs.append(render(p, text, style, phase=i, trail=trail))
+        imgs.append(render(p, text, style, phase=i, trail=trail, sfx=sfx[i]))
         tips.append(orb if i >= 1 else None)
     return imgs
 
@@ -760,7 +809,7 @@ def build(cfg_path):
         poses, ms, loops = MOTIONS[item["motion"]]()
         if len(poses) > 20:  # LINE の上限 20 フレームに収める
             raise SystemExit(f"{item['motion']}: フレーム数 {len(poses)} が 20 を超えています")
-        imgs = render_sequence(poses, item["text"], style)
+        imgs = render_sequence(poses, item["text"], style, item)
         path = out / f"{i:02d}.png"
         an.save_apng(imgs, ms, loops, path)
         all_frames.append((imgs, ms, loops))

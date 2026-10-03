@@ -71,6 +71,10 @@ python3 wizard_anim.py            # wizard_stamps.json → output_wizard/ と wi
 ジャンプ・おじぎ・体の傾き・伸び縮み・空中回転・手の位置・杖の角度を変えています (1 ドット = 5px)。
 杖は木目と節のある木の杖で、振ると宝玉が光の軌跡を残します。
 魔法陣・稲妻・光の輪・立ちのぼる光の粒・花火・衝撃波などの魔法表現も付きます。
+
+LINE のクリエイターズスタンプには音を付けられないので、代わりに「ドーン!!」「ビシッ!」「キラーン」などの
+擬音をドット文字で入れています。`wizard_stamps.json` の `sfx` で、言葉・色 (`impact` / `magic` / `cute` / `calm`)・
+位置 (ドット単位の x, y)・出すコマの範囲 (`frames`) を指定します。範囲の最初のコマでは一回り大きく飛び出します。
 動きは `wizard_anim.py` の `m_thanks` などの関数で決めていて、`wizard_stamps.json` の `motion` で選びます。
 
 ## 動くスタンプ (anim_stamps.py)

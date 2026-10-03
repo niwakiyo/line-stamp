@@ -2,31 +2,692 @@
   "name": "wizard_anim_stamp",
   "output": "output_wizard",
   "preview": "preview_wizard.gif",
-  "window": { "top": "#2E8C78", "bottom": "#123F37", "text": "#FFFFFF", "shadow": "#06201B" },
+  "window": {
+    "top": "#2E8C78",
+    "bottom": "#123F37",
+    "text": "#FFFFFF",
+    "shadow": "#06201B"
+  },
   "stamps": [
-    { "text": "ありがとう", "motion": "thanks" },
-    { "text": "おはよう", "motion": "morning" },
-    { "text": "OK!", "motion": "ok" },
-    { "text": "了解!", "motion": "roger" },
-    { "text": "ごめんね", "motion": "sorry" },
-    { "text": "おつかれさま", "motion": "otsukare" },
-    { "text": "おめでとう!", "motion": "congrats" },
-    { "text": "おやすみ", "motion": "goodnight" },
-    { "text": "いってきます", "motion": "ittekimasu" },
-    { "text": "ただいま", "motion": "tadaima" },
-    { "text": "がんばれ!", "motion": "ganbare" },
-    { "text": "すごい!", "motion": "sugoi" },
-    { "text": "いいね!", "motion": "iine" },
-    { "text": "よろしく", "motion": "yoroshiku" },
-    { "text": "おねがい", "motion": "onegai" },
-    { "text": "ちょっと待って", "motion": "matte" },
-    { "text": "承知しました", "motion": "shouchi" },
-    { "text": "わはは!", "motion": "wahaha" },
-    { "text": "えっ!?", "motion": "eh" },
-    { "text": "大丈夫?", "motion": "daijoubu" },
-    { "text": "お大事に", "motion": "odaiji" },
-    { "text": "楽しみ!", "motion": "tanoshimi" },
-    { "text": "今から帰る", "motion": "kaeru" },
-    { "text": "なるほど", "motion": "naruhodo" }
+    {
+      "text": "ありがとう",
+      "motion": "thanks",
+      "sfx": [
+        {
+          "text": "クルッ",
+          "style": "magic",
+          "x": 40,
+          "y": 14,
+          "frames": [
+            [
+              2,
+              5
+            ]
+          ]
+        },
+        {
+          "text": "ペコリ",
+          "style": "cute",
+          "x": 40,
+          "y": 12,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              8,
+              11
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おはよう",
+      "motion": "morning",
+      "sfx": [
+        {
+          "text": "ふぁ〜",
+          "style": "calm",
+          "x": 38,
+          "y": 20,
+          "frames": [
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "text": "ピカーン",
+          "style": "magic",
+          "x": 34,
+          "y": 22,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "OK!",
+      "motion": "ok",
+      "sfx": [
+        {
+          "text": "シュルッ",
+          "style": "magic",
+          "x": 34,
+          "y": 30,
+          "frames": [
+            [
+              1,
+              13
+            ]
+          ]
+        },
+        {
+          "text": "キラーン",
+          "style": "magic",
+          "x": 34,
+          "y": 30,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              14,
+              16
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "了解!",
+      "motion": "roger",
+      "sfx": [
+        {
+          "text": "グッ",
+          "style": "impact",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "text": "ビシッ!",
+          "style": "impact",
+          "x": 34,
+          "y": 20,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              8,
+              11
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ごめんね",
+      "motion": "sorry",
+      "sfx": [
+        {
+          "text": "ペコペコ",
+          "style": "cute",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おつかれさま",
+      "motion": "otsukare",
+      "sfx": [
+        {
+          "text": "シャラーン",
+          "style": "magic",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おめでとう!",
+      "motion": "congrats",
+      "sfx": [
+        {
+          "text": "パパーン!",
+          "style": "impact",
+          "x": 36,
+          "y": 25,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              2,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おやすみ",
+      "motion": "goodnight",
+      "sfx": [
+        {
+          "text": "スヤァ",
+          "style": "calm",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              2
+            ],
+            [
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "text": "ハッ!",
+          "style": "impact",
+          "x": 44,
+          "y": 16,
+          "frames": [
+            [
+              3,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "いってきます",
+      "motion": "ittekimasu",
+      "sfx": [
+        {
+          "text": "フリフリ",
+          "style": "cute",
+          "x": 34,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "ダダダッ",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              4,
+              11
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ただいま",
+      "motion": "tadaima",
+      "sfx": [
+        {
+          "text": "ダダダッ",
+          "style": "impact",
+          "x": 34,
+          "y": 8,
+          "frames": [
+            [
+              1,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "シュタッ!",
+          "style": "impact",
+          "x": 38,
+          "y": 26,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              11
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "がんばれ!",
+      "motion": "ganbare",
+      "sfx": [
+        {
+          "text": "ブンブン!",
+          "style": "impact",
+          "x": 38,
+          "y": 27,
+          "frames": [
+            [
+              0,
+              7
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "すごい!",
+      "motion": "sugoi",
+      "sfx": [
+        {
+          "text": "ゴゴゴ",
+          "style": "magic",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              3,
+              4
+            ],
+            [
+              9,
+              9
+            ]
+          ]
+        },
+        {
+          "text": "ドーン!!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              8
+            ],
+            [
+              10,
+              12
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "いいね!",
+      "motion": "iine",
+      "sfx": [
+        {
+          "text": "クルクル",
+          "style": "magic",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              1,
+              12
+            ]
+          ]
+        },
+        {
+          "text": "キラッ",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              13,
+              14
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "よろしく",
+      "motion": "yoroshiku",
+      "sfx": [
+        {
+          "text": "ブンブン",
+          "style": "cute",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              1,
+              6
+            ]
+          ]
+        },
+        {
+          "text": "ペコッ",
+          "style": "cute",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              9,
+              12
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おねがい",
+      "motion": "onegai",
+      "sfx": [
+        {
+          "text": "キュン",
+          "style": "cute",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ちょっと待って",
+      "motion": "matte",
+      "sfx": [
+        {
+          "text": "ズバッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "承知しました",
+      "motion": "shouchi",
+      "sfx": [
+        {
+          "text": "カーン",
+          "style": "impact",
+          "x": 36,
+          "y": 22,
+          "frames": [
+            [
+              3,
+              5
+            ]
+          ]
+        },
+        {
+          "text": "ははーっ",
+          "style": "calm",
+          "x": 36,
+          "y": 20,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "わはは!",
+      "motion": "wahaha",
+      "sfx": [
+        {
+          "text": "ゲラゲラ",
+          "style": "cute",
+          "x": 34,
+          "y": 26,
+          "frames": [
+            [
+              0,
+              5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "えっ!?",
+      "motion": "eh",
+      "sfx": [
+        {
+          "text": "ビクッ!!",
+          "style": "impact",
+          "x": 34,
+          "y": 26,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              2,
+              7
+            ]
+          ]
+        },
+        {
+          "text": "ドテッ",
+          "style": "impact",
+          "x": 38,
+          "y": 26,
+          "frames": [
+            [
+              8,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "大丈夫?",
+      "motion": "daijoubu",
+      "sfx": [
+        {
+          "text": "タタタッ",
+          "style": "impact",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              1,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "そっ…",
+          "style": "calm",
+          "x": 2,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "お大事に",
+      "motion": "odaiji",
+      "sfx": [
+        {
+          "text": "ポワワ〜",
+          "style": "magic",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "楽しみ!",
+      "motion": "tanoshimi",
+      "sfx": [
+        {
+          "text": "ワクワク",
+          "style": "cute",
+          "x": 34,
+          "y": 26,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "今から帰る",
+      "motion": "kaeru",
+      "sfx": [
+        {
+          "text": "ビューン!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              13
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "なるほど",
+      "motion": "naruhodo",
+      "sfx": [
+        {
+          "text": "ポン!",
+          "style": "impact",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              4,
+              4
+            ],
+            [
+              8,
+              8
+            ]
+          ]
+        },
+        {
+          "text": "ピコーン",
+          "style": "magic",
+          "x": 36,
+          "y": 27,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              9,
+              10
+            ]
+          ]
+        }
+      ]
+    }
   ]
 }
