@@ -56,6 +56,21 @@ pixel_stamps.json の項目に加えて、次のものが使えます。
 - 表情の追加: `tired` (半目) `dead` (×目) `blank` (真顔) `gloomy` (どんより) `cry`
 - エフェクトの追加: `vein` (怒りマーク) `broken_heart` `sweats` `ellipsis` (…) `soul` (魂が抜ける)
 
+## 杖の魔法使い 動くスタンプ (wizard_anim.py)
+
+杖をついたおじいさん魔法使いが、杖を使って全身で大きく動く 24 個。
+セリフは「よく使われる言葉ランキング」上位 (ありがとう・おはよう・OK・ごめんね・了解・おつかれさま・おめでとう・おやすみ…) が中心です。
+
+![wizard preview](preview_wizard.gif)
+
+```bash
+python3 wizard_anim.py            # wizard_stamps.json → output_wizard/ と wizard_anim_stamp.zip
+```
+
+キャラを 体 / 腕 / 杖 の部品に分けた人形として描き、コマごとに
+ジャンプ・おじぎ・体の傾き・伸び縮み・手の位置・杖の角度を変えています (1 ドット = 5px)。
+動きは `wizard_anim.py` の `m_thanks` などの関数で決めていて、`wizard_stamps.json` の `motion` で選びます。
+
 ## 動くスタンプ (anim_stamps.py)
 
 やる気ゼロ勇者の 24 枚を、LINE のアニメーションスタンプ (APNG) にしたもの。

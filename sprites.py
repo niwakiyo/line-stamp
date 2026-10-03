@@ -23,6 +23,43 @@ PALETTE = {
 }
 
 CHARACTERS = {
+    # 杖をついたおじいさん魔法使い (腕と杖は wizard_anim.py で別に描く)
+    "wizard": {
+        "name": "魔法使い",
+        "colors": {"U": "#2F7D6D", "u": "#1F5A4E", "W": "#F4F4F0", "D": "#5A3B22"},
+        "face": {"eyes": [(6, 11), (10, 11)], "mouth": (7, 13)},
+        "shoulders": [(3, 17), (12, 17)],
+        "pixels": [
+            "..........KK....",
+            ".........KUUK...",
+            "........KUUK....",
+            ".......KUUUK....",
+            "......KUUUUK....",
+            "......KUUUUUK...",
+            ".....KUUUUUUK...",
+            "....KUUUUUUUUK..",
+            "..KKYYYYYYYYYYKK",
+            ".KUUUUUUUUUUUUUK",
+            "..KKWWWSSWWWKK..",
+            "...KSSSSSSSSSK..",
+            "...KSSSSSSSSSK..",
+            "..KWWWWSsSWWWWK.",
+            "..KWWWWWWWWWWWK.",
+            "..KWWWWWWWWWWWK.",
+            "..KUWWWWWWWWWUK.",
+            ".KUUUWWWWWWWUUUK",
+            ".KUUUUWWWWWUUUUK",
+            ".KUUUUUWWWUUUUUK",
+            ".KUUUUUUWUUUUUUK",
+            ".KUuUUUUYUUUUuUK",
+            ".KUuUUUUYUUUUuUK",
+            "KUUuUUUUYUUUUuUK",
+            "KUUuUUUUYUUUUuUK",
+            "KUUUUUUUYUUUUUUK",
+            "KKKKKDDKKKDDKKKK",
+            "....KKK...KKK...",
+        ],
+    },
     # 勇者 (やる気ゼロ): アホ毛と赤いマント
     "yusha": {
         "name": "勇者",

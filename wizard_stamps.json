@@ -1,0 +1,32 @@
+{
+  "name": "wizard_anim_stamp",
+  "output": "output_wizard",
+  "preview": "preview_wizard.gif",
+  "window": { "top": "#2E8C78", "bottom": "#123F37", "text": "#FFFFFF", "shadow": "#06201B" },
+  "stamps": [
+    { "text": "ありがとう", "motion": "thanks" },
+    { "text": "おはよう", "motion": "morning" },
+    { "text": "OK!", "motion": "ok" },
+    { "text": "了解!", "motion": "roger" },
+    { "text": "ごめんね", "motion": "sorry" },
+    { "text": "おつかれさま", "motion": "otsukare" },
+    { "text": "おめでとう!", "motion": "congrats" },
+    { "text": "おやすみ", "motion": "goodnight" },
+    { "text": "いってきます", "motion": "ittekimasu" },
+    { "text": "ただいま", "motion": "tadaima" },
+    { "text": "がんばれ!", "motion": "ganbare" },
+    { "text": "すごい!", "motion": "sugoi" },
+    { "text": "いいね!", "motion": "iine" },
+    { "text": "よろしく", "motion": "yoroshiku" },
+    { "text": "おねがい", "motion": "onegai" },
+    { "text": "ちょっと待って", "motion": "matte" },
+    { "text": "承知しました", "motion": "shouchi" },
+    { "text": "わはは!", "motion": "wahaha" },
+    { "text": "えっ!?", "motion": "eh" },
+    { "text": "大丈夫?", "motion": "daijoubu" },
+    { "text": "お大事に", "motion": "odaiji" },
+    { "text": "楽しみ!", "motion": "tanoshimi" },
+    { "text": "今から帰る", "motion": "kaeru" },
+    { "text": "なるほど", "motion": "naruhodo" }
+  ]
+}
