@@ -23,6 +23,35 @@ PALETTE = {
 }
 
 CHARACTERS = {
+    # 勇者 (やる気ゼロ): アホ毛と赤いマント
+    "yusha": {
+        "name": "勇者",
+        "colors": {"H": "#5A4632", "h": "#8A6C4C", "C": "#D13A44", "c": "#8E1F2A",
+                   "B": "#4C6FB0", "P": "#E6D9B8", "D": "#6B4226"},
+        "face": {"eyes": [(5, 7), (10, 7)], "mouth": (7, 9)},
+        "pixels": [
+            "........KK......",
+            ".......KhK......",
+            "....KKKKHKKK....",
+            "..KKHHhHHHhHKK..",
+            ".KHHHHHHHHHHHHK.",
+            ".KHHhHSHHHShHHK.",
+            ".KHSSSSSSSSSSHK.",
+            ".KHSSSSSSSSSSHK.",
+            ".KHSSSSSSSSSSHK.",
+            "..KSSSSSSSSSSK..",
+            "...KKsSSSSsKK...",
+            "..KCKBBBBBBKCK..",
+            ".KCKSBBBBBBSKCK.",
+            ".KCKSKBBBBKSKCK.",
+            ".KCKKYYYYYYKKCK.",
+            ".KcKPPPPPPPPKcK.",
+            "..KKPPPKKPPPKK..",
+            "....KPPKKPPK....",
+            "...KDDDKKDDDK...",
+            "...KKKK..KKKK...",
+        ],
+    },
     # 剣士: 赤いハチマキと青い服、背中に剣
     "yuu": {
         "name": "ユウ",
@@ -156,6 +185,9 @@ EYES = {
     "heart":    ["R R", " R "],
     "star":     [" Y ", "YYY"],
     "wide":     ["KWK", "KEK"],
+    "tired":    ["KKK", " E "],   # 半目
+    "dizzy":    ["E E", " E ", "E E"],  # ×目
+    "dot":      ["   ", " E "],   # 小さい点目 (真顔)
 }
 
 MOUTHS = {
@@ -164,9 +196,10 @@ MOUTHS = {
     "open":  ["RR"],
     "flat":  ["KK"],
     "o":     ["K "],
+    "wavy":  ["Ks"],
 }
 
-# 表情名 → (左目, 右目, 口, 涙)
+# 表情名 → (左目, 右目, 口, 涙)  ※ 4 番目は True (涙) か、追加演出の名前のリスト
 EXPRESSIONS = {
     "normal":    ("normal", "normal", "none", False),
     "smile":     ("normal", "normal", "smile", False),
@@ -179,6 +212,11 @@ EXPRESSIONS = {
     "love":      ("heart", "heart", "smile", False),
     "kira":      ("star", "star", "open", False),
     "surprised": ("wide", "wide", "o", False),
+    "tired":     ("tired", "tired", "flat", False),
+    "dead":      ("dizzy", "dizzy", "wavy", False),
+    "blank":     ("dot", "dot", "flat", False),          # 真顔・虚無
+    "gloomy":    ("tired", "tired", "wavy", ["gloom"]),  # どんより (顔に縦線)
+    "cry":       ("closed", "closed", "wavy", ["tears"]),
 }
 
 # エフェクト (キャラの右上などに置く小さなドット絵)
@@ -289,6 +327,47 @@ EFFECTS = {
         "YYYRYYY",
         "YYYYYYY",
         "yyyyyyy",
+    ],
+    "vein": [
+        ".R.....R.",
+        "RRR...RRR",
+        ".RRR.RRR.",
+        ".........",
+        ".RRR.RRR.",
+        "RRR...RRR",
+        ".R.....R.",
+    ],
+    "broken_heart": [
+        ".KK..KK.",
+        "KRRKKRrK",
+        "KRRK.RRK",
+        "KRRRK.RK",
+        ".KRK.RK.",
+        "..KRKK..",
+        "...KK...",
+    ],
+    "sweats": [
+        "..L.....",
+        ".LLL..L.",
+        ".LWL.LLL",
+        "..L..LWL",
+        "......L.",
+    ],
+    "ellipsis": [
+        "KKK.KKK.KKK",
+        "KWK.KWK.KWK",
+        "KKK.KKK.KKK",
+    ],
+    "soul": [
+        "..KKKK..",
+        ".KWWWWK.",
+        "KWEWWEWK",
+        "KWWWWWWK",
+        "KWWWWWWK",
+        ".KWWWWK.",
+        "..KWWK..",
+        "...KWK..",
+        "....K...",
     ],
     "grass": [
         "..A...A..A....A...A..",

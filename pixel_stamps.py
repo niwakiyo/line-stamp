@@ -48,17 +48,23 @@ def paint(grid, x, y, pattern):
 def sprite_image(char_id, expression, flip=False):
     ch = CHARACTERS[char_id]
     grid = [list(row) for row in ch["pixels"]]
-    left, right, mouth, tears = EXPRESSIONS[expression]
+    left, right, mouth, extras = EXPRESSIONS[expression]
+    extras = ["tears"] if extras is True else (extras or [])
     (lx, ey), (rx, _) = ch["face"]["eyes"]
     paint(grid, lx, ey, EYES[left])
     paint(grid, rx, ey, EYES[right])
     mx, my = ch["face"]["mouth"]
     paint(grid, mx + 1, my, MOUTHS[mouth])
-    if tears:
+    if "tears" in extras:
         for x in (lx, rx):
             grid[ey + 2][x] = "L"
             grid[ey + 3][x] = "L"
-    colors = {**PALETTE, **ch["colors"]}
+    if "gloom" in extras:  # おでこに縦線 (どんより)
+        for y in (ey - 2, ey - 1):
+            for x in range(len(grid[y])):
+                if grid[y][x] == "S" and x % 2:
+                    grid[y][x] = "Q"
+    colors = {**PALETTE, "Q": "#6A6AA8", **ch["colors"]}
     return pixels_to_image(["".join(r) for r in grid], colors, flip)
 
 
@@ -102,9 +108,9 @@ def pixel_text(text, color, shadow):
     return img
 
 
-def draw_window(img, style):
+def draw_window(img, style, box=WINDOW):
     """RPG 風のメッセージウィンドウ (青いグラデーション + 白枠) を描く。"""
-    x0, y0, x1, y1 = WINDOW
+    x0, y0, x1, y1 = box
     d = ImageDraw.Draw(img)
     top, bottom = rgba(style.get("top", "#3B4FD8")), rgba(style.get("bottom", "#141A6B"))
     # 角を 1 ドット欠いた外枠 (輪郭 → 白 → 輪郭 → 中身)
@@ -122,6 +128,51 @@ def draw_window(img, style):
         d.rectangle([x0 + o, y, x1 - o, min(y + PX - 1, y1 - o)], fill=c)
 
 
+def draw_panel(img, panel, style):
+    """キャラの右側に、ステータス (ゲージ付き) かコマンド選択のミニウィンドウを描く。"""
+    color, shadow = style.get("text", "#FFFFFF"), style.get("shadow", "#0A0D3A")
+    k = 2
+    rows = []
+    if panel["type"] == "status":
+        for r in panel["rows"]:  # 1 行目に名前、2 行目に数値 (右寄せ)、その下にゲージ
+            value = f"{r['value']}/{r['max']}" if r.get("show_max", True) else str(r["value"])
+            rows.append(("text", scaled(pixel_text(r["label"], color, shadow), k), None))
+            rows.append(("gauge", scaled(pixel_text(value, color, shadow), k), r))
+    else:  # menu
+        for i, opt in enumerate(panel["options"]):
+            mark = "▶" if i == panel.get("cursor", 0) else "　"
+            rows.append(("text", scaled(pixel_text(mark + opt, color, shadow), k), None))
+    bar_h = 14
+    heights = [im.height + (bar_h + 6 if kind == "gauge" else 0) for kind, im, _ in rows]
+    gap = 2 if panel["type"] == "status" else 6
+    pad = 3 * PX + 8
+    pw = max(im.width for _, im, _ in rows) + pad * 2
+    pw = max(pw, panel.get("min_width", 160 if panel["type"] == "status" else 0))
+    ph = sum(heights) + gap * (len(rows) - 1) + pad * 2
+    x1 = W - 10
+    x0 = x1 - pw
+    y0 = max(10, (WINDOW[1] - ph) // 2 + panel.get("dy", 0))
+    draw_window(img, style, (x0, y0, x1, y0 + ph))
+    d = ImageDraw.Draw(img)
+    y = y0 + pad
+    for (kind, im, r), h in zip(rows, heights):
+        tx = x0 + pad if kind == "text" else x1 - pad - im.width
+        img.alpha_composite(im, (tx, y))
+        if kind == "gauge":
+            by = y + im.height + 2
+            bx0, bx1 = x0 + pad, x1 - pad
+            d.rectangle([bx0, by, bx1, by + bar_h], fill=rgba("#FFFFFF"))
+            d.rectangle([bx0 + 2, by + 2, bx1 - 2, by + bar_h - 2], fill=rgba("#1B1B2F"))
+            ratio = max(0.0, min(1.0, r["value"] / r["max"]))
+            fill_w = round((bx1 - bx0 - 4) * ratio)
+            if r["value"] > 0:
+                fill_w = max(fill_w, 4)  # 少しでも残っていたら見えるように
+            if fill_w:
+                d.rectangle([bx0 + 2, by + 2, bx0 + 2 + fill_w - 1, by + bar_h - 2],
+                            fill=rgba(r.get("color", "#4CD964")))
+        y += h + gap
+
+
 def render(item, cfg):
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     style = cfg.get("window", {})
@@ -136,8 +187,10 @@ def render(item, cfg):
     img.alpha_composite(text, ((x0 + x1 - text.width) // 2, (y0 + y1 - text.height) // 2 + 2))
 
     # キャラクター (ウィンドウの上に立たせる)
-    sp = scaled(sprite_image(item["chara"], item.get("expression", "normal"), item.get("flip", False)),
-                SPRITE_SCALE)
+    sp = sprite_image(item["chara"], item.get("expression", "normal"), item.get("flip", False))
+    if item.get("pose") == "down":  # 倒れている (頭が左)
+        sp = sp.rotate(90, expand=True)
+    sp = scaled(sp, SPRITE_SCALE)
     sx = {"left": 34, "center": (W - sp.width) // 2, "right": W - sp.width - 34}[item.get("pos", "left")]
     sy = y0 - sp.height + 4 * PX
     sy = max(sy, 10)
@@ -157,6 +210,9 @@ def render(item, cfg):
             ex += eff.get("dx", 0)
             ey += eff.get("dy", 0)
         img.alpha_composite(e, (ex, ey))
+
+    if item.get("panel"):
+        draw_panel(img, item["panel"], style)
     return img
 
 
@@ -183,7 +239,7 @@ def build(cfg_path):
         print(f"  {i:02d}.png  {CHARACTERS[item['chara']]['name']:<3} {item['text']!r}")
 
     # メイン画像: 4 人を 2 人ずつ 2 段に並べる / タブ画像: マスコット
-    party = [sprite_image(c, cfg.get("main_expression", "smile")) for c in cfg.get("main_party", list(CHARACTERS))]
+    party = [sprite_image(c, cfg.get("main_expression", "smile")) for c in cfg.get("main_party", ["yuu", "mira", "kai", "mofu"])]
     cols = 2 if len(party) > 2 else len(party)
     rows = -(-len(party) // cols)
     cw, chh = max(p.width for p in party) + 1, max(p.height for p in party) + 1
@@ -191,7 +247,7 @@ def build(cfg_path):
     for i, p in enumerate(party):
         group.alpha_composite(p, ((i % cols) * cw, (i // cols) * chh + chh - 1 - p.height))
     fit_square(group, MAIN_SIZE, 10).save(out / "main.png", optimize=True)
-    fit_square(sprite_image(cfg.get("tab_chara", "mofu"), "happy"), TAB_SIZE, 4).save(out / "tab.png", optimize=True)
+    fit_square(sprite_image(cfg.get("tab_chara", "mofu"), cfg.get("tab_expression", "happy")), TAB_SIZE, 4).save(out / "tab.png", optimize=True)
 
     make_preview(out, len(cfg["stamps"]), cfg_path.parent / cfg.get("preview", "preview_pixel.png"))
     stamps, problems = check_dir(out)

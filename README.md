@@ -22,7 +22,7 @@ python3 pixel_stamps.py          # pixel_stamps.json から生成
 { "chara": "kai", "text": "草", "expression": "happy", "effects": ["grass"], "pos": "left" }
 ```
 
-- **`chara`**: `yuu` (剣士) / `mira` (魔法使い) / `kai` (シーフ) / `mofu` (マスコット)
+- **`chara`**: `yusha` (やる気ゼロ勇者) / `yuu` (剣士) / `mira` (魔法使い) / `kai` (シーフ) / `mofu` (マスコット)
 - **`expression`**: `normal` `smile` `happy` `wink` `calm` `sleep` `angry` `sad` `love` `kira` `surprised`
 - **`effects`**: `exclaim` `question` `exclaim_q` `heart` `hearts` `sparkle` `sparkles` `sweat` `zzz` `anger` `note` `crown` `grass`
   - 位置や大きさを変えたいときは `{"name": "heart", "dx": 10, "dy": -5, "scale": 8}`
@@ -36,6 +36,25 @@ python3 pixel_stamps.py          # pixel_stamps.json から生成
 Linux では `fonts-unifont` パッケージで入ります。Mac / Windows では
 <https://unifoundry.com/unifont/> から `unifont_jp-*.otf` をダウンロードし、
 `fonts/unifont_jp.otf` という名前で置いてください。
+
+## やる気ゼロ勇者スタンプ (yusha_stamps.json)
+
+HP1・やる気ゼロの勇者が、ステータス画面やコマンド選択で「言いにくい気持ち」を代わりに言ってくれる 24 枚セット。
+
+![yusha preview](preview_yusha.png)
+
+```bash
+python3 pixel_stamps.py -c yusha_stamps.json   # → output_yusha/ と yusha_stamp.zip
+```
+
+pixel_stamps.json の項目に加えて、次のものが使えます。
+
+- **`panel`**: キャラの右に出すミニウィンドウ
+  - ステータス: `{"type": "status", "rows": [{"label": "HP", "value": 1, "max": 999, "color": "#E8414F"}]}`
+  - コマンド選択: `{"type": "menu", "options": ["たたかう", "にげる"], "cursor": 1}`
+- **`pose`**: `"down"` で倒れたポーズ
+- 表情の追加: `tired` (半目) `dead` (×目) `blank` (真顔) `gloomy` (どんより) `cry`
+- エフェクトの追加: `vein` (怒りマーク) `broken_heart` `sweats` `ellipsis` (…) `soul` (魂が抜ける)
 
 ## イラスト + 文字のスタンプ (make_stamps.py)
 
