@@ -1,0 +1,298 @@
+"""ドット絵スタンプ用のオリジナルキャラクター (16x20 ドット).
+
+各キャラは文字の格子で描く。1 文字 = 1 ドット、"." は透明。
+色は PALETTE の共通色に、キャラごとの colors を上書きして決める。
+face には目と口の位置 (ドット座標) を持たせ、表情を差し替えられるようにする。
+"""
+
+PALETTE = {
+    "K": "#1B1B2F",  # 輪郭
+    "S": "#FFD9B0",  # 肌
+    "s": "#E8B48A",  # 肌の影
+    "E": "#1B1B2F",  # 目
+    "W": "#FFFFFF",
+    "R": "#E8414F",
+    "r": "#FF8FA3",  # ほっぺ・ピンク
+    "Y": "#F7C843",
+    "y": "#C9962B",
+    "G": "#C9D3E3",  # 金属
+    "g": "#7D879C",
+    "L": "#5BC8FF",  # 涙・水色
+    "A": "#3DBE5A",  # 草
+    "a": "#24863A",
+}
+
+CHARACTERS = {
+    # 剣士: 赤いハチマキと青い服、背中に剣
+    "yuu": {
+        "name": "ユウ",
+        "colors": {"H": "#9C5A2A", "h": "#D08A4A", "B": "#3367D6", "b": "#1F3F94",
+                   "P": "#6B4A2E", "D": "#4A3020"},
+        "face": {"eyes": [(5, 6), (10, 6)], "mouth": (7, 8)},
+        "pixels": [
+            "....KKKKKKK..KG.",
+            "..KKHhHHHhHKKGK.",
+            ".KHHhHHHHhHHHKg.",
+            ".KRRRRRRRRRRRRK.",
+            ".KHHSHHHHHSHHHK.",
+            ".KHSSSSSSSSSSHK.",
+            ".KHSSSSSSSSSSHK.",
+            ".KHSSSSSSSSSSHK.",
+            "..KSSSSSSSSSSK..",
+            "...KKsSSSSsKK...",
+            "....KBBYYBBK....",
+            "...KBBBYYBBBK...",
+            "..KSKBBBBBBKSK..",
+            "..KSKbBBBBbKSK..",
+            "...KKYYyYYYKK...",
+            "....KPPPPPPK....",
+            "....KPPKKPPK....",
+            "....KPPKKPPK....",
+            "...KDDDKKDDDK...",
+            "...KKKK..KKKK...",
+        ],
+    },
+    # 魔法使い: 紫のとんがり帽子にピンク髪、星の杖
+    "mira": {
+        "name": "ミラ",
+        "colors": {"U": "#7B4FC9", "u": "#4E2D8F", "H": "#FF8FC0", "h": "#FFC2DC",
+                   "T": "#8A5A32"},
+        "face": {"eyes": [(5, 8), (10, 8)], "mouth": (7, 10)},
+        "pixels": [
+            ".Y.......KK.....",
+            "YYY.....KUUK....",
+            ".Y.....KUUuK....",
+            ".T....KUUUUK....",
+            ".T...KUUUUUUK...",
+            ".T..KYYYYYYYYK..",
+            ".TKKUUUUUUUUUUKK",
+            ".TKHHhHHHHhHHHK.",
+            ".TKHSSSSSSSSSHK.",
+            ".TKHSSSSSSSSSHK.",
+            ".TKHrSSSSSSSrHK.",
+            ".TKHHKSSSSSSKHHK",
+            ".TSKKUUYYUUKKHK.",
+            ".TSUUUUUUUUUUK..",
+            ".TKKUuUUUUuUUK..",
+            ".TKUUuUUUUuUUUK.",
+            ".TKUUUUUUUUUUUK.",
+            ".KUUUUUUUUUUUUUK",
+            "..KKKKSKKKKSKKKK",
+            ".....KKK..KKK...",
+        ],
+    },
+    # シーフ: 緑のバンダナ、黒髪、短剣
+    "kai": {
+        "name": "カイ",
+        "colors": {"N": "#2FA866", "n": "#1E7A48", "H": "#2E2A3A", "h": "#4A4560",
+                   "V": "#C9A16A", "v": "#9C7843", "C": "#3F5F8A", "P": "#3E4A5E",
+                   "D": "#5A3B22"},
+        "face": {"eyes": [(5, 6), (10, 6)], "mouth": (7, 8)},
+        "pixels": [
+            "....KKKKKKK.....",
+            "..KKNNNNNNNKK...",
+            ".KNNNnNNNNNNNK..",
+            ".KNNNNNNNNNNNNKK",
+            ".KHHHhHHHhHHHKNK",
+            ".KHSSSSSSSSSSKnK",
+            ".KHSSSSSSSSSSHK.",
+            ".KHSSSSSSSSSSHK.",
+            "..KSSSSSSSSSSK..",
+            "...KKsSSSSsKK...",
+            "....KVCCCCVK....",
+            "...KVVCCCCVVK...",
+            "..KSKVVCCVVKSKG.",
+            "..KSKvVVVVvKSKGK",
+            "...KKDDDDDDKK.g.",
+            "....KPPPPPPK....",
+            "....KPPKKPPK....",
+            "....KPPKKPPK....",
+            "...KDDDKKDDDK...",
+            "...KKKK..KKKK...",
+        ],
+    },
+    # マスコット: 白いもふもふ。長い耳としっぽ
+    "mofu": {
+        "name": "もふ",
+        "colors": {"F": "#FFFFFF", "f": "#D6DCEB", "p": "#FFB3C8"},
+        "face": {"eyes": [(5, 11), (10, 11)], "mouth": (7, 13)},
+        "pixels": [
+            "...KK......KK...",
+            "..KFFK....KFFK..",
+            "..KFpK....KpFK..",
+            "..KFpK....KpFK..",
+            "..KFpK....KpFK..",
+            "..KFFK....KFFK..",
+            "...KFFKKKKFFK...",
+            "..KFFFFFFFFFFK..",
+            ".KFFFFFFFFFFFFK.",
+            "KFFFFFFFFFFFFFFK",
+            "KFFFFFFFFFFFFFFK",
+            "KFFFFFFFFFFFFFFK",
+            "KFrrFFFFFFFFrrFK",
+            "KFFFFFFFFFFFFFFK",
+            "KfFFFFFFFFFFFFfK",
+            ".KfFFFFFFFFFFfKK",
+            ".KffFFFFFFFFffFK",
+            "..KffffffffffKK.",
+            "...KFFKKKKFFK...",
+            "....KKK..KKK....",
+        ],
+    },
+}
+
+# 表情: 目 (3x2、中心が目の座標) と口 (2x1) の差し替えパターン
+# "." はその位置を顔の地の色 (base) で塗る、" " は変更しない
+EYES = {
+    "normal":   [" E ", " E "],
+    "happy":    [" E ", "E E"],   # ^^
+    "closed":   ["   ", "EEE"],   # -- (眠い・満足)
+    "wink":     [" E ", " E "],   # 右目は wink_r を使う
+    "wink_r":   ["   ", "EEE"],
+    "angry_l":  ["E  ", " E "],
+    "angry_r":  ["  E", " E "],
+    "sad_l":    ["  E", " E "],
+    "sad_r":    ["E  ", " E "],
+    "heart":    ["R R", " R "],
+    "star":     [" Y ", "YYY"],
+    "wide":     ["KWK", "KEK"],
+}
+
+MOUTHS = {
+    "none":  ["  "],
+    "smile": ["ss"],
+    "open":  ["RR"],
+    "flat":  ["KK"],
+    "o":     ["K "],
+}
+
+# 表情名 → (左目, 右目, 口, 涙)
+EXPRESSIONS = {
+    "normal":    ("normal", "normal", "none", False),
+    "smile":     ("normal", "normal", "smile", False),
+    "happy":     ("happy", "happy", "open", False),
+    "wink":      ("normal", "wink_r", "smile", False),
+    "calm":      ("closed", "closed", "smile", False),
+    "sleep":     ("closed", "closed", "o", False),
+    "angry":     ("angry_l", "angry_r", "flat", False),
+    "sad":       ("sad_l", "sad_r", "o", True),
+    "love":      ("heart", "heart", "smile", False),
+    "kira":      ("star", "star", "open", False),
+    "surprised": ("wide", "wide", "o", False),
+}
+
+# エフェクト (キャラの右上などに置く小さなドット絵)
+EFFECTS = {
+    "exclaim": [
+        "KKK",
+        "KYK",
+        "KYK",
+        "KYK",
+        "KKK",
+        "KYK",
+        "KKK",
+    ],
+    "question": [
+        "KKKKK",
+        "KYYYK",
+        "KKKYK",
+        ".KYYK",
+        ".KYKK",
+        ".KKK.",
+        ".KYK.",
+        ".KKK.",
+    ],
+    "exclaim_q": [
+        "KKK.KKKKK",
+        "KYK.KYYYK",
+        "KYK.KKKYK",
+        "KYK..KYYK",
+        "KKK..KYKK",
+        "KYK..KKK.",
+        "KKK..KYK.",
+        ".....KKK.",
+    ],
+    "heart": [
+        ".KK.KK.",
+        "KrRKRRK",
+        "KRRRRRK",
+        ".KRRRK.",
+        "..KRK..",
+        "...K...",
+    ],
+    "hearts": [
+        ".KK.KK......",
+        "KrRKRRK.....",
+        "KRRRRRK.K.K.",
+        ".KRRRK.KrKRK",
+        "..KRK..KRRRK",
+        "...K....KRK.",
+        ".........K..",
+    ],
+    "sparkle": [
+        "...Y...",
+        "...Y...",
+        "..YWY..",
+        "YYWWWYY",
+        "..YWY..",
+        "...Y...",
+        "...Y...",
+    ],
+    "sparkles": [
+        "...Y.......",
+        "..YWY....Y.",
+        "YYWWWYY.YWY",
+        "..YWY....Y.",
+        "...Y.......",
+        "......Y....",
+        ".....YWY...",
+        "......Y....",
+    ],
+    "sweat": [
+        "..L.",
+        ".LL.",
+        "LLWL",
+        "LLLL",
+        ".LL.",
+    ],
+    "zzz": [
+        "......KKKKK",
+        "......KWWWK",
+        "......KKWKK",
+        "KKKK..KWKKK",
+        "KWWK..KWWWK",
+        "KKWK..KKKKK",
+        "KWKK.......",
+        "KWWK.......",
+        "KKKK.......",
+    ],
+    "anger": [
+        ".R...R.",
+        "R.R.R.R",
+        ".......",
+        "R.R.R.R",
+        ".R...R.",
+    ],
+    "note": [
+        "..KKKK",
+        "..KYYK",
+        "..KYKK",
+        "..KYK.",
+        "KKKYK.",
+        "KYYYK.",
+        "KYYK..",
+        "KKKK..",
+    ],
+    "crown": [
+        "Y..Y..Y",
+        "YY.Y.YY",
+        "YYYRYYY",
+        "YYYYYYY",
+        "yyyyyyy",
+    ],
+    "grass": [
+        "..A...A..A....A...A..",
+        ".AA.A.AA.AA.A.AA.AAA.",
+        "AAaAAAAaAAAAaAAAAaAAA",
+    ],
+}

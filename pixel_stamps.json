@@ -1,0 +1,26 @@
+{
+  "name": "pixel_party_stamp",
+  "output": "output_pixel",
+  "preview": "preview_pixel.png",
+  "window": { "top": "#3B4FD8", "bottom": "#141A6B", "text": "#FFFFFF", "shadow": "#0A0D3A" },
+  "main_party": ["yuu", "mira", "kai", "mofu"],
+  "tab_chara": "mofu",
+  "stamps": [
+    { "chara": "yuu",  "text": "おはよ",     "expression": "smile",     "effects": ["sparkle"] },
+    { "chara": "kai",  "text": "りょ!",      "expression": "wink",      "effects": ["note"] },
+    { "chara": "mofu", "text": "あざす!",    "expression": "happy",     "effects": ["note"] },
+    { "chara": "kai",  "text": "それな",     "expression": "smile",     "effects": ["exclaim"] },
+    { "chara": "mofu", "text": "それはそう", "expression": "calm",      "effects": ["sparkle"] },
+    { "chara": "kai",  "text": "草",         "expression": "happy",     "effects": ["grass"] },
+    { "chara": "mira", "text": "ぴえん",     "expression": "sad",       "effects": ["sweat"] },
+    { "chara": "mira", "text": "エモい…",    "expression": "calm",      "effects": ["sparkles"] },
+    { "chara": "yuu",  "text": "優勝!",      "expression": "kira",      "effects": ["crown"] },
+    { "chara": "mira", "text": "神!",        "expression": "kira",      "effects": ["sparkles"] },
+    { "chara": "yuu",  "text": "ガチ?",      "expression": "surprised", "effects": ["exclaim_q"] },
+    { "chara": "kai",  "text": "ワンチャン", "expression": "wink",      "effects": ["question"] },
+    { "chara": "mira", "text": "尊い…",      "expression": "love",      "effects": ["hearts"] },
+    { "chara": "yuu",  "text": "おつ!",      "expression": "happy",     "effects": ["sparkle"] },
+    { "chara": "mofu", "text": "しか勝たん", "expression": "love",      "effects": ["hearts"] },
+    { "chara": "mofu", "text": "ねる",       "expression": "sleep",     "effects": ["zzz"] }
+  ]
+}

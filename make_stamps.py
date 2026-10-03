@@ -328,7 +328,7 @@ def build(cfg_path):
     print(f"\n✅ 出力: {out}/  提出用 ZIP: {zip_path}")
 
 
-def make_preview(out, count):
+def make_preview(out, count, dest=None):
     cols = 4
     rows = math.ceil(count / cols)
     cell = (STAMP_MAX[0] + 20, STAMP_MAX[1] + 20)
@@ -338,7 +338,7 @@ def make_preview(out, count):
         x = (i % cols) * cell[0] + (cell[0] - img.width) // 2
         y = (i // cols) * cell[1] + (cell[1] - img.height) // 2
         sheet.paste(img, (x, y), img)
-    sheet.save(out.parent / "preview.png")
+    sheet.save(dest or out.parent / "preview.png")
 
 
 def report(problems):
