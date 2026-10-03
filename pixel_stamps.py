@@ -26,8 +26,21 @@ FONT_CANDIDATES = [
 
 W, H = STAMP_MAX
 SPRITE_SCALE = 9          # 16x20 ドット → 144x180 px
+SPRITE_X = 34             # キャラを左に置くときの x 座標
 WINDOW = (10, 196, W - 10, H - 10)  # メッセージウィンドウの位置
 PX = 4                    # ウィンドウ枠の 1 ドットの大きさ
+PANEL_MIN_W = 160         # ステータスウィンドウの最小幅
+EFFECT_SCALE = 7          # エフェクトの拡大率
+PANEL_PAD = 3 * PX + 8    # ミニウィンドウの内側の余白
+
+
+def set_layout(size, window, sprite_scale, sprite_x=34, panel_min_w=160, effect_scale=7,
+               panel_pad=3 * PX + 8):
+    """画像サイズと配置を切り替える (動くスタンプは 320x270 なので小さめの配置を使う)。"""
+    global W, H, WINDOW, SPRITE_SCALE, SPRITE_X, PANEL_MIN_W, EFFECT_SCALE, PANEL_PAD
+    W, H = size
+    WINDOW, SPRITE_SCALE, SPRITE_X, PANEL_MIN_W = window, sprite_scale, sprite_x, panel_min_w
+    EFFECT_SCALE, PANEL_PAD = effect_scale, panel_pad
 
 
 def rgba(hex_color):
@@ -90,14 +103,22 @@ def load_font():
     raise SystemExit("ドット絵フォント (unifont_jp.otf) が見つかりません。fonts/ に置いてください。")
 
 
-def pixel_text(text, color, shadow):
-    """16px のドットフォントで文字を描き、影付きの 1 倍画像を返す。"""
+def pixel_text(text, color, shadow, upto=None):
+    """16px のドットフォントで文字を描き、影付きの 1 倍画像を返す。
+
+    upto を指定すると先頭から upto 文字だけ描く (1 文字ずつ表示するアニメ用)。
+    配置は全文を描いたときと同じなので、途中でも文字の位置がずれない。
+    """
     font = load_font()
     lines = text.split("\n")
     widths = [int(font.getlength(line)) for line in lines]
     img = Image.new("RGBA", (max(widths) + 2, 17 * len(lines) + 1), (0, 0, 0, 0))
+    remaining = len(text.replace("\n", "")) if upto is None else upto
     for i, line in enumerate(lines):
         x = (img.width - 2 - widths[i]) // 2
+        line, remaining = line[:max(0, remaining)], remaining - len(line)
+        if not line:
+            continue
         for off, col in (((1, 1), shadow), ((0, 0), color)):
             mask = Image.new("L", img.size, 0)
             md = ImageDraw.Draw(mask)
@@ -108,9 +129,9 @@ def pixel_text(text, color, shadow):
     return img
 
 
-def draw_window(img, style, box=WINDOW):
+def draw_window(img, style, box=None):
     """RPG 風のメッセージウィンドウ (青いグラデーション + 白枠) を描く。"""
-    x0, y0, x1, y1 = box
+    x0, y0, x1, y1 = box or WINDOW
     d = ImageDraw.Draw(img)
     top, bottom = rgba(style.get("top", "#3B4FD8")), rgba(style.get("bottom", "#141A6B"))
     # 角を 1 ドット欠いた外枠 (輪郭 → 白 → 輪郭 → 中身)
@@ -139,15 +160,15 @@ def draw_panel(img, panel, style):
             rows.append(("text", scaled(pixel_text(r["label"], color, shadow), k), None))
             rows.append(("gauge", scaled(pixel_text(value, color, shadow), k), r))
     else:  # menu
-        for i, opt in enumerate(panel["options"]):
-            mark = "▶" if i == panel.get("cursor", 0) else "　"
-            rows.append(("text", scaled(pixel_text(mark + opt, color, shadow), k), None))
+        for i, opt in enumerate(panel["options"]):  # カーソル (▶) は三角形で別に描く
+            rows.append(("menu", scaled(pixel_text(opt, color, shadow), k), i == panel.get("cursor", 0)))
     bar_h = 14
     heights = [im.height + (bar_h + 6 if kind == "gauge" else 0) for kind, im, _ in rows]
     gap = 2 if panel["type"] == "status" else 6
-    pad = 3 * PX + 8
-    pw = max(im.width for _, im, _ in rows) + pad * 2
-    pw = max(pw, panel.get("min_width", 160 if panel["type"] == "status" else 0))
+    pad = PANEL_PAD
+    cur_w = 14 if panel["type"] == "menu" else 0
+    pw = max(im.width for _, im, _ in rows) + pad * 2 + cur_w
+    pw = max(pw, panel.get("min_width", PANEL_MIN_W if panel["type"] == "status" else 0))
     ph = sum(heights) + gap * (len(rows) - 1) + pad * 2
     x1 = W - 10
     x0 = x1 - pw
@@ -156,8 +177,11 @@ def draw_panel(img, panel, style):
     d = ImageDraw.Draw(img)
     y = y0 + pad
     for (kind, im, r), h in zip(rows, heights):
-        tx = x0 + pad if kind == "text" else x1 - pad - im.width
+        tx = {"text": x0 + pad, "menu": x0 + pad + cur_w}.get(kind, x1 - pad - im.width)
         img.alpha_composite(im, (tx, y))
+        if kind == "menu" and r:
+            cy = y + im.height // 2
+            d.polygon([(x0 + pad, cy - 7), (x0 + pad + 8, cy), (x0 + pad, cy + 7)], fill=rgba(color))
         if kind == "gauge":
             by = y + im.height + 2
             bx0, bx1 = x0 + pad, x1 - pad
@@ -181,25 +205,35 @@ def render(item, cfg):
     # 文字 (ウィンドウ内に収まる最大の整数倍で拡大)
     x0, y0, x1, y1 = WINDOW
     inner_w, inner_h = x1 - x0 - 6 * PX - 8, y1 - y0 - 6 * PX - 8
-    text = pixel_text(item["text"], style.get("text", "#FFFFFF"), style.get("shadow", "#0A0D3A"))
+    text = pixel_text(item["text"], style.get("text", "#FFFFFF"), style.get("shadow", "#0A0D3A"),
+                      item.get("_chars"))
     k = max(1, min(inner_w // text.width, inner_h // text.height, 4))
     text = scaled(text, k)
     img.alpha_composite(text, ((x0 + x1 - text.width) // 2, (y0 + y1 - text.height) // 2 + 2))
+    if item.get("_arrow"):  # 文字送りの ▼ マーク
+        ax, ay = x1 - 3 * PX - 18, y1 - 3 * PX - 12
+        ImageDraw.Draw(img).polygon([(ax, ay), (ax + 12, ay), (ax + 6, ay + 7)], fill=rgba("#FFFFFF"))
 
     # キャラクター (ウィンドウの上に立たせる)
     sp = sprite_image(item["chara"], item.get("expression", "normal"), item.get("flip", False))
     if item.get("pose") == "down":  # 倒れている (頭が左)
         sp = sp.rotate(90, expand=True)
     sp = scaled(sp, SPRITE_SCALE)
-    sx = {"left": 34, "center": (W - sp.width) // 2, "right": W - sp.width - 34}[item.get("pos", "left")]
+    sx = {"left": SPRITE_X, "center": (W - sp.width) // 2,
+          "right": W - sp.width - SPRITE_X}[item.get("pos", "left")]
     sy = y0 - sp.height + 4 * PX
     sy = max(sy, 10)
+    sx += item.get("_dx", 0)
+    sy += item.get("_dy", 0)
     img.alpha_composite(sp, (sx, sy))
 
     # エフェクト
     for eff in item.get("effects", []):
         name = eff["name"] if isinstance(eff, dict) else eff
-        e = scaled(pixels_to_image(EFFECTS[name]), eff.get("scale", 7) if isinstance(eff, dict) else 7)
+        if isinstance(eff, dict) and eff.get("hidden"):
+            continue
+        e = scaled(pixels_to_image(EFFECTS[name]), eff.get("scale", EFFECT_SCALE) if isinstance(eff, dict)
+                   else EFFECT_SCALE)
         if name == "grass":
             ex, ey = x1 - e.width - 20, y0 - e.height + PX
         elif name == "crown":

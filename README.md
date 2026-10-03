@@ -56,6 +56,37 @@ pixel_stamps.json の項目に加えて、次のものが使えます。
 - 表情の追加: `tired` (半目) `dead` (×目) `blank` (真顔) `gloomy` (どんより) `cry`
 - エフェクトの追加: `vein` (怒りマーク) `broken_heart` `sweats` `ellipsis` (…) `soul` (魂が抜ける)
 
+## 動くスタンプ (anim_stamps.py)
+
+やる気ゼロ勇者の 24 枚を、LINE のアニメーションスタンプ (APNG) にしたもの。
+ゲージが減る・カーソルが迷う・倒れて魂が抜ける・文字が 1 文字ずつ出る、などの動きが付きます。
+
+![anim preview](preview_anim.gif)
+
+```bash
+python3 anim_stamps.py            # anim_stamps.json → output_anim/ と yusha_anim_stamp.zip
+```
+
+各スタンプの `anim` で動きを選びます。
+
+| type | 動き | 主なオプション |
+| --- | --- | --- |
+| `drain` | ステータスのゲージが減っていく | `from` (開始値), `from_expression` |
+| `cursor` | コマンドのカーソルが迷ってから決まる | `from` (最初の選択肢), `from_expression` |
+| `fall` | よろけて倒れる (`pose: down` と一緒に) | `from_expression` |
+| `type` | RPG のように 1 文字ずつ表示 → ▼ が点滅 | `seconds` |
+| `shake` | ぶるぶる震える | `pulse` (エフェクト点滅) |
+| `hop` | ぴょんと跳ねる | `heart` (エフェクトがドキドキ) |
+| `blink` | ときどきまばたき | `blink` (閉じた時の表情), `at` |
+| `bob` | エフェクトがふわふわ | `body: "breath"` (寝息) |
+| `drip` | 汗がたらーっと流れる | |
+| `soul` | 魂が抜けていく | |
+
+生成後に LINE の仕様を自動チェックします (320x270 以内・5〜20 フレーム・ループ 1〜4 回・
+再生時間 1/2/3/4 秒ちょうど・300KB 以下・8/16/24 個)。
+LINE では 1 フレーム目が一覧やサムネイルに静止画として出るので、どの動きも 1 フレーム目は完成形にしてあります。
+メイン画像 (240x240) はまばたきする APNG、タブ画像は静止画です。
+
 ## イラスト + 文字のスタンプ (make_stamps.py)
 
 `stamps.json` に「セリフ」と「表情」を書くだけで、丸いキャラのスタンプや、自作イラストに文字を入れたスタンプを作ります。
