@@ -1,0 +1,25 @@
+{
+  "name": "mochi_stamp",
+  "output": "output",
+  "font": null,
+  "main_stamp": 2,
+  "character": {
+    "body": "#FFF4E0",
+    "outline": "#4A3B32",
+    "cheek": "#FFB3B3"
+  },
+  "text_style": {
+    "color": "#FF7A45",
+    "stroke": "#FFFFFF"
+  },
+  "stamps": [
+    { "text": "おはよう", "expression": "smile" },
+    { "text": "ありがとう!", "expression": "happy", "text_style": { "color": "#FF5C8A" } },
+    { "text": "だいすき", "expression": "love", "text_style": { "color": "#FF4F7B" } },
+    { "text": "OK!", "expression": "wink", "text_style": { "color": "#2EB872" } },
+    { "text": "えっ!?", "expression": "surprised", "text_style": { "color": "#3D8BFF" } },
+    { "text": "かなしい…", "expression": "sad", "text_style": { "color": "#5A7DBF" } },
+    { "text": "おこ", "expression": "angry", "text_style": { "color": "#E53935" } },
+    { "text": "おやすみ", "expression": "sleepy", "text_style": { "color": "#7E57C2" } }
+  ]
+}
