@@ -23,6 +23,44 @@ PALETTE = {
 }
 
 CHARACTERS = {
+    # 剣と盾の戦士 (腕・剣・盾は warrior_anim.py で別に描く)
+    "warrior": {
+        "name": "戦士",
+        "colors": {"G": "#C9D3E3", "g": "#8A93A8", "R": "#E8414F", "r": "#B02A36", "B": "#2F5BD3",
+                   "P": "#4A4F63", "D": "#6B4226", "U": "#8A93A8", "u": "#5E6780"},
+        "face": {"eyes": [(6, 11), (9, 11)], "mouth": (7, 13)},
+        "shoulders": [(3, 17), (12, 17)],
+        "pixels": [
+            ".......RR.......",
+            "......RRRR......",
+            ".....RRrRR......",
+            "......KKKK......",
+            "....KKGGGGKK....",
+            "...KGGGGGGGGK...",
+            "..KGGGGGGGGGgK..",
+            "..KGGGGGGGGGgK..",
+            "..KgGGGGGGGGgK..",
+            "..KKKKKKKKKKKK..",
+            "..KgSSSSSSSSgK..",
+            "..KgSSSSSSSSgK..",
+            "..KgSSSSSSSSgK..",
+            "..KgGSSssSSGgK..",
+            "...KGGGGGGGGK...",
+            "...KKBBBBBBKK...",
+            "..KGGKBBBBKGGK..",
+            ".KGGGGKBBKGGGGK.",
+            ".KgGGGGBBGGGGgK.",
+            ".KgGGGGYYGGGGgK.",
+            "..KGGGGYYGGGGK..",
+            "..KBBKYYYYKBBK..",
+            "..KBBBBBBBBBBK..",
+            "..KBBBBKKBBBBK..",
+            "...KPPK..KPPK...",
+            "...KPPK..KPPK...",
+            "..KDDDK..KDDDK..",
+            "..KKKKK..KKKKK..",
+        ],
+    },
     # 杖をついたおじいさん魔法使い (腕と杖は wizard_anim.py で別に描く)
     "wizard": {
         "name": "魔法使い",

@@ -28,3 +28,10 @@
 | --- | --- | --- |
 | タイトル | 動く！杖のおじいさん魔法使い ドット絵 | Animated Old Wizard: Pixel Art Greetings |
 | 説明文 | 杖をついたおじいさん魔法使いが、杖を振り回して全身で動く！ありがとう・了解・おはよう・おつかれさまなど毎日使う言葉ばかり24種。文字も大きく読みやすい | An old pixel-art wizard swings his staff and moves his whole body. Thanks, OK, good morning, good job and more: 24 everyday animated stickers with big text. |
+
+## 剣と盾の戦士 動くスタンプ (warrior_anim_stamp.zip)
+
+| 項目 | 日本語 | 英語 |
+| --- | --- | --- |
+| タイトル | 動く！剣と盾の戦士 ドット絵RPG | Animated Knight: Pixel Sword & Shield |
+| 説明文 | 剣を振り回し盾を構えて全身で動く！ありがとう・了解・おつかれさま・御意・着いたよなど、仕事も家族も使える24種。文字も大きく読みやすい | A pixel-art knight swings his sword and raises his shield with full-body moves. Thanks, OK, good job, on my way and more: 24 everyday animated stickers. |

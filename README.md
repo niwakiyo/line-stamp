@@ -56,6 +56,19 @@ pixel_stamps.json の項目に加えて、次のものが使えます。
 - 表情の追加: `tired` (半目) `dead` (×目) `blank` (真顔) `gloomy` (どんより) `cry`
 - エフェクトの追加: `vein` (怒りマーク) `broken_heart` `sweats` `ellipsis` (…) `soul` (魂が抜ける)
 
+## 剣と盾の戦士 動くスタンプ (warrior_anim.py)
+
+剣と盾を持った戦士が、剣を振り回し盾を構えて全身で動く 24 個。魔法使いと同じ仕組み (部品に分けた人形・
+光の軌跡・擬音) で、剣を振ると刃先が斬撃の軌跡を残します。地面に突き立てた剣は地面の下が隠れます。
+セリフは定番の上位 10 語に、30〜40 代に人気の気づかい・実用の言葉 (無理しないでね・着いたよ・ごはんどうする?) と
+面白い返し (御意!・まじか!?) を加えています。
+
+![warrior preview](preview_warrior.gif)
+
+```bash
+python3 warrior_anim.py           # warrior_stamps.json → output_warrior/ と warrior_anim_stamp.zip
+```
+
 ## 杖の魔法使い 動くスタンプ (wizard_anim.py)
 
 杖をついたおじいさん魔法使いが、杖を使って全身で大きく動く 24 個。
