@@ -22,7 +22,7 @@ LINE Creators Market (https://creator.line.me/ja/) で申請するときに、�
 | タイトル (英語) | Animated Old Wizard: Pixel Art Greetings |
 | 説明文 (日本語) | 杖をついたおじいさん魔法使いが、杖を振り回して全身で動く！ありがとう・了解・おはよう・おつかれさまなど毎日使う言葉ばかり24種。文字も大きく読みやすい |
 | 説明文 (英語) | An old pixel-art wizard swings his staff and moves his whole body. Thanks, OK, good morning, good job and more: 24 everyday animated stickers with big text. |
-| コピーライト | (C) 2026 クリエイター名のローマ字 (例: `(C) 2026 niwakiyo`) |
+| コピーライト | (C) 2026 gonbe |
 | テイスト / キャラクター | テイスト: 面白い・ゲーム系に近いもの / キャラクター: その他 (人物・オリジナル) |
 
 タイトル 40 文字・説明文 160 文字の上限に、全角を 2 文字と数えても収まる長さにしてある。
