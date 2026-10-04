@@ -30,6 +30,10 @@ CH = CHARACTERS["warrior"]
 COLORS = {**PALETTE, **CH["colors"]}
 CYAN, VIOLET, PINK, GOLD, WHITE = wz.CYAN, wz.VIOLET, wz.PINK, wz.GOLD, wz.WHITE
 BLADE, BLADE_EDGE, GRIP = "#EEF3FB", "#9AA7BD", "#6B4226"
+SCABBARD = "#5A3A22"
+STEEL, STEEL_LIGHT = "#6F8DBA", "#CFDDF2"          # 斬撃・残像の鋼色
+SPARK_ORANGE, SPARK_YELLOW = "#FF9A3C", "#FFE14D"  # 金属の火花
+OWN_FX = ("slash", "cut", "sparks", "glint", "hit")
 SHIELD_FIELD = "#C0343F"
 BLADE_LEN = 13
 
@@ -57,7 +61,7 @@ def col(c):
 # sword  : 剣。ang は刃の向き (0 が真上、プラスで右)、glow で刃がきらめく。free=True で手を離れて (gx, gy) に飛ぶ
 # shield : 盾。ang は傾き、w は横幅 (1.0 が正面、小さいほど横向き)、front=False で体の後ろ、
 #          free=True で手を離れて (gx, gy) に置かれる
-IDLE = dict(x=24, y=0, tilt=0, squash=1.0, sx=1.0, bow=0, expr="normal",
+IDLE = dict(x=24, y=0, tilt=0, squash=1.0, sx=1.0, bow=0, expr="normal", ghost=(),
             lh=(-7, -11), rh=(9, -11), sword=dict(ang=25, glow=False),
             shield=dict(ang=0, w=1.0, front=True), fx=[])
 
@@ -175,16 +179,20 @@ def clamp(p):
 
 
 # --- 剣と盾 ------------------------------------------------------------------
-def draw_sword(d, g, glow, phase):
+def draw_sword(d, g, glow, phase, sheathed=False):
     (hx, hy), (ux, uy) = g["grip"], g["u"]
     nx, ny = -uy, ux
     guard = (hx + ux * 1.5, hy + uy * 1.5)
     tip = g["tip"]
-    # 刃: 輪郭 → 白い刃 → 刃の影の筋
-    d.line([guard, tip], fill=col("K"), width=4)
-    d.line([guard, (tip[0] - ux, tip[1] - uy)], fill=col(BLADE), width=2)
-    d.line([(guard[0] + nx * 0.6, guard[1] + ny * 0.6), (tip[0] - ux * 2 + nx * 0.6, tip[1] - uy * 2 + ny * 0.6)],
-           fill=col(BLADE_EDGE), width=1)
+    if sheathed:  # 鞘に収まった剣: 刃の代わりに茶色の鞘と、先の金具
+        d.line([guard, tip], fill=col("K"), width=4)
+        d.line([guard, (tip[0] - ux, tip[1] - uy)], fill=col(SCABBARD), width=2)
+        d.point((round(tip[0] - ux), round(tip[1] - uy)), fill=col("Y"))
+    else:  # 刃: 輪郭 → 白い刃 → 刃の影の筋
+        d.line([guard, tip], fill=col("K"), width=4)
+        d.line([guard, (tip[0] - ux, tip[1] - uy)], fill=col(BLADE), width=2)
+        d.line([(guard[0] + nx * 0.6, guard[1] + ny * 0.6), (tip[0] - ux * 2 + nx * 0.6, tip[1] - uy * 2 + ny * 0.6)],
+               fill=col(BLADE_EDGE), width=1)
     # つば (金) と柄・柄頭
     a, b = (guard[0] - nx * 3, guard[1] - ny * 3), (guard[0] + nx * 3, guard[1] + ny * 3)
     d.line([a, b], fill=col("K"), width=3)
@@ -193,13 +201,10 @@ def draw_sword(d, g, glow, phase):
     d.line([pa, pb], fill=col("K"), width=3)
     d.line([pa, pb], fill=col(GRIP), width=1)
     d.point((round(hx - ux * 3.5), round(hy - uy * 3.5)), fill=col("Y"))
-    if glow:  # 刃のきらめき: 刃の上を光が走り、刃先が光る
+    if glow and not sheathed:  # 刃のきらめき: 刃の上を白い光が走る
         f = 0.25 + 0.6 * ((phase % 4) / 3)
         gx, gy = guard[0] + (tip[0] - guard[0]) * f, guard[1] + (tip[1] - guard[1]) * f
-        d.point((round(gx), round(gy)), fill=col(WHITE))
-        tx, ty = round(tip[0]), round(tip[1])
-        r = 2 + phase % 2
-        d.point([(tx, ty - r), (tx, ty + r), (tx - r, ty), (tx + r, ty)], fill=col(WHITE))
+        d.point([(round(gx), round(gy)), (round(gx + ux), round(gy + uy))], fill=col(WHITE))
 
 
 def shield_image(sh):
@@ -220,18 +225,45 @@ def draw_shield(gimg, p, g):
 
 
 def draw_slash(d, e):
-    """三日月形の斬撃 (外側が白、内側が水色)。"""
+    """太い三日月形の斬撃 (白 → 薄い鋼色 → 鋼色の 3 層)。"""
     cx, cy, r, a0, a1 = e["cx"], e["cy"], e["r"], e["a0"], e["a1"]
-    for rr, c, w in ((r, WHITE, 2), (r - 2, CYAN, 1)):
-        pts = wz.arc_pts(cx, cy, rr, a0, a1, 10)
-        d.line(pts, fill=col(c), width=w)
+    for rr, c, w in ((r, WHITE, 2), (r - 1.5, STEEL_LIGHT, 2), (r - 3, STEEL, 1)):
+        d.line(wz.arc_pts(cx, cy, rr, a0, a1, 12), fill=col(c), width=w)
 
 
 def draw_trail(d, tips):
-    colors = [VIOLET, CYAN, WHITE]
+    """剣を振ったときの刃先の跡 (古いほど暗い鋼色、最新は太い白)。"""
+    colors = [STEEL, STEEL_LIGHT, WHITE]
     for i in range(len(tips) - 1):
         c = colors[max(0, len(colors) - (len(tips) - 1) + i)]
-        d.line([tips[i], tips[i + 1]], fill=col(c), width=3 if i == len(tips) - 2 else 2)
+        d.line([tips[i], tips[i + 1]], fill=col(c), width=4 if i == len(tips) - 2 else 2)
+
+
+def draw_sword_fx(d, fx):
+    """剣士用のエフェクト: 斬り跡の線・金属の火花・刃のきらめき・打撃の星。"""
+    for e in fx:
+        kind = e.get("type")
+        if kind == "cut":  # まっすぐな斬り跡
+            a, b = (e["x0"], e["y0"]), (e["x1"], e["y1"])
+            d.line([a, b], fill=col(STEEL), width=4)
+            d.line([a, b], fill=col(WHITE), width=2)
+        elif kind == "sparks":  # 金属がぶつかった火花 (オレンジと黄色の短い線)
+            x, y, r = e["x"], e["y"], e["r"]
+            for i in range(8):
+                a = 2 * math.pi * i / 8 + (0.3 if i % 2 else 0)
+                r0, r1 = r * 0.35, r * (1.0 if i % 2 == 0 else 0.7)
+                d.line([(x + r0 * math.cos(a), y + r0 * math.sin(a)), (x + r1 * math.cos(a), y + r1 * math.sin(a))],
+                       fill=col(SPARK_ORANGE if i % 2 else SPARK_YELLOW))
+        elif kind == "glint":  # 刃のきらめき (白い 4 本の光)
+            x, y, s = round(e["x"]), round(e["y"]), e.get("s", 3)
+            d.line([(x - s, y), (x + s, y)], fill=col(WHITE))
+            d.line([(x, y - s - 1), (x, y + s + 1)], fill=col(WHITE))
+            d.point([(x - 1, y - 1), (x + 1, y + 1), (x + 1, y - 1), (x - 1, y + 1)], fill=col(STEEL_LIGHT))
+        elif kind == "hit":  # 打撃の星 (白い星にオレンジの縁)
+            x, y, r = e["x"], e["y"], e.get("r", 4)
+            pts = [(x + (r if i % 2 == 0 else r / 2.2) * math.cos(math.pi * i / 4),
+                    y + (r if i % 2 == 0 else r / 2.2) * math.sin(math.pi * i / 4)) for i in range(8)]
+            d.polygon(pts, fill=col(WHITE), outline=col(SPARK_ORANGE))
 
 
 def render_grid(p, phase=0, trail=()):
@@ -241,7 +273,7 @@ def render_grid(p, phase=0, trail=()):
     d = ImageDraw.Draw(gimg)
     g = geometry(p)
     ax, ay = g["anchor"]
-    wz.draw_fx(gimg, d, [e for e in p["fx"] if e.get("type") != "slash"], g, phase, back=True)
+    wz.draw_fx(gimg, d, [e for e in p["fx"] if e.get("type") not in OWN_FX], g, phase, back=True)
     if not p["shield"].get("front") and not p["shield"].get("free"):
         draw_shield(gimg, p, g)
     if p["shield"].get("free"):
@@ -252,6 +284,10 @@ def render_grid(p, phase=0, trail=()):
     tmp.alpha_composite(body, (24 - body.width // 2, 44 - body.height))
     if p["tilt"]:
         tmp = tmp.rotate(p["tilt"], resample=Image.NEAREST, center=(24, 44))
+    for i, gdx in enumerate(p.get("ghost", ())):  # 残像: 体の形を薄い鋼色で後ろに残す
+        sil = Image.new("RGBA", tmp.size, col(STEEL_LIGHT)[:3] + (0,))
+        sil.putalpha(tmp.getchannel("A").point(lambda v, k=i: (70 if k == 0 else 40) if v else 0))
+        gimg.alpha_composite(sil, (round(ax + gdx) - 24, round(ay) - 44))
     gimg.alpha_composite(tmp, (round(ax) - 24, round(ay) - 44))
 
     if len(trail) >= 2:
@@ -261,7 +297,7 @@ def render_grid(p, phase=0, trail=()):
             draw_slash(d, e)
     # 剣は別の層に描き、地面より下は消す (地面に突き立てた剣が文字のウィンドウに刺さらないように)
     layer = Image.new("RGBA", (GW, GH), (0, 0, 0, 0))
-    draw_sword(ImageDraw.Draw(layer), g, p["sword"].get("glow"), phase)
+    draw_sword(ImageDraw.Draw(layer), g, p["sword"].get("glow"), phase, p["sword"].get("sheathed", False))
     layer.paste((0, 0, 0, 0), (0, GROUND, GW, GH))
     gimg.alpha_composite(layer)
     for sh, hk in zip(g["shoulders"], ("l", "r")):
@@ -279,7 +315,8 @@ def render_grid(p, phase=0, trail=()):
         for dx in (-4, 0, 4):
             x = round(ax + dx)
             d.line([(x, round(ay) + 2), (x, min(GROUND - 1, round(ay) + 5))], fill=col(WHITE))
-    wz.draw_fx(gimg, d, [e for e in p["fx"] if e.get("type") != "slash"], g, phase, back=False)
+    wz.draw_fx(gimg, d, [e for e in p["fx"] if e.get("type") not in OWN_FX], g, phase, back=False)
+    draw_sword_fx(d, p["fx"])
     return gimg
 
 
@@ -316,24 +353,86 @@ def render_sequence(poses, text, style, item):
     return imgs
 
 
-# --- エフェクトの部品 (wizard_anim のものを使う) -----------------------------
-spr, burst, speed, ring, puff, confetti = wz.spr, wz.burst, wz.speed, wz.ring, wz.puff, wz.confetti
-circle = wz.circle
-GOLD_AURA = {"type": "aura", "n": 9, "color": GOLD}
-RAINBOW_AURA = wz.AURA
+# --- エフェクトの部品 --------------------------------------------------------
+spr, speed, puff, confetti = wz.spr, wz.speed, wz.puff, wz.confetti
 
 
 def slash(cx, cy, r, a0, a1):
     return {"type": "slash", "cx": cx, "cy": cy, "r": r, "a0": a0, "a1": a1}
 
 
-def bolt_to_tip(x1, y1):
-    return {"type": "bolt", "from": "orb", "x1": x1, "y1": y1}
+def cut(x0, y0, x1, y1):
+    return {"type": "cut", "x0": x0, "y0": y0, "x1": x1, "y1": y1}
 
 
-# --- 動き (24 種) ------------------------------------------------------------
-UP = dict(rh=(4, -24), sword=dict(ang=0, glow=True))                 # 剣を真上に掲げる
-GUARD = dict(lh=(-2, -14), shield=dict(ang=0, w=1.0, front=True))     # 盾を体の前に構える
+def sparks(x, y, r=5):
+    return {"type": "sparks", "x": x, "y": y, "r": r}
+
+
+def glint(x, y, s=3):
+    return {"type": "glint", "x": x, "y": y, "s": s}
+
+
+def hit(x, y, r=4):
+    return {"type": "hit", "x": x, "y": y, "r": r}
+
+
+def dust(x, r):
+    """着地や踏み込みで地面に広がる土ぼこりの輪。"""
+    return {"type": "ring", "x": x, "y": GROUND, "r": r, "color": "#D8CFB8", "back": True}
+
+
+def tip_of(p):
+    return geometry(clamp(p))["tip"]
+
+
+def with_glint(p, s=3):
+    """刃先にきらめきを足した姿勢を返す。"""
+    x, y = tip_of(p)
+    q = copy.deepcopy(p)
+    q["fx"] = q["fx"] + [glint(x, y, s)]
+    return q
+
+
+# --- 構え (剣士の基本姿勢) ---------------------------------------------------
+def ready(**kw):      # 中段の構え: 剣先を斜め前に向け、盾を構える
+    return pose(**{**dict(rh=(8, -13), sword=dict(ang=50), lh=(-7, -12), expr="angry"), **kw})
+
+
+def overhead(**kw):   # 上段: 剣を頭の後ろに振りかぶる
+    return pose(**{**dict(y=-1, squash=1.06, tilt=10, rh=(2, -25), sword=dict(ang=-40), lh=(-8, -13), expr="angry"), **kw})
+
+
+def downcut(**kw):    # 振り下ろした後: 体を前に倒し、剣先は右下
+    return pose(**{**dict(x=25, squash=0.88, tilt=-14, rh=(11, -9), sword=dict(ang=135, glow=True), lh=(-8, -12),
+                          expr="angry"), **kw})
+
+
+def thrust(**kw):     # 突き: 大きく踏み込んで、剣をまっすぐ前へ
+    return pose(**{**dict(x=27, tilt=-16, squash=0.94, rh=(13, -15), sword=dict(ang=90, glow=True), lh=(-10, -13),
+                          expr="angry"), **kw})
+
+
+def pullback(**kw):   # 突きの前の引き: 体を後ろに引き、剣を水平に引きしぼる
+    return pose(**{**dict(x=21, tilt=12, rh=(-3, -15), sword=dict(ang=90), lh=(-9, -12), expr="angry"), **kw})
+
+
+def salute(**kw):     # 騎士の敬礼: 剣を顔の前にまっすぐ立てる
+    return pose(**{**dict(rh=(1, -14), sword=dict(ang=0, glow=True), lh=(-7, -12), expr="smile"), **kw})
+
+
+def shoulder(**kw):   # 剣を肩にかつぐ
+    return pose(**{**dict(rh=(5, -20), sword=dict(ang=-60), lh=(-7, -12)), **kw})
+
+
+def planted(**kw):    # 剣を地面に突き立て、柄に手を置く
+    return pose(**{**dict(rh=(9, -12), sword=dict(ang=180), lh=(-7, -12)), **kw})
+
+
+def sheathed(**kw):   # 納刀: 剣を腰の鞘に収めて、柄に手を添える
+    x = kw.get("x", 24)
+    return pose(**{**dict(rh=(-4, -12), lh=(-8, -12),
+                          sword=dict(free=True, gx=x - 4, gy=GROUND - 12, ang=205, sheathed=True)), **kw})
 
 
 def run(x, i, **kw):
@@ -341,8 +440,8 @@ def run(x, i, **kw):
     ph = i % 2
     return pose(x=x, y=-2 * ph, tilt=-16 + 4 * ph, squash=1.05 if ph else 0.92,
                 lh=(7, -14 + ph), rh=(-9, -12 - ph), sword=dict(ang=-110 + 20 * ph),
-                shield=dict(ang=-10, w=0.8), fx=[speed(x - 12, GROUND - 16, n=3, length=6)] +
-                ([puff(x)] if ph == 0 else []), **kw)
+                shield=dict(ang=-10, w=0.8), ghost=(-6, -12),
+                fx=[speed(x - 14, GROUND - 16, n=3, length=6)] + ([puff(x)] if ph == 0 else []), **kw)
 
 
 def spin(base, sxs=(0.5, -0.5, -1.0, -0.5, 0.5)):
@@ -354,46 +453,40 @@ def spin(base, sxs=(0.5, -0.5, -1.0, -0.5, 0.5)):
     return out
 
 
+# --- 動き (24 種) ------------------------------------------------------------
 def m_thanks():   # ありがとう!: 剣を顔の前に立てて騎士の敬礼 → 剣を地に突き立てて深くおじぎ
-    final = pose(bow=5, squash=0.84, expr="calm", rh=(6, -9), sword=dict(ang=180, glow=True),
-                 lh=(-7, -10), shield=dict(ang=0, w=1.0),
-                 fx=[burst(24, 4, 7, "rainbow"), spr("sparkle", 44, 2), ring(30, 8)])
-    salute = pose(expr="smile", rh=(1, -14), sword=dict(ang=0, glow=True), fx=[spr("sparkle", 30, 0)])
-    seq = [final] + tween(pose(), 2, salute, 2, with_fx(salute, burst(25, 2, 5)), 2,
-                          pose(squash=0.9, expr="calm", rh=(6, -12), sword=dict(ang=180), lh=(-7, -10)), 2, final) + [final] * 2
+    final = planted(bow=5, squash=0.84, expr="calm", rh=(8, -10), fx=[dust(31, 6)])
+    sal = salute()
+    seq = [final] + tween(ready(expr="normal"), 1, sal, 1, with_glint(sal, 4), 2,
+                          planted(squash=0.92, expr="calm"), 2, final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_morning():  # おはよう!: 剣を真上に突き上げて大きく伸び、朝日のように光る
-    final = pose(y=-2, squash=1.16, expr="happy", **UP, lh=(-9, -16), fx=[{"type": "rays", "n": 10, "r0": 4, "r1": 9},
-                                                                           spr("sparkle", 46, 10)])
-    yawn = pose(squash=0.82, bow=2, expr="sleep", rh=(8, -10), sword=dict(ang=150), fx=[spr("zzz", 38, 8)])
-    left = pose(y=-2, squash=1.12, tilt=20, expr="calm", rh=(2, -24), sword=dict(ang=-25, glow=True), lh=(-9, -18))
-    right = pose(y=-2, squash=1.12, tilt=-20, expr="calm", rh=(6, -24), sword=dict(ang=25, glow=True), lh=(-9, -18))
-    seq = [final] + tween(yawn, 2, final, 2, left, 2, right, 2, final) + [final]
+def m_morning():  # おはよう!: 朝の素振りを 2 回 → 剣を肩にかついで大きく伸び
+    final = shoulder(y=-1, squash=1.1, expr="happy", lh=(-9, -25), fx=[spr("sparkle", 46, 8)])
+    cut1 = downcut(fx=[slash(26, 18, 14, -40, 140), dust(30, 8)])
+    seq = [final, overhead(), cut1, downcut(), overhead(), with_fx(cut1, slash(26, 18, 14, -40, 140), dust(30, 10)),
+           downcut(), lerp(downcut(), final, 0.5), final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_ok():       # OK!: 剣を頭上で大きく 1 回転させて光の輪を描き、ビシッと止める
-    seq, pts = [], []
-    for a in range(-30, 331, 30):
-        g = geometry(pose(rh=(4, -22), sword=dict(ang=a)))
-        pts.append(g["tip"])
-        seq.append(pose(rh=(4, -22), lh=(-8, -12), tilt=-math.sin(math.radians(a)) * 12, expr="smile",
-                        sword=dict(ang=a, glow=True), fx=[{"type": "plus", "pts": list(pts), "color": "rainbow"}]))
-    final = pose(rh=(4, -22), lh=(-8, -12), tilt=-4, expr="wink", sword=dict(ang=330, glow=True),
-                 fx=[{"type": "plus", "pts": pts, "color": "rainbow"}, spr("sparkles", 46, 22)])
-    seq = [final] + seq + [final] * 3
+def m_ok():       # OK!: 手首で剣をくるくる回す剣さばき → 中段に構えてビシッ
+    final = with_glint(ready(expr="wink", sword=dict(ang=45, glow=True)), 4)
+    seq = [final, ready(expr="smile")]
+    for i, a in enumerate(range(90, 450, 45)):
+        seq.append(pose(rh=(8, -16), lh=(-7, -12), expr="smile", tilt=(-4 if i % 2 else 4),
+                        sword=dict(ang=a, glow=True), fx=[slash(32, 22, 10, a - 100, a - 20)]))
+    seq += [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_roger():    # 了解!: 盾をドンと前に突き出し、剣を真上に掲げて稲妻を受ける
-    final = pose(y=-3, squash=1.08, expr="kira", rh=(5, -24), lh=(-9, -14), sword=dict(ang=0, glow=True),
-                 shield=dict(ang=-10, w=1.0), fx=[bolt_to_tip(40, 0), bolt_to_tip(14, 0), spr("exclaim", 48, 10), GOLD_AURA])
-    crouch = pose(squash=0.76, expr="angry", rh=(9, -8), lh=(-4, -9), sword=dict(ang=120), **{"shield": dict(ang=10, w=0.7)})
-    bash = pose(x=26, tilt=-14, expr="angry", lh=(-11, -14), rh=(6, -12), sword=dict(ang=-120),
-                shield=dict(ang=-15, w=1.0), fx=[speed(6, 14, left=True), burst(12, 22, 6)])
-    seq = [final] + tween(pose(), 1, crouch, 2, bash, 2, final, 1, with_fx(final, ring(26, 14), puff(24))) + [final] * 3
+def m_roger():    # 了解!: 盾で体当たり → 剣を顔の前に立てて敬礼
+    final = with_glint(salute(expr="kira", fx=[spr("exclaim", 46, 6)]), 4)
+    crouch = pose(squash=0.76, expr="angry", rh=(9, -8), lh=(-4, -9), sword=dict(ang=120), shield=dict(ang=10, w=0.7))
+    bash = pose(x=27, tilt=-16, expr="angry", lh=(-12, -14), rh=(6, -12), sword=dict(ang=-120),
+                shield=dict(ang=-15, w=1.0), ghost=(-5,), fx=[speed(54, 12, left=False), hit(10, 20, 5), dust(27, 9)])
+    seq = [final] + tween(ready(), 1, crouch, 1, bash, 1, with_fx(bash, hit(10, 20, 7), sparks(10, 20, 7)), 2,
+                          final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
@@ -408,30 +501,27 @@ def m_sorry():    # ごめん!: 剣と盾を地面に置き、汗を飛ばして
     return seq, an.split(1000, len(seq)), 3
 
 
-def m_otsukare():  # おつかれさま!: 大きく剣を振り抜いてから、地面に突き立てて寄りかかり、ねぎらう
-    final = pose(tilt=-6, expr="smile", rh=(8, -13), sword=dict(ang=180, glow=True), lh=(-9, -12),
-                 fx=[spr("sparkle", 44, 4), {"type": "plus", "pts": [(42, 14), (50, 20), (6, 8), (10, 18)], "color": "rainbow"}])
-    back = pose(tilt=18, expr="angry", rh=(-4, -24), sword=dict(ang=-70, glow=True), lh=(-9, -12))
-    swing = pose(tilt=-20, x=26, expr="angry", rh=(12, -14), sword=dict(ang=110, glow=True), lh=(-9, -14),
-                 fx=[slash(26, 16, 14, -60, 120)])
-    seq = [final] + tween(pose(), 1, back, 2, swing, 1, with_fx(swing, slash(26, 16, 14, -60, 120), burst(44, 20, 5)), 2,
-                          final) + [final] * 3
+def m_otsukare():  # おつかれさま!: 大きく袈裟斬り → 血振り → 腰の鞘にチャキンと納刀
+    final = sheathed(expr="calm", fx=[glint(19, 25, 3)])
+    cut1 = downcut(fx=[slash(25, 18, 15, -50, 150)])
+    flick = pose(x=25, tilt=-6, rh=(12, -12), sword=dict(ang=100, glow=True), lh=(-8, -12), expr="normal",
+                 fx=[speed(54, 20, n=2, length=5, left=False)])
+    to_hip = pose(rh=(-2, -13), sword=dict(ang=200), lh=(-8, -12), expr="calm")
+    seq = [final, overhead(), cut1, downcut(), flick, to_hip, with_fx(final, glint(19, 25, 5)), final, final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_congrats():  # おめでとう!: 回転ジャンプして剣を掲げ、刃先から花火
-    def fw(r, seed):
-        return [burst(46, 8, r, PINK), burst(46, 8, r * 0.55, GOLD, 6), burst(12, 8, r * 0.8, CYAN),
-                burst(30, 3, r * 0.5, VIOLET, 6), confetti(seed)]
-    final = pose(y=-6, squash=1.12, expr="happy", **UP, lh=(-10, -20), fx=fw(7, 0))
+def m_congrats():  # おめでとう!: 回転ジャンプで剣を高く掲げて、紙吹雪
+    up = dict(rh=(4, -24), sword=dict(ang=0, glow=True), lh=(-10, -20))
+    final = with_glint(pose(y=-6, squash=1.12, expr="happy", **up, fx=[confetti(0)]), 4)
     seq = [final, pose(squash=0.75, expr="smile", rh=(8, -10), sword=dict(ang=60))]
-    seq += spin(pose(y=-6, squash=1.1, expr="happy", **UP, lh=(-10, -20), fx=fw(3, 1)), (0.5, -0.5, -1.0, -0.5, 0.5))
-    seq += [with_fx(final, *fw(5, 2)), with_fx(final, *fw(9, 3)),
-            pose(squash=0.8, expr="happy", **UP, lh=(-10, -20), fx=fw(8, 4) + [puff(24)]), final, final]
+    seq += spin(pose(y=-6, squash=1.1, expr="happy", **up, fx=[confetti(1)]), (0.5, -0.5, -1.0, -0.5, 0.5))
+    seq += [with_fx(final, confetti(2)), pose(squash=0.8, expr="happy", **up, fx=[confetti(3), dust(24, 12)]),
+            final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_goodnight():  # おやすみ: 盾を枕のように抱えて剣にもたれ、こっくり → ハッ!
+def m_goodnight():  # おやすみ: 盾を抱えて剣にもたれ、こっくり → ハッ!
     final = pose(tilt=-16, bow=3, expr="sleep", rh=(9, -14), sword=dict(ang=180), lh=(-1, -12),
                  shield=dict(ang=20, w=0.9), fx=[spr("zzz", 40, 2)])
     awake = pose(y=-2, squash=1.08, expr="surprised", rh=(9, -14), sword=dict(ang=180), lh=(-6, -12),
@@ -440,122 +530,117 @@ def m_goodnight():  # おやすみ: 盾を枕のように抱えて剣にもた�
     return seq, an.split(1000, len(seq)), 3
 
 
-def m_ittekimasu():  # いってきます!: 剣を高く掲げて出発の合図 → 盾を構えて全速力で走っていく
-    final = pose(y=-3, squash=1.1, expr="happy", **UP, lh=(-9, -14), fx=[spr("sparkle", 30, 0), spr("note", 4, 4)])
-    seq = [final, pose(squash=0.82, expr="smile", rh=(8, -12), sword=dict(ang=40)), final]
+def m_ittekimasu():  # いってきます!: 剣を肩にかついで出発 → 盾を構えて全速力で走っていく
+    final = shoulder(expr="happy", lh=(-11, -22), fx=[spr("note", 4, 4)])
+    seq = [final, shoulder(expr="happy", lh=(-12, -16)), final]
     seq += [run(26 + 8 * i, i, expr="angry") for i in range(1, 6)]
-    seq += [run(-6 + 8 * i, i, expr="angry") for i in range(1, 4)] + [pose(squash=0.85, expr="happy"), final]
+    seq += [run(-6 + 8 * i, i, expr="angry") for i in range(1, 4)] + [shoulder(squash=0.85, expr="happy"), final]
     return seq, an.split(4000, len(seq)), 1
 
 
-def m_tadaima():  # ただいま!: 走って帰ってきてジャンプ、剣を地面に突き立ててドン!
-    final = pose(squash=0.86, expr="happy", rh=(10, -10), sword=dict(ang=180, glow=True), lh=(-10, -22),
-                 shield=dict(ang=-20, w=1.0), fx=[ring(34, 12), puff(34), spr("note", 46, 4)])
+def m_tadaima():  # ただいま!: 走って帰ってきてジャンプ、剣を地面に突き立ててザクッ!
+    final = planted(squash=0.86, expr="happy", rh=(10, -10), lh=(-10, -22), shield=dict(ang=-20, w=1.0),
+                    fx=[dust(34, 12), puff(34), spr("note", 46, 4)])
     seq = [final] + [run(-6 + 8 * i, i, expr="smile") for i in range(1, 5)]
     seq += [pose(y=-6, squash=1.12, expr="happy", rh=(8, -24), sword=dict(ang=170, glow=True), lh=(-10, -22)),
-            final, with_fx(final, ring(34, 18, VIOLET), ring(34, 10), puff(34)), final, final]
+            final, with_fx(final, dust(34, 18), dust(34, 10), puff(34)), final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_yoroshiku():  # よろしく!: 剣と盾を胸の前で交差させてから、勢いよくおじぎ
-    cross = pose(expr="smile", rh=(4, -14), sword=dict(ang=-40, glow=True), lh=(-3, -14), shield=dict(ang=0, w=1.0),
-                 fx=[burst(24, 10, 8, GOLD)])
-    final = pose(bow=5, squash=0.84, expr="calm", rh=(8, -10), sword=dict(ang=160), lh=(-7, -10),
-                 fx=[spr("sparkle", 44, 4), burst(24, 4, 6, "rainbow")])
-    seq = [final] + tween(pose(), 2, cross, 1, with_fx(cross, burst(24, 10, 11, "rainbow")), 2, final) + [final] * 3
+def m_yoroshiku():  # よろしく!: 剣と盾を胸の前でガキンと交差 → 勢いよくおじぎ
+    cross = pose(expr="angry", rh=(4, -14), sword=dict(ang=-40, glow=True), lh=(-3, -14), shield=dict(ang=0, w=1.0),
+                 fx=[sparks(21, 13, 6)])
+    final = planted(bow=5, squash=0.84, expr="calm", rh=(8, -10), sword=dict(ang=170), fx=[dust(32, 6)])
+    seq = [final] + tween(ready(), 2, cross, 1, with_fx(cross, sparks(21, 13, 9), hit(21, 13, 3)), 2, final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_omakase():  # おまかせを!: 盾で胸をドンと叩き、剣を掲げて金色のオーラ
-    final = pose(y=-2, squash=1.1, expr="kira", **UP, lh=(-3, -15), shield=dict(ang=0, w=1.0),
-                 fx=[GOLD_AURA, burst(27, 3, 6, GOLD), spr("sparkle", 46, 10)])
-    thump = pose(squash=0.9, tilt=6, expr="angry", rh=(9, -12), sword=dict(ang=40), lh=(-1, -15),
-                 fx=[burst(22, 16, 6), GOLD_AURA])
-    seq = [final] + tween(pose(), 1, with_fx(thump, burst(22, 16, 4)), 1, pose(expr="angry", lh=(-8, -14)), 1, thump, 2,
-                          final) + [final] * 3
+def m_omakase():  # おまかせを!: 盾で胸をドンと叩き、剣先をビシッと前に向ける
+    final = with_glint(thrust(x=25, tilt=-8, expr="kira", fx=[spr("exclaim", 46, 2)]), 4)
+    thump = pose(squash=0.9, tilt=6, expr="angry", rh=(9, -12), sword=dict(ang=40), lh=(-1, -15), fx=[hit(22, 16, 4)])
+    seq = [final] + tween(ready(), 1, with_fx(thump, hit(22, 16, 6)), 1, ready(), 1, thump, 2, final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
 def m_gyoi():     # 御意!: 片ひざをついて剣を地に立て、盾を横に置いて深く頭を垂れる
-    final = pose(squash=0.72, bow=5, expr="calm", rh=(8, -9), sword=dict(ang=180), lh=(-7, -9),
-                 shield=dict(ang=-10, w=0.8), fx=[burst(24, 3, 5, GOLD), ring(32, 9)])
-    seq = [final] + tween(pose(expr="normal"), 1, pose(y=-2, squash=1.05, expr="normal", rh=(6, -18), sword=dict(ang=180)), 2,
-                          pose(squash=0.72, expr="normal", rh=(8, -9), sword=dict(ang=180), lh=(-7, -9),
-                               fx=[ring(32, 12), puff(32)]), 2, final) + [final] * 3
+    final = planted(squash=0.72, bow=5, expr="calm", rh=(8, -9), lh=(-7, -9), shield=dict(ang=-10, w=0.8),
+                    fx=[dust(32, 9)])
+    seq = [final] + tween(ready(expr="normal"), 1, planted(y=-2, squash=1.05, expr="normal", rh=(6, -18)), 2,
+                          planted(squash=0.72, expr="normal", rh=(8, -9), lh=(-7, -9), fx=[dust(32, 12), puff(32)]), 2,
+                          final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_fight():    # ファイト!: 剣を左右に大きく連続で振り、跳ねながら応援
+def m_fight():    # ファイト!: 剣を左右に大きく連続で振る (斬撃が交差する)
     l = pose(y=-4, tilt=20, squash=1.08, expr="angry", rh=(-2, -24), sword=dict(ang=-70, glow=True), lh=(-9, -12),
-             fx=[slash(24, 14, 13, 70, -70), speed(52, 10, left=False)])
+             fx=[slash(24, 14, 14, 70, -70), speed(52, 10, left=False)])
     r = pose(y=-4, tilt=-20, squash=1.08, expr="angry", rh=(10, -22), sword=dict(ang=70, glow=True), lh=(-9, -12),
-             fx=[slash(24, 14, 13, -70, 70), speed(10, 10)])
-    mid = pose(squash=0.82, expr="kira", rh=(5, -20), sword=dict(ang=0, glow=True), lh=(-9, -12), fx=[])
+             fx=[slash(24, 14, 14, -70, 70), speed(10, 10)])
+    mid = pose(squash=0.82, expr="kira", rh=(5, -20), sword=dict(ang=0, glow=True), lh=(-9, -12), fx=[dust(24, 9)])
     seq = [r, lerp(r, mid, 0.5), mid, lerp(mid, l, 0.5), l, lerp(l, mid, 0.5), mid, lerp(mid, r, 0.5)]
     return seq, an.split(1000, len(seq)), 3
 
 
 def m_sasuga():   # さすが!: 剣で盾をカンカン叩いて火花を散らし、たたえる
-    hit = pose(tilt=-6, expr="happy", lh=(-4, -14), rh=(4, -14), sword=dict(ang=-60, glow=True),
-               fx=[burst(15, 18, 5, GOLD), spr("sparkle", 44, 4)])
-    lift = pose(tilt=8, y=-2, expr="happy", lh=(-6, -14), rh=(8, -22), sword=dict(ang=20, glow=True), fx=[spr("sparkle", 44, 6)])
-    seq = [hit, lift, lerp(lift, hit, 0.5), hit, with_fx(hit, burst(15, 18, 8, "rainbow"))]
+    hit_p = pose(tilt=-6, expr="happy", lh=(-4, -14), rh=(4, -14), sword=dict(ang=-60, glow=True),
+                 fx=[sparks(15, 18, 6), hit(15, 18, 3)])
+    lift = pose(tilt=8, y=-2, expr="happy", lh=(-6, -14), rh=(8, -22), sword=dict(ang=20, glow=True))
+    seq = [hit_p, lift, lerp(lift, hit_p, 0.5), hit_p, with_fx(hit_p, sparks(15, 18, 9), hit(15, 18, 4))]
     return seq, an.split(1000, len(seq)), 3
 
 
-def m_iine():     # いいね!: 斜め上に剣をビシッと突き出してウインク、刃先がキラーン
-    final = pose(tilt=-14, x=22, expr="wink", rh=(10, -20), sword=dict(ang=45, glow=True), lh=(-9, -14),
-                 fx=[spr("sparkles", 46, 0), burst(42, 6, 5, "rainbow")])
-    pull = pose(tilt=10, squash=0.9, expr="smile", rh=(-4, -14), sword=dict(ang=-100), lh=(-9, -12))
-    seq = [final] + tween(pose(), 2, pull, 2, final, 1, with_fx(final, burst(42, 6, 8, "rainbow"), spr("sparkles", 46, 0))) + [final] * 3
+def m_iine():     # いいね!: 引きしぼってから、残像とともに鋭い突き! → 刃先がキラッ
+    final = with_glint(thrust(expr="wink", fx=[speed(6, 16, n=3, length=6)]), 4)
+    strike = thrust(ghost=(-5, -10), fx=[speed(6, 16, n=3, length=8), hit(tip_of(thrust())[0], tip_of(thrust())[1], 5)])
+    seq = [final] + tween(ready(), 2, pullback(), 1, strike, 1, with_fx(strike, hit(*tip_of(thrust()), 7)), 2,
+                          final) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
 def m_nice():     # ナイス!: 体ごと 1 回転しながら剣を水平に振り回す回転斬り → 決め
-    final = pose(tilt=-10, expr="kira", rh=(11, -15), sword=dict(ang=80, glow=True), lh=(-9, -13),
-                 fx=[slash(24, 22, 15, -100, 100), spr("sparkle", 48, 4)])
+    final = with_glint(pose(tilt=-10, expr="kira", rh=(11, -15), sword=dict(ang=80, glow=True), lh=(-9, -13),
+                            fx=[slash(24, 22, 15, -100, 100)]), 4)
     seq = [final, pose(squash=0.85, expr="angry", rh=(-8, -14), sword=dict(ang=-90), lh=(-9, -12))]
-    for i, (sx, a) in enumerate(zip((0.5, -0.5, -1.0, -0.5, 0.5, 1.0), (-60, 0, 60, 120, 180, 240))):
+    for i, sx in enumerate((0.5, -0.5, -1.0, -0.5, 0.5, 1.0)):
         seq.append(pose(sx=sx, y=-2, expr="angry", rh=(9, -15), sword=dict(ang=80 + i * 60, glow=True), lh=(-9, -13),
-                        fx=[slash(24, 22, 15, -100 + i * 40, 20 + i * 40)]))
+                        fx=[slash(24, 22, 15, -100 + i * 40, 20 + i * 40), dust(24, 10)]))
     seq += [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
 def m_muri():     # 無理しないでね: 盾をそっと差し出してかばい、心配そうに見つめる
     final = pose(x=22, tilt=-10, expr="worry", lh=(-11, -16), rh=(8, -11), sword=dict(ang=160),
-                 shield=dict(ang=-12, w=1.0), fx=[spr("heart", 46, 6), spr("sweat", 14, 2), {"type": "rays", "n": 6, "r0": 6, "r1": 8}])
+                 shield=dict(ang=-12, w=1.0), fx=[spr("heart", 46, 6), spr("sweat", 14, 2)])
     seq = [final] + tween(pose(expr="worry"), 3, final, 3, with_fx(final, spr("heart", 46, 2), spr("sweat", 14, 2))) + [final] * 3
     return seq, an.split(3000, len(seq)), 1
 
 
 def m_yukkuri():  # ゆっくり休んで: 剣を肩にかついで、ゆったり手を振る
-    st = dict(ang=-60)
-    final = pose(expr="calm", rh=(5, -20), sword=st, lh=(-11, -22), fx=[spr("heart", 4, 2), spr("zzz", 44, 4)])
-    a = pose(tilt=6, expr="calm", rh=(5, -20), sword=st, lh=(-12, -16), fx=[spr("heart", 4, 4), spr("zzz", 44, 6)])
+    final = shoulder(expr="calm", lh=(-11, -22), fx=[spr("heart", 4, 2), spr("zzz", 44, 4)])
+    a = shoulder(tilt=6, expr="calm", lh=(-12, -16), fx=[spr("heart", 4, 4), spr("zzz", 44, 6)])
     seq = [final] + tween(a, 3, final, 3, a)[1:-1]
     return seq, an.split(2000, len(seq)), 2
 
 
-def m_mukatteru():  # いま向かってる: 盾を構えて全速力で画面を駆け抜ける
+def m_mukatteru():  # いま向かってる: 盾を構え、残像を残して全速力で画面を駆け抜ける
     final = run(30, 0, expr="angry")
     final["fx"].append(spr("sweat", 6, 4))
     seq = [final] + [run(-10 + 8 * i, i, expr="angry") for i in range(1, 10)] + [final]
     return seq, an.split(2000, len(seq)), 2
 
 
-def m_tsuita():   # 着いたよ!: 跳んできてズザッと着地、剣を掲げて到着の合図
-    final = pose(expr="happy", **UP, lh=(-10, -20), fx=[spr("sparkle", 30, 0), puff(24), spr("note", 46, 6)])
-    seq = [final, pose(x=4, y=-8, tilt=-20, squash=1.1, expr="surprised", rh=(8, -14), sword=dict(ang=60)),
-           pose(x=12, y=-8, tilt=-15, squash=1.1, expr="surprised", rh=(8, -14), sword=dict(ang=60)),
-           pose(x=20, y=-4, tilt=-10, expr="surprised", rh=(8, -14), sword=dict(ang=60)),
-           pose(x=24, squash=0.75, tilt=-6, expr="angry", rh=(9, -10), sword=dict(ang=120), fx=[puff(24), speed(8, 30, n=2, length=8)]),
-           pose(x=24, squash=0.85, expr="smile", rh=(9, -12), sword=dict(ang=60), fx=[puff(24)])]
+def m_tsuita():   # 着いたよ!: 跳んできてズザッと着地、剣を地面に突き立てる
+    final = planted(expr="happy", lh=(-10, -22), fx=[dust(32, 8), spr("note", 46, 6)])
+    seq = [final, pose(x=4, y=-8, tilt=-20, squash=1.1, expr="surprised", rh=(8, -14), sword=dict(ang=60), ghost=(-5,)),
+           pose(x=12, y=-8, tilt=-15, squash=1.1, expr="surprised", rh=(8, -14), sword=dict(ang=60), ghost=(-6, -12)),
+           pose(x=20, y=-4, tilt=-10, expr="surprised", rh=(8, -14), sword=dict(ang=90), ghost=(-6, -12)),
+           planted(x=24, squash=0.75, tilt=-6, expr="angry", rh=(9, -10), fx=[puff(24), dust(24, 14), speed(8, 30, n=2, length=8)]),
+           planted(x=24, squash=0.85, expr="smile", fx=[puff(24)])]
     seq += tween(seq[-1], 2, final)[1:] + [final] * 2
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_gohan():    # ごはんどうする?: 盾をお盆のように持ち、首をかしげて剣をフォークのように揺らす
+def m_gohan():    # ごはんどうする?: 盾をお盆のように持ち、首をかしげて剣を揺らす
     tray = dict(ang=90, w=0.5)
     final = pose(tilt=12, expr="normal", lh=(-9, -16), shield=tray, rh=(8, -18), sword=dict(ang=-15),
                  fx=[spr("question", 48, 2), spr("note", 2, 4)])
@@ -565,11 +650,11 @@ def m_gohan():    # ごはんどうする?: 盾をお盆のように持ち、首
     return seq, an.split(2000, len(seq)), 2
 
 
-def m_majika():   # まじか!?: のけぞって跳び上がり、剣が手から吹っ飛び、盾で顔を隠す
+def m_majika():   # まじか!?: のけぞって跳び上がり、剣が手から吹っ飛ぶ
     final = pose(y=-6, tilt=14, squash=1.12, expr="surprised", lh=(-3, -16), rh=(10, -24),
                  sword=dict(free=True, gx=48, gy=10, ang=140), shield=dict(ang=0, w=1.0),
                  fx=[spr("exclaim_q", 3, 22), spr("sweats", 34, 14)])
-    seq = [final, pose(expr="normal")]
+    seq = [final, ready(expr="normal")]
     for i, (gx, gy, a) in enumerate([(36, 22, 30), (42, 14, 90), (48, 10, 150), (52, 8, 220), (50, 12, 290), (44, 20, 350)]):
         seq.append(pose(y=-6 + max(0, i - 2) * 2, tilt=14, squash=1.12, expr="surprised", lh=(-3, -16), rh=(10, -24),
                         sword=dict(free=True, gx=gx, gy=gy, ang=a), shield=dict(ang=0, w=1.0), fx=[spr("exclaim_q", 3, 22)]))
@@ -577,13 +662,19 @@ def m_majika():   # まじか!?: のけぞって跳び上がり、剣が手か�
     return seq, an.split(2000, len(seq)), 2
 
 
-def m_yossha():   # よっしゃー!: 剣を天に突き上げて跳び、稲妻が落ちて光り輝く
-    final = pose(y=-6, squash=1.14, expr="kira", **UP, lh=(-10, -20), shield=dict(ang=-20, w=1.0),
-                 fx=[bolt_to_tip(30, 0), bolt_to_tip(46, 0), burst(28, 4, 7, "rainbow"), GOLD_AURA, confetti(3)])
-    crouch = pose(squash=0.72, expr="angry", rh=(8, -9), sword=dict(ang=60), lh=(-6, -9), fx=[GOLD_AURA])
-    seq = [final] + tween(pose(), 1, crouch, 2, final, 1, with_fx(final, bolt_to_tip(20, 0), burst(28, 4, 10, "rainbow"),
-                                                                  GOLD_AURA, confetti(5)), 1,
-                          final) + [pose(squash=0.82, expr="happy", **UP, lh=(-10, -20), fx=[ring(24, 14), puff(24)]), final, final]
+def m_yossha():   # よっしゃー!: 十字斬り (✕) を決めてから、剣を天に突き上げて跳ぶ
+    up = dict(rh=(4, -24), sword=dict(ang=0, glow=True), lh=(-10, -20))
+    xcut = [cut(34, 6, 54, 26), cut(54, 6, 34, 26)]
+    final = with_glint(pose(y=-6, squash=1.14, expr="kira", **up, shield=dict(ang=-20, w=1.0),
+                            fx=xcut + [confetti(3)]), 5)
+    cut_a = pose(x=26, tilt=-12, expr="angry", rh=(12, -10), sword=dict(ang=140, glow=True), lh=(-9, -12),
+                 fx=[cut(34, 6, 54, 26)])
+    cut_b = pose(x=26, tilt=12, expr="angry", rh=(-2, -10), sword=dict(ang=-140, glow=True), lh=(-9, -12),
+                 fx=xcut + [sparks(44, 16, 6)])
+    crouch = pose(squash=0.72, expr="angry", rh=(8, -9), sword=dict(ang=60), lh=(-6, -9), fx=xcut)
+    seq = [final, ready(), overhead(), cut_a, overhead(tilt=-10, rh=(10, -25), sword=dict(ang=40)), cut_b,
+           crouch, final, with_fx(final, *xcut, confetti(5)),
+           pose(squash=0.82, expr="happy", **up, fx=xcut + [dust(24, 14), puff(24)]), final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
@@ -621,7 +712,7 @@ def build(cfg_path):
               f"{info['bytes'] // 1024:>3}KB  {item['text']!r}")
 
     # メイン画像 (240x240): 剣を立てて構え、刃がきらめく
-    grids = [render_grid(pose(expr=e, rh=(9, -13), sword=dict(ang=0, glow=True), fx=[GOLD_AURA]), phase=j)
+    grids = [render_grid(pose(expr=e, rh=(9, -13), sword=dict(ang=0, glow=True)), phase=j)
              for j, e in enumerate(["normal"] * 5 + ["calm"] + ["normal"] * 4)]
     box = (6, 4, 44, GROUND + 2)
     k = min((MAIN_SIZE[0] - 20) // (box[2] - box[0]), (MAIN_SIZE[1] - 20) // (box[3] - box[1]))
