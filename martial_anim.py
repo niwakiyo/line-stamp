@@ -301,13 +301,41 @@ def num(text, x, y, style="damage", k=2):
     return {"type": "num", "text": text, "x": x, "y": y, "style": style, "k": k}
 
 
-def status(label, value, vmax, color="#E8414F", show_max=True):
-    """右上に出す RPG のステータスウィンドウ (ゲージ付き)。"""
-    return {"type": "status", "rows": [{"label": label, "value": value, "max": vmax, "color": color,
-                                         "show_max": show_max}], "min_width": 130}
+def status(label, value, vmax, color="#E8414F", *more):
+    """右上に出す RPG のステータスウィンドウ。1 行が「名前 数値」とゲージ。
+    more に (名前, 数値, 最大, 色) を足すと、HP と MP のように複数行を並べられる。"""
+    rows = [(label, value, vmax, color)] + list(more)
+    return {"type": "compact", "rows": [{"label": r[0], "value": r[1], "max": r[2], "color": r[3]} for r in rows]}
 
 
-def render(p, text, style, phase=0, trail=(), sfx=()):
+def draw_status(img, panel, style):
+    """小さめのステータスウィンドウ (右上)。行の高さを詰めて、HP と MP の 2 行でも収まるようにした。"""
+    color, shadow = style.get("text", "#FFFFFF"), style.get("shadow", "#0A0D3A")
+    pad, bar_h, k = 14, 8, 2
+    texts = [ps.scaled(ps.pixel_text(f"{r['label']} {r['value']}", color, shadow), k) for r in panel["rows"]]
+    row_h = [im.height + bar_h + 4 for im in texts]
+    w = max(130, max(im.width for im in texts) + pad * 2)
+    h = sum(row_h) + pad * 2 - 4
+    x1, y0 = GW * S - 10, 8
+    x0 = x1 - w
+    ps.draw_window(img, style, (x0, y0, x1, y0 + h))
+    d = ImageDraw.Draw(img)
+    y = y0 + pad - 2
+    for r, im, rh in zip(panel["rows"], texts, row_h):
+        img.alpha_composite(im, (x0 + pad, y))
+        by = y + im.height
+        d.rectangle([x0 + pad, by, x1 - pad, by + bar_h], fill=ps.rgba("#FFFFFF"))
+        d.rectangle([x0 + pad + 2, by + 2, x1 - pad - 2, by + bar_h - 2], fill=ps.rgba("#1B1B2F"))
+        full = x1 - pad - 2 - (x0 + pad + 2)
+        fw = round(full * max(0.0, min(1.0, r["value"] / r["max"])))
+        if r["value"] > 0:
+            fw = max(fw, 3)
+        if fw:
+            d.rectangle([x0 + pad + 2, by + 2, x0 + pad + 2 + fw - 1, by + bar_h - 2], fill=ps.rgba(r["color"]))
+        y += rh
+
+
+def render(p, text, style, phase=0, trail=(), sfx=(), arrow=False):
     img = Image.new("RGBA", (GW * S, GH * S), (0, 0, 0, 0))
     ps.draw_window(img, style)
     x0, y0, x1, y1 = WINDOW
@@ -315,9 +343,12 @@ def render(p, text, style, phase=0, trail=(), sfx=()):
     k = max(1, min((x1 - x0 - 28) // t.width, (y1 - y0 - 24) // t.height, 3))
     t = ps.scaled(t, k)
     img.alpha_composite(t, ((x0 + x1 - t.width) // 2, (y0 + y1 - t.height) // 2 + 2))
+    if arrow:  # RPG のメッセージ送りの ▼ (次のページにオチの一言が出る合図)
+        ax, ay = x1 - 30, y1 - 22
+        ImageDraw.Draw(img).polygon([(ax, ay), (ax + 14, ay), (ax + 7, ay + 8)], fill=ps.rgba("#FFFFFF"))
     img.alpha_composite(ps.scaled(render_grid(p, phase, trail), S))
     if p.get("panel"):
-        ps.draw_panel(img, p["panel"], style)
+        draw_status(img, p["panel"], style)
     for e in p["fx"]:
         if e.get("type") == "num":
             im = wz.sfx_image(e["text"], e["style"], e["k"])
@@ -337,8 +368,9 @@ def limbs(p):
     return {"lh": g["hands"]["l"], "rh": g["hands"]["r"], "lf": g["feet"]["l"], "rf": g["feet"]["r"]}
 
 
-def render_sequence(poses, text, style, item):
-    """コマを順に描く。拳か足がいちばん大きく動いたら、その通り道に風を切る筋を残す。"""
+def render_sequence(poses, texts, style, item, arrows=()):
+    """コマを順に描く。拳か足がいちばん大きく動いたら、その通り道に風を切る筋を残す。
+    texts はコマごとのセリフ (途中からオチの一言に切り替わる)。"""
     imgs, hist = [], []
     sfx = wz.frame_sfx(item, len(poses))
     for i, p in enumerate(poses):
@@ -350,7 +382,7 @@ def render_sequence(poses, text, style, item):
             if math.hypot(cur[key][0] - prev[key][0], cur[key][1] - prev[key][1]) > 5:
                 pts = [h[key] for h in hist[-2:] if h is not None] + [cur[key]]
                 trail = pts
-        imgs.append(render(p, text, style, phase=i, trail=trail, sfx=sfx[i]))
+        imgs.append(render(p, texts[i], style, phase=i, trail=trail, sfx=sfx[i], arrow=i in arrows))
         hist.append(cur if i >= 1 else None)
     return imgs
 
@@ -429,13 +461,18 @@ def m_thanks():   # ありがとう!: 拳を手のひらで包む拳法の礼 �
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_morning():  # おはよう!: シャドーボクシングでワン・ツー → 大きく伸び
-    final = pose(hip=10, squash=1.1, lh=(-6, -28), rh=(6, -28), expr="happy", lf=(-3, 0), rf=(3, 0),
-                 fx=[spr("sparkle", 46, 6)])
-    seq = [final, stance(), punch("l", fx=[impact(9, 21, 4)]), stance(), punch("r", fx=[impact(39, 21, 5)]),
-           stance(), lerp(stance(), final, 0.5), final, final, final]
+def m_morning():  # おはよう!: 寝起きは HP も MP もカラッポ → シャドーボクシングで HP・MP が満タンに
+    def hpmp(h, m):
+        return status("HP", h, 100, "#4CD964", ("MP", m, 100, "#5BC8FF"))
+    final = pose(x=18, hip=10, squash=1.1, lh=(-7, -30), rh=(7, -30), expr="happy", lf=(-4, 0), rf=(4, 0),
+                 fx=[num("全回復!", 18, 2, "heal")], panel=hpmp(100, 100))
+    yawn = pose(x=18, hip=9, bow=2, squash=0.92, lh=(-8, -9), rh=(4, -20), expr="sleep", fx=[spr("zzz", 2, 6)],
+                panel=hpmp(15, 5))
+    seq = [final, yawn, stance(x=18, panel=hpmp(30, 20)),
+           punch("l", x=17, fx=[impact(4, 21, 4)], panel=hpmp(50, 40)), stance(x=18, panel=hpmp(60, 55)),
+           punch("r", x=19, fx=[impact(37, 21, 5)], panel=hpmp(80, 75)), stance(x=18, panel=hpmp(90, 90)),
+           final, final, final]
     return seq, an.split(3000, len(seq)), 1
-
 
 def m_ok():       # OK!: 溜めてから右のハイキック → 片足立ちでビシッ
     hk = high_kick()
@@ -682,6 +719,28 @@ MOTIONS = {
 
 
 # --- 書き出し ----------------------------------------------------------------
+PUNCH_MS = 1400   # オチの一言を見せる時間
+TOTAL_MS = 4000   # オチ付きのスタンプは 4 秒の 1 回再生にそろえる
+
+
+def with_punchline(poses, ms, loops, item):
+    """セリフのあとにオチの一言 (item["after"]) を出す。
+    くり返しは 1 回再生に展開し、後ろの約 3 割のコマでオチに切り替える。直前のコマには ▼ を出す。
+    1 コマ目 (一覧に出る静止画) はメインのセリフのまま。"""
+    if not item.get("after"):
+        return poses, ms, loops, [item["text"]] * len(poses), ()
+    poses, ms = poses * loops, ms * loops
+    n = len(poses)
+    sw = item.get("after_from", n - max(2, round(n * 0.3)))
+    before = ms[:sw]
+    scale = (TOTAL_MS - PUNCH_MS) / sum(before)
+    new_before = [max(20, round(v * scale)) for v in before]
+    new_before[-1] += (TOTAL_MS - PUNCH_MS) - sum(new_before)
+    new_ms = new_before + an.split(PUNCH_MS, n - sw)
+    texts = [item["text"]] * sw + [item["after"]] * (n - sw)
+    return poses, new_ms, 1, texts, {sw - 1}
+
+
 def build(cfg_path):
     cfg_path = Path(cfg_path)
     cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
@@ -694,9 +753,10 @@ def build(cfg_path):
     problems, all_frames = [], []
     for i, item in enumerate(cfg["stamps"], 1):
         poses, ms, loops = MOTIONS[item["motion"]]()
+        poses, ms, loops, texts, arrows = with_punchline(poses, ms, loops, item)
         if len(poses) > 20:
             raise SystemExit(f"{item['motion']}: フレーム数 {len(poses)} が 20 を超えています")
-        imgs = render_sequence(poses, item["text"], style, item)
+        imgs = render_sequence(poses, texts, style, item, arrows)
         path = out / f"{i:02d}.png"
         an.save_apng(imgs, ms, loops, path)
         all_frames.append((imgs, ms, loops))

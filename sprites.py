@@ -26,8 +26,9 @@ CHARACTERS = {
     # 武闘家 (腕・脚は martial_anim.py で別に描く。この絵は腰から上)
     "fighter": {
         "name": "武闘家",
-        # ゴツい武闘家: 日焼けした肌、太い眉とあごひげ、胸元を開けた赤い道着に黒帯
-        "colors": {"H": "#2A2230", "C": "#B8323C", "c": "#8A222B", "W": "#F2EEE6", "E": "#1E1E28",
+        # ゴツい武闘家: 日焼けした肌、太い眉とあごひげ、胸元を開けた赤い道着に黒帯。
+        # ハチマキはこげ茶 (N) で、額の真ん中に金の額当て (Y / y)
+        "colors": {"N": "#6B4226", "H": "#2A2230", "C": "#B8323C", "c": "#8A222B", "W": "#F2EEE6", "E": "#1E1E28",
                    "S": "#E3A877", "s": "#B97A4C"},
         "face": {"eyes": [(7, 7), (12, 7)], "mouth": (9, 9)},
         "shoulders": [(2, 14), (17, 14)],
@@ -35,9 +36,9 @@ CHARACTERS = {
             "........KKKK........",
             "......KKHHHHKK......",
             ".....KHHHHHHHHK.....",
-            "....KHHHHHHHHHHK....",
-            "....KWWWWWWWWWWKWW..",
-            "....KHSSSSSSSSHK..W.",
+            "....KHHHHWYHHHHK....",
+            "....KNNNNyyNNNNKNN..",
+            "....KHSSSSSSSSHK..N.",
             "....KSHHSSSSHHSK....",
             "....KSSSSSSSSSSK....",
             "....KSSSSssSSSSK....",
