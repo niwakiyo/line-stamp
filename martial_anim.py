@@ -33,8 +33,11 @@ WHITE, GOLD, PINK, CYAN = wz.WHITE, wz.GOLD, wz.PINK, wz.CYAN
 PANTS, SHOE, SOLE = "#2A2A3A", "#15151F", "#E8E2D0"
 TRAIL_DARK, TRAIL_LIGHT = "#C9B48A", "#FFF3D6"     # 拳・蹴りの軌跡 (風を切る白い筋)
 BODY_H = len(CH["pixels"])                         # 上半身の絵の高さ (腰まで)
+BODY_W = len(CH["pixels"][0])
+BODY_CX = (BODY_W - 1) / 2                         # 上半身の絵の横の中心
+HEAD_ROWS = 12                                     # 頭 (髪〜あごひげ) の行数
 THIGH = SHIN = 5.5                                 # 脚の長さ (太もも・すね)
-OWN_FX = ("impact", "fists", "tiles", "dizzy", "steam", "crack", "hit", "sparks", "glint", "cut", "slash")
+OWN_FX = ("num", "impact", "fists", "tiles", "dizzy", "steam", "crack", "hit", "sparks", "glint", "cut", "slash")
 
 
 def col(c):
@@ -46,7 +49,7 @@ def col(c):
 # hip    : 腰の高さ (地面からのドット数、普通は 10。下げると脚が曲がってしゃがむ)
 # lf, rf : 左足・右足の位置 (足元からの相対ドット)。キックは足を高く遠くに置く
 # lh, rh : 左右の拳の位置
-IDLE = dict(x=24, y=0, tilt=0, squash=1.0, sx=1.0, bow=0, expr="normal", hip=10, ghost=(),
+IDLE = dict(x=24, y=0, tilt=0, squash=1.0, sx=1.0, bow=0, expr="normal", hip=10, ghost=(), panel=None,
             lh=(-6, -18), rh=(6, -18), lf=(-4, 0), rf=(4, 0), fx=[])
 
 
@@ -65,25 +68,23 @@ def stance(**kw):
 
 
 # --- 体 ----------------------------------------------------------------------
-_EL, _ER = 5, 10
+_EL, _ER = 7, 12  # 太い眉の下の小さな目 (7 行目)、口はあごひげの中 (9 行目)
 FACES = {
-    "normal":    [(_EL, 8, "E"), (_EL, 9, "E"), (_ER, 8, "E"), (_ER, 9, "E")],
-    "smile":     [(_EL, 8, "E"), (_EL, 9, "E"), (_ER, 8, "E"), (_ER, 9, "E"), (7, 10, "R"), (8, 10, "R")],
-    "calm":      [(4, 9, "E"), (5, 9, "E"), (10, 9, "E"), (11, 9, "E")],
-    "sleep":     [(4, 9, "E"), (5, 9, "E"), (10, 9, "E"), (11, 9, "E"), (7, 10, "K")],
-    "happy":     [(4, 9, "E"), (5, 8, "E"), (6, 9, "E"), (9, 9, "E"), (10, 8, "E"), (11, 9, "E"),
-                  (7, 10, "R"), (8, 10, "R")],
-    "wink":      [(_EL, 8, "E"), (_EL, 9, "E"), (10, 9, "E"), (11, 9, "E"), (7, 10, "R"), (8, 10, "R")],
-    "surprised": [(_EL, 8, "E"), (_EL, 9, "E"), (_ER, 8, "E"), (_ER, 9, "E"), (7, 10, "K"), (8, 10, "K"),
-                  (4, 7, "E"), (11, 7, "E")],
-    "kira":      [(_EL, 8, "Y"), (_EL, 9, "Y"), (_ER, 8, "Y"), (_ER, 9, "Y"), (7, 10, "R"), (8, 10, "R")],
-    "sad":       [(_EL, 9, "E"), (_ER, 9, "E"), (_EL, 10, "L"), (_ER, 10, "L"), (4, 7, "E"), (11, 7, "E")],
-    "angry":     [(_EL, 8, "E"), (_EL, 9, "E"), (_ER, 8, "E"), (_ER, 9, "E"), (6, 7, "E"), (9, 7, "E"),
-                  (7, 10, "K"), (8, 10, "K")],
-    "shout":     [(_EL, 8, "E"), (_EL, 9, "E"), (_ER, 8, "E"), (_ER, 9, "E"), (6, 7, "E"), (9, 7, "E"),
-                  (6, 10, "K"), (7, 10, "R"), (8, 10, "R"), (9, 10, "K")],
-    "dizzy":     [(4, 8, "E"), (6, 8, "E"), (5, 9, "E"), (9, 8, "E"), (11, 8, "E"), (10, 9, "E"), (7, 10, "K")],
-    "worry":     [(_EL, 9, "E"), (_ER, 9, "E"), (4, 7, "E"), (11, 7, "E")],
+    "normal":    [(_EL, 7, "E"), (_ER, 7, "E")],
+    "smile":     [(_EL, 7, "E"), (_ER, 7, "E"), (9, 9, "R"), (10, 9, "R")],
+    "calm":      [(6, 7, "E"), (7, 7, "E"), (12, 7, "E"), (13, 7, "E")],
+    "sleep":     [(6, 7, "E"), (7, 7, "E"), (12, 7, "E"), (13, 7, "E"), (9, 9, "K")],
+    "happy":     [(6, 7, "E"), (7, 6, "E"), (8, 7, "E"), (11, 7, "E"), (12, 6, "E"), (13, 7, "E"),
+                  (9, 9, "R"), (10, 9, "R")],
+    "wink":      [(_EL, 7, "E"), (12, 7, "E"), (13, 7, "E"), (9, 9, "R"), (10, 9, "R")],
+    "surprised": [(_EL, 7, "W"), (_ER, 7, "W"), (_EL, 8, "E"), (_ER, 8, "E"), (9, 9, "K"), (10, 9, "K")],
+    "kira":      [(_EL, 7, "Y"), (_ER, 7, "Y"), (9, 9, "R"), (10, 9, "R")],
+    "sad":       [(_EL, 7, "E"), (_ER, 7, "E"), (_EL, 8, "L"), (_ER, 8, "L"), (6, 6, "S"), (13, 6, "S")],
+    "angry":     [(_EL, 7, "E"), (_ER, 7, "E"), (8, 6, "H"), (11, 6, "H"), (9, 9, "K"), (10, 9, "K")],
+    "shout":     [(_EL, 7, "E"), (_ER, 7, "E"), (8, 6, "H"), (11, 6, "H"), (8, 9, "K"), (9, 9, "R"), (10, 9, "R"),
+                  (11, 9, "K")],
+    "dizzy":     [(6, 6, "E"), (8, 8, "E"), (7, 7, "E"), (11, 8, "E"), (13, 6, "E"), (12, 7, "E"), (9, 9, "K")],
+    "worry":     [(_EL, 7, "E"), (_ER, 7, "E"), (6, 6, "S"), (13, 6, "S")],
 }
 
 
@@ -98,10 +99,10 @@ def body_image(p):
     img = fighter_sprite(p["expr"])
     bow = round(p["bow"])
     if bow:  # 頭 (髪〜あご) を下げて、おじぎ・うなずきに見せる
-        head = img.crop((0, 0, img.width, 11))
-        rest = img.crop((0, 11, img.width, img.height))
+        head = img.crop((0, 0, img.width, HEAD_ROWS))
+        rest = img.crop((0, HEAD_ROWS, img.width, img.height))
         img = Image.new("RGBA", img.size, (0, 0, 0, 0))
-        img.alpha_composite(rest, (0, 11))
+        img.alpha_composite(rest, (0, HEAD_ROWS))
         img.alpha_composite(head, (0, bow))
     w = max(2, round(img.width * abs(p["sx"])))
     h = max(4, round(img.height * p["squash"]))
@@ -145,10 +146,10 @@ def geometry(p):
 
     shoulders = []
     for sx, sy in CH["shoulders"]:
-        dx, dy = wz.rot((sx - 7.5) * abs(p["sx"]) * flip, (sy - (BODY_H - 1)) * p["squash"], p["tilt"])
+        dx, dy = wz.rot((sx - BODY_CX) * abs(p["sx"]) * flip, (sy - (BODY_H - 1)) * p["squash"], p["tilt"])
         shoulders.append((hip[0] + dx, hip[1] + dy))
     hips = []
-    for hx in (-2.5, 2.5):
+    for hx in (-4, 4):
         dx, dy = wz.rot(hx * abs(p["sx"]) * flip, 0, p["tilt"])
         hips.append((hip[0] + dx, hip[1] + dy))
     feet = {"l": (ax + p["lf"][0], ay + p["lf"][1]), "r": (ax + p["rf"][0], ay + p["rf"][1])}
@@ -223,27 +224,27 @@ def draw_own_fx(img, d, fx, g, phase):
 # --- 描画 --------------------------------------------------------------------
 def draw_leg(d, hip, foot, center_x):
     k = knee(hip, foot, center_x)
-    d.line([hip, k, foot], fill=col("K"), width=5, joint="curve")
-    d.line([hip, k, foot], fill=col(PANTS), width=3, joint="curve")
+    d.line([hip, k, foot], fill=col("K"), width=7, joint="curve")
+    d.line([hip, k, foot], fill=col(PANTS), width=5, joint="curve")
     fx, fy = round(foot[0]), round(foot[1])
     side = 1 if foot[0] >= center_x else -1
-    d.rectangle([min(fx, fx + side * 3) - 1, fy - 2, max(fx, fx + side * 3) + 1, fy + 1], fill=col("K"))
-    d.rectangle([min(fx, fx + side * 3), fy - 1, max(fx, fx + side * 3), fy], fill=col(SHOE))
+    d.rectangle([min(fx, fx + side * 4) - 1, fy - 3, max(fx, fx + side * 4) + 1, fy + 1], fill=col("K"))
+    d.rectangle([min(fx, fx + side * 4), fy - 2, max(fx, fx + side * 4), fy], fill=col(SHOE))
     d.point((fx + side * 2, fy), fill=col(SOLE))
 
 
 def draw_arm(d, shoulder, hand):
-    d.line([shoulder, hand], fill=col("K"), width=4)
-    d.line([shoulder, hand], fill=col("S"), width=2)
+    d.line([shoulder, hand], fill=col("K"), width=6)
+    d.line([shoulder, hand], fill=col("S"), width=4)
     sleeve = (shoulder[0] + (hand[0] - shoulder[0]) * 0.4, shoulder[1] + (hand[1] - shoulder[1]) * 0.4)
-    d.line([shoulder, sleeve], fill=col("C"), width=2)
+    d.line([shoulder, sleeve], fill=col("C"), width=4)
 
 
 def draw_fist(d, h):
     x, y = round(h[0]), round(h[1])
-    d.rectangle([x - 2, y - 2, x + 2, y + 2], fill=col("K"))
-    d.rectangle([x - 1, y - 1, x + 1, y + 1], fill=col("S"))
-    d.point((x - 1, y + 1), fill=col("W"))  # 手首のバンド
+    d.rectangle([x - 2, y - 2, x + 3, y + 3], fill=col("K"))
+    d.rectangle([x - 1, y - 1, x + 2, y + 2], fill=col("S"))
+    d.line([(x - 1, y + 2), (x + 2, y + 2)], fill=col("W"))  # 手首のバンド
 
 
 def render_grid(p, phase=0, trail=()):
@@ -286,6 +287,26 @@ def render_grid(p, phase=0, trail=()):
     return gimg
 
 
+# 数字の色: (文字, 縁)
+wz.SFX_STYLES.update({
+    "damage": ("#FFFFFF", "#7A1F1F"),   # ダメージの数字
+    "crit":   ("#FFE14D", "#B02A36"),   # CRITICAL! / 大ダメージ
+    "heal":   ("#9CFF8F", "#1F5A2A"),   # 回復・EXP
+    "level":  ("#FFE14D", "#2A3A8A"),   # LEVEL UP! / HIT 数
+})
+
+
+def num(text, x, y, style="damage", k=2):
+    """RPG の数字 (ダメージ・HIT 数・EXP など)。x, y はドット単位の中心。"""
+    return {"type": "num", "text": text, "x": x, "y": y, "style": style, "k": k}
+
+
+def status(label, value, vmax, color="#E8414F", show_max=True):
+    """右上に出す RPG のステータスウィンドウ (ゲージ付き)。"""
+    return {"type": "status", "rows": [{"label": label, "value": value, "max": vmax, "color": color,
+                                         "show_max": show_max}], "min_width": 130}
+
+
 def render(p, text, style, phase=0, trail=(), sfx=()):
     img = Image.new("RGBA", (GW * S, GH * S), (0, 0, 0, 0))
     ps.draw_window(img, style)
@@ -295,6 +316,14 @@ def render(p, text, style, phase=0, trail=(), sfx=()):
     t = ps.scaled(t, k)
     img.alpha_composite(t, ((x0 + x1 - t.width) // 2, (y0 + y1 - t.height) // 2 + 2))
     img.alpha_composite(ps.scaled(render_grid(p, phase, trail), S))
+    if p.get("panel"):
+        ps.draw_panel(img, p["panel"], style)
+    for e in p["fx"]:
+        if e.get("type") == "num":
+            im = wz.sfx_image(e["text"], e["style"], e["k"])
+            cx, cy = round(e["x"] * S), round(e["y"] * S)
+            img.alpha_composite(im, (max(0, min(GW * S - im.width, cx - im.width // 2)),
+                                     max(0, min(WINDOW[1] - im.height, cy - im.height // 2))))
     for s in sfx:
         im = wz.sfx_image(s["text"], s.get("style", "impact"), s["k"])
         cx, cy = s["x"] * S + s["w"] // 2, s["y"] * S + s["h"] // 2
@@ -434,15 +463,15 @@ def m_sorry():    # ごめん!: 正座して何度も深く頭を下げる (土�
     return seq, an.split(1000, len(seq)), 3
 
 
-def m_otsukare():  # おつかれ!: 稽古の最後の一撃 → 汗をぬぐい、頭から湯気
+def m_otsukare():  # おつかれ!: 稽古の最後の一撃 → 汗をぬぐい、頭から湯気。EXP +100
     p = punch()
     tip = at_hand(p)
-    final = pose(hip=10, lh=(-6, -9), rh=(4, -24), expr="calm", lf=(-3, 0), rf=(3, 0),
-                 fx=[STEAM, spr("sweat", 40, 8)])
+    final = pose(hip=10, lh=(-8, -9), rh=(4, -27), expr="calm", lf=(-4, 0), rf=(4, 0),
+                 fx=[STEAM, spr("sweat", 42, 8), num("EXP +100", 48, 27, "heal")])
     seq = [final, stance(), with_fx(p, impact(tip[0] + 3, tip[1], 7)), stance(),
-           pose(hip=10, lh=(-6, -9), rh=(6, -20), expr="calm", fx=[STEAM]), final, final, final, final]
+           pose(hip=10, lh=(-8, -9), rh=(6, -22), expr="calm", fx=[STEAM]),
+           with_fx(final, STEAM, num("EXP +100", 48, 30, "heal")), final, final, final]
     return seq, an.split(3000, len(seq)), 1
-
 
 def m_congrats():  # おめでとう!: 回転ジャンプからの飛び蹴り、紙吹雪
     air = pose(y=-5, hip=10, lf=(-3, -4), rf=(3, -4), lh=(-8, -20), rh=(8, -20), expr="happy", fx=[confetti(0)])
@@ -455,13 +484,20 @@ def m_congrats():  # おめでとう!: 回転ジャンプからの飛び蹴り�
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_goodnight():  # おやすみ: あぐらで瞑想していたら、こっくり → ハッ!
-    final = pose(hip=4, bow=3, lh=(-3, -9), rh=(3, -9), lf=(-7, 0), rf=(7, 0), expr="sleep", fx=[spr("zzz", 40, 8)])
-    awake = pose(hip=5, squash=1.05, lh=(-6, -14), rh=(6, -14), lf=(-7, 0), rf=(7, 0), expr="surprised",
-                 fx=[spr("exclaim", 42, 10)])
-    seq = [final] + tween(final, 3, awake, 1, awake, 2, final)[1:]
-    return seq, an.split(1000, len(seq)), 3
-
+def m_goodnight():  # おやすみ: あぐらで瞑想しながら眠ると、HP がだんだん回復していく
+    def hp(v):
+        return status("HP", v, 100, "#4CD964")
+    final = pose(x=18, hip=4, bow=3, lh=(-3, -9), rh=(3, -9), lf=(-8, 0), rf=(8, 0), expr="sleep",
+                 fx=[spr("zzz", 2, 4)], panel=hp(100))
+    seq = [final]
+    for i, v in enumerate((10, 25, 40, 55, 70, 85, 100)):
+        q = copy.deepcopy(final)
+        q["bow"] = 3 if i % 2 == 0 else 2
+        q["panel"] = hp(v)
+        q["fx"] = [spr("zzz", 2, 4 - i % 2), num(f"+{15 if v > 10 else 10}", 50, 33 - i % 2, "heal")]
+        seq.append(q)
+    seq += [with_fx(final, spr("zzz", 2, 4), num("HP MAX", 49, 33, "heal")), final]
+    return seq, an.split(3000, len(seq)), 1
 
 def m_ittekimasu():  # いってきます!: 拳を突き上げてから、全速力で走っていく
     final = pose(hip=10, lh=(-6, -12), rh=(3, -29), expr="happy", lf=(-3, 0), rf=(3, 0), fx=[spr("note", 44, 6)])
@@ -490,23 +526,31 @@ def m_osu():      # 押忍!: 両腕を顔の前で交差させ、気合ととも
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_ganbare():  # がんばれ!: 目にも止まらぬ連続パンチ (拳の残像)
+def m_ganbare():  # がんばれ!: 目にも止まらぬ連続パンチ。HIT 数がどんどん増えて 12 HIT!
     a = punch("r", fx=[fists((40, 16), (38, 22), (41, 26)), speed(54, 14, left=False)])
     b = punch("l", fx=[fists((9, 16), (11, 22), (7, 26)), speed(2, 14, left=True)])
     ta, tb = at_hand(a, "r"), at_hand(b, "l")
-    seq = [with_fx(a, *a["fx"], impact(ta[0] + 2, ta[1], 5)), b, a, with_fx(b, *b["fx"], impact(tb[0] - 2, tb[1], 5))]
-    return seq + [stance(expr="shout")], an.split(1000, 5), 3
-
-
-def m_sugoi():    # すごい!: 手刀で瓦を一撃で割る
-    top = pose(x=20, hip=9, lh=(-6, -14), rh=(6, -28), expr="shout", lf=(-5, 0), rf=(5, 0), fx=[tiles(38, 34, 4)])
-    chop = pose(x=22, tilt=-12, hip=7, lh=(-6, -14), rh=(15, -10), expr="shout", lf=(-6, 0), rf=(5, 0),
-                fx=[tiles(38, 34, 4, broken=1), impact(38, 24, 8)])
-    final = with_fx(chop, tiles(38, 34, 4, broken=2), spr("exclaim", 50, 4), dust(38, 10))
-    seq = [final, pose(x=20, hip=10, expr="normal", fx=[tiles(38, 34, 4)]), top, top, chop, final,
-           with_fx(final, tiles(38, 34, 4, broken=3), spr("exclaim", 50, 4), dust(38, 14), puff(38)), final, final]
+    final = with_fx(a, *a["fx"], impact(ta[0] + 2, ta[1], 6), num("12 HIT!", 24, 3, "level"))
+    seq = [final]
+    for i in range(1, 13):
+        side = a if i % 2 else b
+        tip = (ta[0] + 2, ta[1]) if i % 2 else (tb[0] - 2, tb[1])
+        seq.append(with_fx(side, *side["fx"], impact(tip[0], tip[1], 5),
+                           num(f"{i} HIT" + ("!" if i == 12 else ""), 24, 3, "level", k=3 if i == 12 else 2)))
+    seq += [final] * 2
     return seq, an.split(3000, len(seq)), 1
 
+def m_sugoi():    # すごい!: 手刀で瓦を一撃で割る → CRITICAL! 9999
+    top = pose(x=20, hip=9, lh=(-6, -14), rh=(6, -30), expr="shout", lf=(-5, 0), rf=(5, 0), fx=[tiles(40, 34, 4)])
+    chop = pose(x=22, tilt=-12, hip=7, lh=(-6, -14), rh=(17, -10), expr="shout", lf=(-6, 0), rf=(5, 0),
+                fx=[tiles(40, 34, 4, broken=1), impact(40, 24, 8), num("CRITICAL!", 30, 3, "crit")])
+    final = with_fx(chop, tiles(40, 34, 4, broken=2), dust(40, 10), num("CRITICAL!", 30, 3, "crit"),
+                    num("9999", 48, 12, "damage", k=3))
+    seq = [final, pose(x=20, hip=10, expr="normal", fx=[tiles(40, 34, 4)]), top, top, chop,
+           with_fx(chop, tiles(40, 34, 4, broken=2), num("CRITICAL!", 30, 3, "crit"), num("9999", 48, 16, "damage", k=3)),
+           with_fx(final, tiles(40, 34, 4, broken=3), dust(40, 14), puff(40), num("CRITICAL!", 30, 3, "crit"),
+                   num("9999", 48, 12, "damage", k=3)), final, final]
+    return seq, an.split(3000, len(seq)), 1
 
 def m_iine():     # いいね!: 回し蹴りを決めてウインク
     hk = high_kick(rf=(17, -14))
@@ -534,40 +578,54 @@ def m_wakaru():   # わかる〜: 腕を組んで、深くうなずく
     return seq, an.split(2000, len(seq)), 2
 
 
-def m_nandeyanen():  # なんでやねん!: 横向きにツッコミの手刀 (裏拳)
-    p = pose(x=22, tilt=-14, hip=9, lh=(-5, -15), rh=(17, -16), expr="shout", lf=(-5, 0), rf=(6, 0))
+def m_nandeyanen():  # なんでやねん!: 横向きにツッコミの手刀。ダメージは「1」
+    p = pose(x=22, tilt=-14, hip=9, lh=(-5, -15), rh=(18, -16), expr="shout", lf=(-5, 0), rf=(6, 0))
     tip = at_hand(p)
-    final = with_fx(p, impact(tip[0] + 3, tip[1], 7), speed(4, 16, n=3, length=6))
-    seq = [final, stance(expr="normal"), pose(x=22, tilt=10, hip=9, lh=(-5, -15), rh=(-6, -20), expr="shout"),
-           with_fx(p, impact(tip[0] + 3, tip[1], 5)), final, final, final]
+    final = with_fx(p, impact(tip[0] + 3, tip[1], 7), speed(4, 16, n=3, length=6), num("1", tip[0] + 6, tip[1] - 9))
+    seq = [final, stance(expr="normal"), pose(x=22, tilt=10, hip=9, lh=(-5, -15), rh=(-6, -22), expr="shout"),
+           with_fx(p, impact(tip[0] + 3, tip[1], 5), num("1", tip[0] + 6, tip[1] - 5)),
+           with_fx(p, impact(tip[0] + 3, tip[1], 7), num("1", tip[0] + 6, tip[1] - 8)), final, final]
     return seq, an.split(2000, len(seq)), 1
 
-
-def m_muri():     # もうムリ…: ふらふらして倒れ、目を回す (KO)
-    final = pose(x=24, hip=3, tilt=0, bow=3, squash=0.85, lh=(-8, -2), rh=(8, -2), lf=(-9, 0), rf=(9, 0), expr="dizzy",
-                 fx=[DIZZY, spr("sweats", 36, 14)])
-    wob = [pose(tilt=t, hip=9, lh=(-7, -10), rh=(7, -10), expr="dizzy", fx=[DIZZY]) for t in (12, -12, 10)]
-    seq = [final] + wob + [pose(tilt=-6, hip=6, lh=(-8, -6), rh=(8, -6), expr="dizzy", lf=(-7, 0), rf=(7, 0), fx=[DIZZY]),
-                           with_fx(final, DIZZY, puff(24)), final, final]
+def m_muri():     # もうムリ…: HP がみるみる減って 0。ふらふらして倒れ、目を回す
+    def hp(v):
+        return status("HP", v, 100, "#E8414F")
+    final = pose(x=18, hip=3, bow=3, squash=0.85, lh=(-9, -2), rh=(9, -2), lf=(-10, 0), rf=(10, 0), expr="dizzy",
+                 fx=[DIZZY], panel=hp(0))
+    seq = [final, stance(x=18, expr="normal", panel=hp(100))]
+    for v, tl in ((60, 12), (30, -12), (10, 10)):
+        seq.append(pose(x=18, tilt=tl, hip=9, lh=(-8, -10), rh=(8, -10), expr="dizzy", fx=[DIZZY], panel=hp(v)))
+    seq += [pose(x=18, tilt=-6, hip=6, lh=(-9, -6), rh=(9, -6), expr="dizzy", lf=(-8, 0), rf=(8, 0), fx=[DIZZY], panel=hp(3)),
+            with_fx(final, DIZZY, puff(18)), final, final]
     return seq, an.split(3000, len(seq)), 1
 
+def m_ureshii():  # うれしい!: 両拳を突き上げて跳びはねると LEVEL UP! (Lv 98 → 99)
+    def up(lv, lvl_up=False):
+        fx = [spr("note", 46, 18), num(f"Lv {lv}", 48, 28, "level")]
+        if lvl_up:
+            fx.append(num("LEVEL UP!", 32, 3, "level", k=3 if lv == 99 else 2))
+        return pose(y=-6, hip=10, lh=(-7, -31), rh=(7, -31), lf=(-3, -2), rf=(3, -2), expr="happy", fx=fx)
 
-def m_ureshii():  # うれしい!: 両拳を突き上げて、何度も跳びはねる
-    up = pose(y=-6, hip=10, lh=(-6, -29), rh=(6, -29), lf=(-3, -2), rf=(3, -2), expr="happy",
-              fx=[spr("note", 44, 6), spr("heart", 4, 8)])
-    dn = pose(hip=7, lh=(-6, -18), rh=(6, -18), lf=(-6, 0), rf=(6, 0), expr="happy", fx=[spr("note", 44, 10)])
-    seq = [up, lerp(up, dn, 0.5), dn, lerp(dn, up, 0.5)]
-    return seq + [up], an.split(1000, 5), 3
-
-
-def m_shock():    # ショック…: 見えない一撃を受けたように吹っ飛ばされ、ひざから崩れる
-    final = pose(hip=5, bow=2, lh=(-5, -6), rh=(5, -6), lf=(-6, 0), rf=(6, 0), expr="sad", fx=[spr("sweats", 34, 10)])
-    hit_p = pose(x=20, tilt=22, hip=9, lh=(-12, -20), rh=(2, -24), lf=(-6, 0), rf=(4, -3), expr="surprised",
-                 fx=[impact(34, 16, 8)])
-    seq = [final, stance(expr="normal"), hit_p, pose(x=16, tilt=26, hip=8, lh=(-12, -20), rh=(2, -24), expr="surprised"),
-           lerp(hit_p, final, 0.5), final, final, final]
+    def dn(lv):
+        return pose(hip=7, lh=(-7, -19), rh=(7, -19), lf=(-7, 0), rf=(7, 0), expr="happy",
+                    fx=[num(f"Lv {lv}", 48, 28, "level")])
+    final = up(99, True)
+    seq = [final, dn(98), up(98), dn(98), up(99, True), dn(99), up(99, True), dn(99), final, final]
     return seq, an.split(3000, len(seq)), 1
 
+def m_shock():    # ショック…: 見えない一撃で -9999 のダメージ、HP が一気に減ってひざから崩れる
+    def hp(v):
+        return status("HP", v, 100, "#E8414F")
+    final = pose(x=18, hip=5, bow=2, lh=(-6, -6), rh=(6, -6), lf=(-7, 0), rf=(7, 0), expr="sad",
+                 fx=[spr("sweats", 30, 6)], panel=hp(12))
+    hit_p = pose(x=16, tilt=22, hip=9, lh=(-13, -20), rh=(3, -26), lf=(-6, 0), rf=(4, -3), expr="surprised",
+                 fx=[impact(28, 14, 8), num("-9999", 16, 3, "crit")], panel=hp(100))
+    seq = [final, stance(x=18, expr="normal", panel=hp(100)), hit_p,
+           pose(x=13, tilt=26, hip=8, lh=(-13, -20), rh=(3, -26), expr="surprised", fx=[num("-9999", 16, 2, "crit")],
+                panel=hp(55)),
+           with_fx(lerp(hit_p, final, 0.5), num("-9999", 16, 1, "crit")), final, final, final]
+    seq[4]["panel"] = hp(20)
+    return seq, an.split(3000, len(seq)), 1
 
 def m_makasero():  # 任せろ!: 胸をドンと叩いてから、拳を前に突き出す
     p = punch(expr="kira")
@@ -595,14 +653,22 @@ def m_yoroshiku():  # よろしく!: 前蹴りを見せてから、拳法の礼�
     return seq, an.split(3000, len(seq)), 1
 
 
-def m_kiai():     # 気合だ!: 腰を落として力をため、全身から気合を放つ (地面にひび)
-    crouch = pose(hip=6, lh=(-9, -12), rh=(9, -12), lf=(-8, 0), rf=(8, 0), expr="angry", fx=[STEAM])
-    final = pose(hip=8, lh=(-12, -18), rh=(12, -18), lf=(-8, 0), rf=(8, 0), expr="shout",
-                 fx=[STEAM, {"type": "crack", "x": 24, "n": 4}, dust(24, 16), speed(6, 8, n=3, length=5),
-                     speed(56, 8, n=3, length=5, left=False)])
+def m_kiai():     # 気合だ!: 腰を落として力をため、ATK がぐんぐん上がる。地面にひび
+    def atk(v):
+        return status("ATK", v, 999, "#FF9A3C")
+    crouch = pose(x=18, hip=6, lh=(-10, -12), rh=(10, -12), lf=(-9, 0), rf=(9, 0), expr="angry", fx=[STEAM])
+    final = pose(x=18, hip=8, lh=(-13, -19), rh=(13, -19), lf=(-9, 0), rf=(9, 0), expr="shout",
+                 fx=[STEAM, {"type": "crack", "x": 18, "n": 4}, dust(18, 16), num("ATK UP!", 18, 1, "crit")],
+                 panel=atk(999))
+    seq = [final, stance(x=18, panel=atk(100))]
+    for v in (250, 450, 700):
+        q = copy.deepcopy(crouch)
+        q["panel"] = atk(v)
+        q["x"] = 18 + (1 if v % 2 else -1)
+        seq.append(q)
     shake1, shake2 = copy.deepcopy(final), copy.deepcopy(final)
-    shake1["x"], shake2["x"] = 23, 25
-    seq = [final, stance(), crouch, crouch, final, shake1, shake2, final, final]
+    shake1["x"], shake2["x"] = 17, 19
+    seq += [final, shake1, shake2, final, final]
     return seq, an.split(3000, len(seq)), 1
 
 
