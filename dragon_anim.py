@@ -293,7 +293,7 @@ def m_ittekimasu():  # いってきます!: 力強く羽ばたいて飛び立ち
 
 def m_tadaima():  # ただいま!: 飛んで帰ってきてズシン!と着地。震度3
     final = stance(squash=0.86, wing=60, lh=(-9, -12), rh=(9, -12), expr="happy",
-                   fx=[dust(24, 14), {"type": "crack", "x": 24, "n": 3}, num("震度3", 42, 6, "crit")])
+                   fx=[dust(24, 8), {"type": "crack", "x": 24, "n": 3}, num("震度3", 42, 6, "crit")])
     seq = [final]
     for i, x in enumerate((-2, 6, 14, 20)):
         seq.append(stance(x=x, y=-4, wing=70 if i % 2 else -15, lf=(-3, -2), rf=(3, -2), expr="smile",

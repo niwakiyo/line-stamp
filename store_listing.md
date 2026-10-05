@@ -42,3 +42,11 @@
 | --- | --- | --- |
 | タイトル | 動く！武闘家 ドット絵RPG パンチ&キック | Animated Fighter: Pixel Punch & Kick |
 | 説明文 | ゴツい武闘家がパンチとキックで全身を使って動く！HPやLvの数字とクスッと笑えるオチ付き。ありがとう・了解・押忍・それな・なんでやねんなど24種 | A burly pixel-art fighter punches and kicks with RPG numbers and a funny punchline. Thanks, OK, got it, I know right and more: 24 animated stickers. |
+
+## ドラゴン 動くスタンプ (dragon_anim_stamp.zip)
+
+- タイトル (日本語): 動く！ドラゴン ドット絵RPG 炎ブレス
+- タイトル (英語): Animated Dragon: Pixel Fire Breath
+- 説明文 (日本語): 炎を吐き、翼で羽ばたき、しっぽでツッコむドラゴン！HPやLvの数字とクスッと笑えるオチ付き。ありがとう・了解・それな・ごはんどうする?など毎日使える24種
+- 説明文 (英語): A pixel-art dragon breathes fire, flaps its wings and slaps with its tail. HP and Lv numbers plus a funny punchline. 24 everyday animated stickers.
+- コピーライト: (C) 2026 gonbe
