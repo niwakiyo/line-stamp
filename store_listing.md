@@ -41,4 +41,4 @@
 | 項目 | 日本語 | 英語 |
 | --- | --- | --- |
 | タイトル | 動く！武闘家 ドット絵RPG パンチ&キック | Animated Fighter: Pixel Punch & Kick |
-| 説明文 | パンチとキックで全身を使って動く！ありがとう・了解・押忍・それな・わかる〜・なんでやねんなど、毎日使える24種。文字も大きく読みやすい | A pixel-art martial artist punches, kicks and breaks tiles with full-body moves. Thanks, OK, I know right, no way and more: 24 everyday animated stickers. |
+| 説明文 | ゴツい武闘家がパンチとキックで全身を使って動く！HPやLvの数字とクスッと笑えるオチ付き。ありがとう・了解・押忍・それな・なんでやねんなど24種 | A burly pixel-art fighter punches and kicks with RPG numbers and a funny punchline. Thanks, OK, got it, I know right and more: 24 animated stickers. |
