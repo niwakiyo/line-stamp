@@ -35,3 +35,10 @@
 | --- | --- | --- |
 | タイトル | 動く！剣と盾の戦士 ドット絵RPG | Animated Knight: Pixel Sword & Shield |
 | 説明文 | 剣を振り回し盾を構えて全身で動く！ありがとう・了解・おつかれさま・御意・着いたよなど、仕事も家族も使える24種。文字も大きく読みやすい | A pixel-art knight swings his sword and raises his shield with full-body moves. Thanks, OK, good job, on my way and more: 24 everyday animated stickers. |
+
+## 武闘家 動くスタンプ (martial_anim_stamp.zip)
+
+| 項目 | 日本語 | 英語 |
+| --- | --- | --- |
+| タイトル | 動く！武闘家 ドット絵RPG パンチ&キック | Animated Fighter: Pixel Punch & Kick |
+| 説明文 | パンチとキックで全身を使って動く！ありがとう・了解・押忍・それな・わかる〜・なんでやねんなど、毎日使える24種。文字も大きく読みやすい | A pixel-art martial artist punches, kicks and breaks tiles with full-body moves. Thanks, OK, I know right, no way and more: 24 everyday animated stickers. |

@@ -23,6 +23,35 @@ PALETTE = {
 }
 
 CHARACTERS = {
+    # 武闘家 (腕・脚は martial_anim.py で別に描く。この絵は腰から上)
+    "fighter": {
+        "name": "武闘家",
+        "colors": {"H": "#2A2230", "C": "#B8323C", "c": "#8A222B", "W": "#F2EEE6", "E": "#1E1E28"},
+        "face": {"eyes": [(5, 8), (10, 8)], "mouth": (7, 10)},
+        "shoulders": [(2, 13), (13, 13)],
+        "pixels": [
+            ".......KK.......",
+            "......KHHK......",
+            "......KHHK......",
+            "....KKKHHKKK....",
+            "...KHHHHHHHHK...",
+            "..KHHHHHHHHHHK..",
+            "..KWWWWWWWWWWKW.",
+            "..KSSSSSSSSSSK.W",
+            "..KSSSSSSSSSSK..",
+            "..KSSSSSSSSSSK..",
+            "...KSSSSSSSSK...",
+            "....KKSSSSKK....",
+            "..KKCCCWWCCCKK..",
+            ".KCCCCCWWCCCCCK.",
+            ".KCCCCCWWCCCCCK.",
+            ".KcCCCCCCCCCCcK.",
+            "..KCCCCCCCCCCK..",
+            "..KEEEEEEEEEEK..",
+            "..KCCCCKKCCCCK..",
+            "...KKKK..KKKK...",
+        ],
+    },
     # 剣と盾の戦士 (腕・剣・盾は warrior_anim.py で別に描く)
     "warrior": {
         "name": "戦士",

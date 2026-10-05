@@ -1,0 +1,725 @@
+{
+  "name": "martial_anim_stamp",
+  "output": "output_martial",
+  "preview": "preview_martial.gif",
+  "window": {
+    "top": "#B8323C",
+    "bottom": "#4A1218",
+    "text": "#FFFFFF",
+    "shadow": "#2A0A0E"
+  },
+  "stamps": [
+    {
+      "text": "ありがとう!",
+      "motion": "thanks",
+      "sfx": [
+        {
+          "text": "シュッ",
+          "style": "impact",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "text": "ペコリ",
+          "style": "cute",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おはよう!",
+      "motion": "morning",
+      "sfx": [
+        {
+          "text": "シュシュッ",
+          "style": "impact",
+          "x": 34,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "のび〜",
+          "style": "calm",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              7,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "OK!",
+      "motion": "ok",
+      "sfx": [
+        {
+          "text": "バシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              3,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "ビシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "了解!",
+      "motion": "roger",
+      "sfx": [
+        {
+          "text": "ドンッ!",
+          "style": "impact",
+          "x": 36,
+          "y": 2,
+          "frames": [
+            [
+              3,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "ビシッ!",
+          "style": "impact",
+          "x": 34,
+          "y": 22,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ごめん!",
+      "motion": "sorry",
+      "sfx": [
+        {
+          "text": "ペコペコ",
+          "style": "cute",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おつかれ!",
+      "motion": "otsukare",
+      "sfx": [
+        {
+          "text": "ドスッ",
+          "style": "impact",
+          "x": 36,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "text": "ふぅ〜",
+          "style": "calm",
+          "x": 36,
+          "y": 22,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おめでとう!",
+      "motion": "congrats",
+      "sfx": [
+        {
+          "text": "クルッ",
+          "style": "magic",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              2,
+              5
+            ]
+          ]
+        },
+        {
+          "text": "パパーン!",
+          "style": "impact",
+          "x": 2,
+          "y": 24,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おやすみ",
+      "motion": "goodnight",
+      "sfx": [
+        {
+          "text": "スヤァ",
+          "style": "calm",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              2
+            ],
+            [
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "text": "ハッ!",
+          "style": "impact",
+          "x": 44,
+          "y": 18,
+          "frames": [
+            [
+              3,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "いってきます!",
+      "motion": "ittekimasu",
+      "sfx": [
+        {
+          "text": "いざ!",
+          "style": "impact",
+          "x": 36,
+          "y": 14,
+          "frames": [
+            [
+              0,
+              2
+            ]
+          ]
+        },
+        {
+          "text": "ダダダッ",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              3,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ただいま!",
+      "motion": "tadaima",
+      "sfx": [
+        {
+          "text": "クルクル",
+          "style": "magic",
+          "x": 30,
+          "y": 2,
+          "frames": [
+            [
+              1,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "シュタッ!",
+          "style": "impact",
+          "x": 36,
+          "y": 22,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "押忍!",
+      "motion": "osu",
+      "sfx": [
+        {
+          "text": "ハッ!",
+          "style": "impact",
+          "x": 38,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "がんばれ!",
+      "motion": "ganbare",
+      "sfx": [
+        {
+          "text": "ドドドド",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "すごい!",
+      "motion": "sugoi",
+      "sfx": [
+        {
+          "text": "ハァッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "バキッ!!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "いいね!",
+      "motion": "iine",
+      "sfx": [
+        {
+          "text": "ブンッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "バシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              4,
+              5
+            ]
+          ]
+        },
+        {
+          "text": "キラッ",
+          "style": "magic",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "それな!",
+      "motion": "sorena",
+      "sfx": [
+        {
+          "text": "ズドン!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "わかる〜",
+      "motion": "wakaru",
+      "sfx": [
+        {
+          "text": "うんうん",
+          "style": "calm",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "なんでやねん!",
+      "motion": "nandeyanen",
+      "sfx": [
+        {
+          "text": "ビシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "もうムリ…",
+      "motion": "muri",
+      "sfx": [
+        {
+          "text": "フラフラ",
+          "style": "calm",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              1,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "バタッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "うれしい!",
+      "motion": "ureshii",
+      "sfx": [
+        {
+          "text": "ワーイ!",
+          "style": "cute",
+          "x": 2,
+          "y": 24,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ショック…",
+      "motion": "shock",
+      "sfx": [
+        {
+          "text": "ドーン!",
+          "style": "impact",
+          "x": 36,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "ガーン…",
+          "style": "calm",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "任せろ!",
+      "motion": "makasero",
+      "sfx": [
+        {
+          "text": "ドンッ",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              2,
+              2
+            ],
+            [
+              4,
+              4
+            ]
+          ]
+        },
+        {
+          "text": "ビシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "かかってこい!",
+      "motion": "kakattekoi",
+      "sfx": [
+        {
+          "text": "クイクイ",
+          "style": "impact",
+          "x": 36,
+          "y": 4,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "よろしく!",
+      "motion": "yoroshiku",
+      "sfx": [
+        {
+          "text": "バシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              3,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "ペコッ",
+          "style": "cute",
+          "x": 36,
+          "y": 6,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "気合だ!",
+      "motion": "kiai",
+      "sfx": [
+        {
+          "text": "ググッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "text": "ハァーッ!!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
