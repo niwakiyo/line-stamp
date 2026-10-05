@@ -1,0 +1,356 @@
+{
+  "name": "dragon_anim_stamp",
+  "output": "output_dragon",
+  "preview": "preview_dragon.gif",
+  "window": {
+    "top": "#C8501E",
+    "bottom": "#4A1608",
+    "text": "#FFFFFF",
+    "shadow": "#2A0A04"
+  },
+  "stamps": [
+    {
+      "text": "ありがとう!",
+      "motion": "thanks",
+      "after": "うろこ一同 感謝",
+      "sfx": [
+        {
+          "text": "バサッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              2
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おはよう!",
+      "motion": "morning",
+      "after": "寝起きは火力弱め",
+      "sfx": []
+    },
+    {
+      "text": "OK!",
+      "motion": "ok",
+      "after": "火の元もOK",
+      "sfx": []
+    },
+    {
+      "text": "了解!",
+      "motion": "roger",
+      "after": "燃えてきた",
+      "sfx": [
+        {
+          "text": "ゴォォ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ごめん!",
+      "motion": "sorry",
+      "after": "ちょっと焦がした",
+      "sfx": [
+        {
+          "text": "ペコペコ",
+          "style": "cute",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おつかれ!",
+      "motion": "otsukare",
+      "after": "体温 下げます",
+      "sfx": []
+    },
+    {
+      "text": "おめでとう!",
+      "motion": "congrats",
+      "after": "火の祝砲だ",
+      "sfx": [
+        {
+          "text": "ドドーン",
+          "style": "impact",
+          "x": 2,
+          "y": 24,
+          "frames": [
+            [
+              4,
+              5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "おやすみ",
+      "motion": "goodnight",
+      "after": "宝の上で寝る",
+      "sfx": []
+    },
+    {
+      "text": "いってきます!",
+      "motion": "ittekimasu",
+      "after": "飛んで5分",
+      "sfx": [
+        {
+          "text": "バサバサ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              8
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ただいま!",
+      "motion": "tadaima",
+      "after": "着地で地震",
+      "sfx": [
+        {
+          "text": "ズシン!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              5,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "がんばれ!",
+      "motion": "ganbare",
+      "after": "応援も高温",
+      "sfx": []
+    },
+    {
+      "text": "すごい!",
+      "motion": "sugoi",
+      "after": "焼き加減 完璧",
+      "sfx": [
+        {
+          "text": "ゴォォ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              3,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "いいね!",
+      "motion": "iine",
+      "after": "しっぽも賛成",
+      "sfx": [
+        {
+          "text": "フリフリ",
+          "style": "cute",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              3
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "それな!",
+      "motion": "sorena",
+      "after": "火を見るより明らか",
+      "sfx": [
+        {
+          "text": "ボッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              3,
+              3
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "わかる〜",
+      "motion": "wakaru",
+      "after": "千年生きた勘",
+      "sfx": []
+    },
+    {
+      "text": "なんでやねん!",
+      "motion": "nandeyanen",
+      "after": "しっぽで失礼",
+      "sfx": [
+        {
+          "text": "ベシッ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              5,
+              7
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "もうムリ…",
+      "motion": "muri",
+      "after": "燃え尽きた…",
+      "sfx": []
+    },
+    {
+      "text": "うれしい!",
+      "motion": "ureshii",
+      "after": "脱皮しそう",
+      "sfx": []
+    },
+    {
+      "text": "ショック…",
+      "motion": "shock",
+      "after": "火が消えた",
+      "sfx": []
+    },
+    {
+      "text": "任せろ!",
+      "motion": "makasero",
+      "after": "火力には自信",
+      "sfx": [
+        {
+          "text": "ドンッ",
+          "style": "impact",
+          "x": 2,
+          "y": 4,
+          "frames": [
+            [
+              2,
+              2
+            ],
+            [
+              4,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "かかってこい!",
+      "motion": "kakattekoi",
+      "after": "ただし水はなし",
+      "sfx": [
+        {
+          "text": "ガオォ!",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              0,
+              3
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "よろしく!",
+      "motion": "yoroshiku",
+      "after": "火傷に注意",
+      "sfx": [
+        {
+          "text": "バサッ",
+          "style": "impact",
+          "x": 2,
+          "y": 2,
+          "frames": [
+            [
+              2,
+              2
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ちょっと待って",
+      "motion": "matte",
+      "after": "火 止めてくる",
+      "sfx": [
+        {
+          "text": "バタバタ",
+          "style": "impact",
+          "x": 36,
+          "y": 26,
+          "frames": [
+            [
+              0,
+              3
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ごはんどうする?",
+      "motion": "gohan",
+      "after": "丸焼き希望",
+      "sfx": [
+        {
+          "text": "グゥ〜",
+          "style": "calm",
+          "x": 36,
+          "y": 24,
+          "frames": [
+            [
+              0,
+              3
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -23,6 +23,37 @@ PALETTE = {
 }
 
 CHARACTERS = {
+    # ドラゴン (翼・しっぽ・腕・脚は dragon_anim.py で別に描く。この絵は腰から上)
+    "dragon": {
+        "name": "ドラゴン",
+        # 紺色のうろこに金の角、クリーム色の鼻先とおなか
+        "colors": {"S": "#2F4A8A", "s": "#1F3266", "W": "#F2E6C8", "Y": "#F7C843", "C": "#2F4A8A"},
+        "face": {"eyes": [(6, 6), (13, 6)], "mouth": (9, 11)},
+        "shoulders": [(2, 15), (17, 15)],
+        "pixels": [
+            "..KY............YK..",
+            "..KYY..........YYK..",
+            "...KYY.KKKKKK.YYK...",
+            "....KKKSSSSSSKKK....",
+            "...KSSSSSSSSSSSSK...",
+            "..KSSSSSSSSSSSSSSK..",
+            "..KSSSSSSSSSSSSSSK..",
+            "..KSSSSSSSSSSSSSSK..",
+            ".KSSSSSSSSSSSSSSSSK.",
+            ".KSSWWWWWWWWWWWWSSK.",
+            ".KSWWWWWWWWWWWWWWSK.",
+            "..KWWKWWWWWWWWKWWK..",
+            "...KKKKKKKKKKKKKK...",
+            "....KSSSSSSSSSSK....",
+            "..KKSSSSWWWWSSSSKK..",
+            ".KSSSSSWWWWWWSSSSSK.",
+            ".KSSSSWWWWWWWWSSSSK.",
+            ".KsSSSWWWWWWWWSSSsK.",
+            "..KSSSWWWWWWWWSSSK..",
+            "..KsSSSWWWWWWSSSsK..",
+            "...KKKKKKKKKKKKKK...",
+        ],
+    },
     # 武闘家 (腕・脚は martial_anim.py で別に描く。この絵は腰から上)
     "fighter": {
         "name": "武闘家",

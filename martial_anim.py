@@ -258,6 +258,7 @@ def render_grid(p, phase=0, trail=()):
 
     char = Image.new("RGBA", (GW, GH), (0, 0, 0, 0))   # キャラ本体 (残像を作るため別の層に描く)
     cd = ImageDraw.Draw(char)
+    draw_back(char, cd, p, g)
     for hp, fk in zip(g["hips"], ("l", "r")):
         draw_leg(cd, hp, g["feet"][fk], ax)
     char.alpha_composite(lean_body(body_image(p), p["tilt"]), (round(g["hip"][0]) - 24, round(g["hip"][1]) - 44))
@@ -284,7 +285,16 @@ def render_grid(p, phase=0, trail=()):
             d.line([(x, round(ay) + 2), (x, min(GROUND - 1, round(ay) + 5))], fill=col(WHITE))
     wz.draw_fx(gimg, d, [e for e in p["fx"] if e.get("type") not in OWN_FX], g, phase, back=False)
     draw_own_fx(gimg, d, p["fx"], g, phase)
+    draw_extra_fx(gimg, d, p["fx"], g, phase, p)
     return gimg
+
+
+def draw_back(char, d, p, g):
+    """体の後ろに描く部品 (ドラゴンの翼・しっぽなど)。武闘家では何も描かない。"""
+
+
+def draw_extra_fx(img, d, fx, g, phase, p):
+    """キャラ別のエフェクト (ドラゴンの炎など)。武闘家では何も描かない。"""
 
 
 # 数字の色: (文字, 縁)
