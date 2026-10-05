@@ -50,3 +50,11 @@
 - 説明文 (日本語): 炎を吐き、翼で羽ばたき、しっぽでツッコむドラゴン！HPやLvの数字とクスッと笑えるオチ付き。ありがとう・了解・それな・ごはんどうする?など毎日使える24種
 - 説明文 (英語): A pixel-art dragon breathes fire, flaps its wings and slaps with its tail. HP and Lv numbers plus a funny punchline. 24 everyday animated stickers.
 - コピーライト: (C) 2026 gonbe
+
+## 秋のリス 動くスタンプ (squirrel_anim_stamp.zip)
+
+- タイトル (日本語): 動く！秋のリス ドット絵 流行語
+- タイトル (英語): Animated Autumn Squirrel: Pixel Art
+- 説明文 (日本語): マフラーのリスが全身で動く秋スタンプ！セリフが3段階で変わる。それな・メロい・ぴえん・焼き芋しか勝たんなど女子の流行語24種
+- 説明文 (英語): A scarf-wearing pixel squirrel moves its whole body in autumn scenes. Each sticker shows 3 lines of trendy girl talk. 24 animated stickers.
+- コピーライト: (C) 2026 gonbe
