@@ -1,0 +1,103 @@
+{
+ "name": "tennis_stamp",
+ "input": "photos",
+ "output": "output_tennis",
+ "stamps": [
+  {
+   "file": "01.png",
+   "text": "ナイスショット!"
+  },
+  {
+   "file": "02.png",
+   "text": "スマッシュ!"
+  },
+  {
+   "file": "03.png",
+   "text": "ナイスボレー!"
+  },
+  {
+   "file": "04.png",
+   "text": "おはよう!"
+  },
+  {
+   "file": "05.png",
+   "text": "おつかれ!"
+  },
+  {
+   "file": "06.png",
+   "text": "ありがとう!"
+  },
+  {
+   "file": "07.png",
+   "text": "了解!"
+  },
+  {
+   "file": "08.png",
+   "text": "ファイト!"
+  },
+  {
+   "file": "09.png",
+   "text": "よっしゃー!"
+  },
+  {
+   "file": "10.png",
+   "text": "ごめん!"
+  },
+  {
+   "file": "11.png",
+   "text": "練習いってきます"
+  },
+  {
+   "file": "12.png",
+   "text": "雨で中止…"
+  },
+  {
+   "file": "13.png",
+   "text": "ドンマイ!"
+  },
+  {
+   "file": "14.png",
+   "text": "サーブいくよ!"
+  },
+  {
+   "file": "15.png",
+   "text": "バックハンド!"
+  },
+  {
+   "file": "16.png",
+   "text": "カットサーブ"
+  },
+  {
+   "file": "17.png",
+   "text": "ダブルフォルト…"
+  },
+  {
+   "file": "18.png",
+   "text": "試合がんばって!"
+  },
+  {
+   "file": "19.png",
+   "text": "勝った!"
+  },
+  {
+   "file": "20.png",
+   "text": "足つった…"
+  },
+  {
+   "file": "21.png",
+   "text": "ボール拾い中"
+  },
+  {
+   "file": "22.png",
+   "text": "ロブで逃げる"
+  },
+  {
+   "file": "23.png",
+   "text": "ナイスペア!"
+  },
+  {
+   "file": "24.png",
+   "text": "ゲームセット!"
+  }
+ ]
+}
