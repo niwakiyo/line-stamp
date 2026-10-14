@@ -6,6 +6,11 @@
   GEMINI_API_KEY  … Gemini(画像生成)を使う場合
   OPENAI_IMAGE_MODEL / GEMINI_IMAGE_MODEL … モデル名を変えたいとき
 
+クラウド環境で Gemini のキーを「ネットワークシークレット(Bearer, 許可ウェブサイト
+generativelanguage.googleapis.com, パス /v1beta/openai/)」に登録した場合は、キーが
+セッションから見えないため --provider gemini-secret を使う(通信時に自動でキーが付く)。
+  GEMINI_COMPAT_IMAGE_MODEL … この方式で使う画像モデル(既定 imagen-4.0-generate-001)
+
 例:
   python3 tools/gen_image.py --provider auto -o work/neko/design/01_gen.png \\
       --prompt "$(cat work/neko/design/01_prompt.txt)"
@@ -47,9 +52,17 @@ def gemini(prompt):
     sys.exit("Geminiから画像が返りませんでした: " + json.dumps(res)[:500])
 
 
+def gemini_secret(prompt):
+    """Gemini の OpenAI 互換窓口。Authorization ヘッダーはプロキシが付ける。"""
+    model = os.environ.get("GEMINI_COMPAT_IMAGE_MODEL", "imagen-4.0-generate-001")
+    res = post("https://generativelanguage.googleapis.com/v1beta/openai/images/generations",
+               {"model": model, "prompt": prompt, "n": 1, "response_format": "b64_json"}, {})
+    return base64.b64decode(res["data"][0]["b64_json"])
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--provider", choices=["auto", "openai", "gemini"], default="auto")
+    p.add_argument("--provider", choices=["auto", "openai", "gemini", "gemini-secret"], default="auto")
     p.add_argument("--prompt", required=True)
     p.add_argument("-o", "--out", required=True)
     a = p.parse_args()
@@ -58,9 +71,10 @@ def main():
     if provider == "auto":
         provider = "openai" if os.environ.get("OPENAI_API_KEY") else "gemini" if os.environ.get("GEMINI_API_KEY") else None
     if provider is None:
-        sys.exit("OPENAI_API_KEY も GEMINI_API_KEY も未設定です。Canvaの生成機能で代替してください。")
+        print("APIキーの環境変数がないため、ネットワークシークレット方式(gemini-secret)で試します")
+        provider = "gemini-secret"
 
-    data = openai(a.prompt) if provider == "openai" else gemini(a.prompt)
+    data = {"openai": openai, "gemini": gemini, "gemini-secret": gemini_secret}[provider](a.prompt)
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)

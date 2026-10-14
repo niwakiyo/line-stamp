@@ -35,6 +35,7 @@ Claude Code で:
 
 - `OPENAI_API_KEY` … ChatGPT(gpt-image-1)
 - `GEMINI_API_KEY` … Gemini(gemini-2.5-flash-image)
+- 環境変数の欄がない場合は、ネットワークシークレットに Bearer / `generativelanguage.googleapis.com` / パス `/v1beta/openai/` で登録し、`--provider gemini-secret` を使う
 
 クラウド環境の場合は、環境設定の「環境変数」に登録してください。
 
