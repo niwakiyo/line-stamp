@@ -56,7 +56,11 @@ def key_out(img, color, tol):
     masks = [band.point(lambda v, c=c: 255 if abs(v - c) <= tol else 0)
              for band, c in zip((r, g, b), color)]
     bg = ImageChops.multiply(ImageChops.multiply(masks[0], masks[1]), masks[2])
-    img.putalpha(ImageChops.darker(a, ImageChops.invert(bg)))
+    alpha = ImageChops.darker(a, ImageChops.invert(bg))
+    if color[1] > max(color[0], color[2]):
+        # グリーンバックの色かぶり除去: 輪郭のなじみ部分に残る緑を G<=max(R,B) に抑える
+        g = ImageChops.darker(g, ImageChops.lighter(r, b))
+    img = Image.merge("RGBA", (r, g, b, alpha))
     return img
 
 
