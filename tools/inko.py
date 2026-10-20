@@ -10,6 +10,7 @@ SVG パス(M/L/C/Z のみ)に変換して図形として描く。
 """
 import argparse
 import copy
+import math
 import json
 import subprocess
 import tempfile
@@ -160,7 +161,16 @@ def J1(c):
 
 
 def J2(c): move(c, list(c), dy=-22)
-def SAL(c, dy=0): wing(c, "P7", 206, 176 + dy, -25)
+def SAL(c, dy=0):
+    """敬礼: 右羽を体の外側から上げ、細い羽先をおでこの右上に当てる(羽は30x70に伸ばす)。"""
+    c["P7"].update(h=70, vw=30, vh=52)
+    wing(c, "P7", 212, 178 + dy, -42)
+    # 羽先の右上に「ビシッ」の強調線を3本(放射状)
+    for k, ang in enumerate((-75, -40, -5)):
+        r = math.radians(ang)
+        cx, cy = 204 + 16 * math.cos(r), 150 + dy + 16 * math.sin(r)
+        c[f"SAL{k}"] = dict(fill=INK, stroke=None, sw=0, w=10, h=3, left=cx - 5, top=cy - 1.5,
+                            d="M1.5 0 L8.5 0 A1.5 1.5 0 0 1 8.5 3 L1.5 3 A1.5 1.5 0 0 1 1.5 0 Z", rot=ang)
 def W_A(c): wing(c, "P7", 215, 180, -150); happy(c)
 def W_B(c): wing(c, "P7", 228, 184, -115); happy(c)
 def N1(c): wing(c, "P6", 100, 190, 90); wing(c, "P7", 220, 190, -90)
@@ -309,7 +319,7 @@ ZZ = [[zz(228, 160, 28)], [zz(232, 152, 28)], [zz(236, 144, 28), zz(222, 168, 20
 
 STAMPS = {
     "01": [F([SAL], T(L01, 48)), F([S]), F([J0]), F([S], T(L01, 29)),
-           F([SAL], T(L01, 54), [spark(58, 70), spark(262, 70)]),
+           F([SAL], T(L01, 54, dy=4), [spark(58, 70), spark(262, 70)]),
            F([SAL], T(L01, 46)), F([SAL], T(L01, 50)), F([SAL], T(L01, 48))],
     "02": [F([B2], T(L02, 48, dy=6)), F([B2], T(L02, 48, dy=6)), F([B1], T(L02, 48, dy=3)),
            F([happy], T(L02, 48)), F([happy], T(L02, 48), [spark(88, 150), spark(232, 140)]),
