@@ -128,10 +128,19 @@ def cmd_extras(a):
     img = next(ImageSequence.Iterator(img)).convert("RGBA")
     out = Path(a.outdir)
     out.mkdir(parents=True, exist_ok=True)
-    bbox = img.getbbox() or (0, 0, img.width, img.height)
-    img = img.crop(bbox)
-    fit(img, *MAIN_SIZE).save(out / "main.png", optimize=True)
-    fit(img, *TAB_SIZE).save(out / "tab.png", optimize=True)
+    def trim(im):
+        return im.crop(im.getbbox() or (0, 0, im.width, im.height))
+
+    def padded(im, w, h, pad):
+        canvas = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        inner = fit(im, w - pad * 2, h - pad * 2)
+        canvas.paste(inner, (pad, pad))
+        return canvas
+
+    padded(trim(img), *MAIN_SIZE, a.pad).save(out / "main.png", optimize=True)
+    # タブは小さいので文字を外し、キャラだけを大きく入れる
+    tab_src = trim(img.crop((0, a.tab_top, img.width, img.height))) if a.tab_top else trim(img)
+    padded(tab_src, *TAB_SIZE, 2).save(out / "tab.png", optimize=True)
     print(f"メイン画像: {out / 'main.png'}\nタブ画像  : {out / 'tab.png'}")
 
 
@@ -195,6 +204,8 @@ def main():
     s = sub.add_parser("extras", help="メイン画像/タブ画像を作成")
     s.add_argument("image")
     s.add_argument("-o", "--outdir", required=True)
+    s.add_argument("--pad", type=int, default=8, help="メイン画像の余白(px)")
+    s.add_argument("--tab-top", type=int, default=0, help="タブ画像はこのy座標より下(キャラ部分)だけを使う")
     s.set_defaults(func=cmd_extras)
 
     s = sub.add_parser("check", help="規定チェック")
