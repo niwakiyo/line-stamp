@@ -5,7 +5,7 @@
 
 inko.py のパーツ・ポーズをそのまま使い、見た目だけを変える。
 - キャラ: 線を濃い茶→やわらかい茶色にして細くし、輪郭を手描き風に少し揺らす。
-  体はふちを小さく波打たせて「ふわふわ」に見せる。ほっぺはピンク。
+  体はふちを小さく波打たせて「ふわふわ」に見せる。羽はふっくら丸く、目は大きく。ほっぺはピンク。
 - セリフ: Yusei Magic(手書きマーカー風, OFL)で一文字ずつ置き、文字ごとに少し傾ける。
   言葉ごとに色を分け、コマごとに「ポン」と出す(拡大→戻る)。
 """
@@ -56,42 +56,9 @@ def scallop(w, h, bumps=18, depth=1.6):
     return d + " Z"
 
 
-def fluff(d, bumps=9, depth=2.2, seed=0):
-    """閉じたパス(M と C だけ)のふちを小さく波打たせる。羽をふわふわに見せる。"""
-    nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", d)]
-    p0, segs = (nums[0], nums[1]), [nums[i:i + 6] for i in range(2, len(nums) - 5, 6)]
-    pts, cur = [], p0
-    for s_ in segs:
-        c1, c2, e = s_[0:2], s_[2:4], s_[4:6]
-        for k in range(20):
-            t = k / 20
-            mt = 1 - t
-            pts.append((mt ** 3 * cur[0] + 3 * mt * mt * t * c1[0] + 3 * mt * t * t * c2[0] + t ** 3 * e[0],
-                        mt ** 3 * cur[1] + 3 * mt * mt * t * c1[1] + 3 * mt * t * t * c2[1] + t ** 3 * e[1]))
-        cur = e
-    # 弧長で等間隔に bumps 点を取る
-    lens = [0]
-    for a, b in zip(pts, pts[1:] + pts[:1]):
-        lens.append(lens[-1] + math.dist(a, b))
-    step, picks, j = lens[-1] / bumps, [], 0
-    for i in range(bumps):
-        while lens[j + 1] < i * step:
-            j += 1
-        picks.append(pts[j % len(pts)])
-    gx = sum(x for x, _ in pts) / len(pts)
-    gy = sum(y for _, y in pts) / len(pts)
-    rnd = random.Random(seed)
-    out = f"M{picks[0][0]:.1f} {picks[0][1]:.1f}"
-    for a, b in zip(picks, picks[1:] + picks[:1]):
-        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
-        dx, dy = mx - gx, my - gy
-        n = math.hypot(dx, dy) or 1
-        dep = depth * rnd.uniform(0.8, 1.2)
-        ox, oy = dx / n * dep * 1.6, dy / n * dep * 1.6
-        c1 = (a[0] + (b[0] - a[0]) * 0.2 + ox, a[1] + (b[1] - a[1]) * 0.2 + oy)
-        c2 = (a[0] + (b[0] - a[0]) * 0.8 + ox, a[1] + (b[1] - a[1]) * 0.8 + oy)
-        out += f" C{c1[0]:.1f} {c1[1]:.1f} {c2[0]:.1f} {c2[1]:.1f} {b[0]:.1f} {b[1]:.1f}"
-    return out + " Z"
+# 羽: なめらかでふっくらした形に、下側だけ小さな羽先を2つ(ボコボコさせない)
+WING_L = "M22 2 C30 10 30 32 25 44 C23 48 20 50 17 48 C15 51 11 51 9 48 C6 49 3 46 4 42 C2 30 8 10 22 2 Z"
+WING_R = "M8 2 C0 10 0 32 5 44 C7 48 10 50 13 48 C15 51 19 51 21 48 C24 49 27 46 26 42 C28 30 22 10 8 2 Z"
 
 
 def big_eyes(c, k=1.4, hk=1.7):
@@ -126,7 +93,7 @@ def soften(c):
         if e["d"] in BODY_PATHS:
             e["d"] = scallop(e.get("vw", e["w"]), e.get("vh", e["h"]))
         elif key in ("P6", "P7"):
-            e["d"] = fluff(e["d"], seed=key)
+            e["d"] = wobble(WING_L if key == "P6" else WING_R, key, 0.5)
         elif e["sw"] and key not in ("P0",):
             e["d"] = wobble(e["d"], key)
         if e["stroke"] == inko.INK:
