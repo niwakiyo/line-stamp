@@ -27,7 +27,7 @@ HAND_FONT = ROOT / "assets/fonts/YuseiMagic-Regular.ttf"
 COLS, ROWS = 4, 3
 CW, CH = inko.CELL_W, inko.CELL_H
 
-LINE = "#7A5040"      # やわらかい茶色の線
+LINE = "#8C6450"      # やわらかい茶色の線(細く・淡く)
 EYE = "#4A3328"
 CHEEK = "#FFB3C1"
 BROWN, ORANGE, PINK = "#5B3A2E", "#F2894B", "#EE7D98"
@@ -56,7 +56,66 @@ def scallop(w, h, bumps=18, depth=1.6):
     return d + " Z"
 
 
-def wobble(d, seed, amt=0.7):
+def fluff(d, bumps=9, depth=2.2, seed=0):
+    """閉じたパス(M と C だけ)のふちを小さく波打たせる。羽をふわふわに見せる。"""
+    nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", d)]
+    p0, segs = (nums[0], nums[1]), [nums[i:i + 6] for i in range(2, len(nums) - 5, 6)]
+    pts, cur = [], p0
+    for s_ in segs:
+        c1, c2, e = s_[0:2], s_[2:4], s_[4:6]
+        for k in range(20):
+            t = k / 20
+            mt = 1 - t
+            pts.append((mt ** 3 * cur[0] + 3 * mt * mt * t * c1[0] + 3 * mt * t * t * c2[0] + t ** 3 * e[0],
+                        mt ** 3 * cur[1] + 3 * mt * mt * t * c1[1] + 3 * mt * t * t * c2[1] + t ** 3 * e[1]))
+        cur = e
+    # 弧長で等間隔に bumps 点を取る
+    lens = [0]
+    for a, b in zip(pts, pts[1:] + pts[:1]):
+        lens.append(lens[-1] + math.dist(a, b))
+    step, picks, j = lens[-1] / bumps, [], 0
+    for i in range(bumps):
+        while lens[j + 1] < i * step:
+            j += 1
+        picks.append(pts[j % len(pts)])
+    gx = sum(x for x, _ in pts) / len(pts)
+    gy = sum(y for _, y in pts) / len(pts)
+    rnd = random.Random(seed)
+    out = f"M{picks[0][0]:.1f} {picks[0][1]:.1f}"
+    for a, b in zip(picks, picks[1:] + picks[:1]):
+        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+        dx, dy = mx - gx, my - gy
+        n = math.hypot(dx, dy) or 1
+        dep = depth * rnd.uniform(0.8, 1.2)
+        ox, oy = dx / n * dep * 1.6, dy / n * dep * 1.6
+        c1 = (a[0] + (b[0] - a[0]) * 0.2 + ox, a[1] + (b[1] - a[1]) * 0.2 + oy)
+        c2 = (a[0] + (b[0] - a[0]) * 0.8 + ox, a[1] + (b[1] - a[1]) * 0.8 + oy)
+        out += f" C{c1[0]:.1f} {c1[1]:.1f} {c2[0]:.1f} {c2[1]:.1f} {b[0]:.1f} {b[1]:.1f}"
+    return out + " Z"
+
+
+def big_eyes(c, k=1.4, hk=1.7):
+    """目を大きく、ハイライトも大きくする(閉じ目・にっこり目も同じ倍率)。"""
+    for eye, hl in (("P8", "P10"), ("P9", "P11")):
+        if eye not in c:
+            continue
+        e = c[eye]
+        ex, ey = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
+        e.setdefault("vw", e["w"])
+        e.setdefault("vh", e["h"])
+        e["w"], e["h"] = e["w"] * k, e["h"] * k
+        e["left"], e["top"] = ex - e["w"] / 2, ey - e["h"] / 2
+        if hl in c:
+            h = c[hl]
+            hx, hy = h["left"] + h["w"] / 2, h["top"] + h["h"] / 2
+            h.setdefault("vw", h["w"])
+            h.setdefault("vh", h["h"])
+            h["w"], h["h"] = h["w"] * hk, h["h"] * hk
+            nx, ny = ex + (hx - ex) * k, ey + (hy - ey) * k
+            h["left"], h["top"] = nx - h["w"] / 2, ny - h["h"] / 2
+
+
+def wobble(d, seed, amt=1.0):
     """パスの座標を少しずらして手描きの揺らぎを出す。"""
     rnd = random.Random(seed)
     return re.sub(r"-?\d+(?:\.\d+)?", lambda m: f"{float(m.group()) + rnd.uniform(-amt, amt):.1f}", d)
@@ -66,11 +125,13 @@ def soften(c):
     for key, e in c.items():
         if e["d"] in BODY_PATHS:
             e["d"] = scallop(e.get("vw", e["w"]), e.get("vh", e["h"]))
+        elif key in ("P6", "P7"):
+            e["d"] = fluff(e["d"], seed=key)
         elif e["sw"] and key not in ("P0",):
             e["d"] = wobble(e["d"], key)
         if e["stroke"] == inko.INK:
             e["stroke"] = LINE
-            e["sw"] = round(e["sw"] * 0.75, 1)
+            e["sw"] = round(e["sw"] * 0.65, 1)
         if e["fill"] == inko.INK:
             e["fill"] = EYE
         if key in ("P12", "P13"):
@@ -80,6 +141,15 @@ def soften(c):
             e["top"] += 5  # 目を少し下げて幼く
         if key == "P0":
             e["sw"] = 10
+    big_eyes(c)
+    for key in ("P14", "P15"):  # くちばしは小さめに
+        if key in c:
+            e = c[key]
+            cx, cy = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
+            e.setdefault("vw", e["w"])
+            e.setdefault("vh", e["h"])
+            e["w"], e["h"] = e["w"] * 0.78, e["h"] * 0.78
+            e["left"], e["top"] = cx - e["w"] / 2, cy - e["h"] / 2
     return c
 
 
