@@ -1,5 +1,7 @@
 # set01 デザイン一覧
 
+> これは v1(最初の版)。現在の完成品は v2(ふわふわ版)で、`../design2/index.md` を参照。`../anim/` は v2 で上書きした。
+
 Canva: 「LINEスタンプ制作作業キャンバス」 https://www.canva.com/d/tgzwRgieXp-Pxai (編集用URL)
 
 キャラもセリフも Canva のページ上にあり、各ページをそのまま書き出したものが `0N_sheet.png`(1280x540、4x2コマ、緑背景)。
