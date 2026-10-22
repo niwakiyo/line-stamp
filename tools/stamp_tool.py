@@ -13,6 +13,7 @@ import io
 import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageChops, ImageSequence
 
 # LINE Creators Market 規定 (アニメーションスタンプ)
@@ -64,6 +65,45 @@ def key_out(img, color, tol):
     return img
 
 
+def fill_holes(img, src, max_area=40, fill=(255, 248, 240), grow=1, green=40):
+    """文字の輪(「す」「は」など)の中に閉じ込められた小さな背景の穴を白フチの色で埋める。
+    Canva の書き出しでは輪の中の緑がなじみ色になって透過されずに残り、緑かぶり除去で黒い点になる。
+    元画像 src で緑が強い(G - max(R,B) > green)ピクセルも穴の一部として扱う。
+    外周とつながっていない max_area px 以下の穴だけが対象で、キャラと文字の間の大きなすき間は残す。"""
+    arr = np.array(img)
+    rgb = np.array(src.convert("RGB")).astype(int)
+    greenish = rgb[:, :, 1] - np.maximum(rgb[:, :, 0], rgb[:, :, 2]) > green
+    clear = (arr[:, :, 3] == 0) | greenish
+    h, w = clear.shape
+    seen = np.zeros_like(clear)
+    holes = np.zeros_like(clear)
+    for y0, x0 in zip(*np.nonzero(clear)):
+        if seen[y0, x0]:
+            continue
+        stack, comp, edge = [(y0, x0)], [], False
+        seen[y0, x0] = True
+        while stack:
+            y, x = stack.pop()
+            comp.append((y, x))
+            if y in (0, h - 1) or x in (0, w - 1):
+                edge = True
+            for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if 0 <= ny < h and 0 <= nx < w and clear[ny, nx] and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((ny, nx))
+        if not edge and len(comp) <= max_area:
+            ys, xs = zip(*comp)
+            holes[list(ys), list(xs)] = True
+    if not holes.any():
+        return img
+    for _ in range(grow):
+        g = holes.copy()
+        g[1:] |= holes[:-1]; g[:-1] |= holes[1:]; g[:, 1:] |= holes[:, :-1]; g[:, :-1] |= holes[:, 1:]
+        holes = holes | (g & ~clear)  # 別の穴やすき間には広げない
+    arr[holes] = (*fill, 255)
+    return Image.fromarray(arr)
+
+
 def fit(img, max_w, max_h, min_side=0):
     """縦横比を保って max_w x max_h に収め、透明で余白を付ける。"""
     scale = min(max_w / img.width, max_h / img.height)
@@ -97,7 +137,7 @@ def cmd_anim(a):
     if a.key != "none":
         color = detect_key_color(frames[0]) if a.key == "auto" else parse_color(a.key)
         print(f"背景色 #{color[0]:02x}{color[1]:02x}{color[2]:02x} を透過にします (許容差 {a.tol})")
-        frames = [key_out(f, color, a.tol) for f in frames]
+        frames = [fill_holes(key_out(f, color, a.tol), f) for f in frames]
     frames = [fit(f.convert("RGBA"), ANIM_MAX_W, ANIM_MAX_H, ANIM_MIN_SIDE) for f in frames]
 
     # 1ループの再生時間は整数秒にそろえる(ループ数 x 再生時間 <= 4秒)
