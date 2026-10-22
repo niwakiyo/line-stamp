@@ -292,9 +292,10 @@ def zz(i):
     return [("z", 272 + i * 2, 146 - i * 4, 24 + i % 2 * 4), ("z", 288 + i, 120 - i * 3, 16)]
 
 
-def yoro(scale=1.0, n2=0, bob=0):
-    """「よろしく」(強調語・コーラル)は左上にポンと出し、「お願いします」は頭に重ねて左から書いていく。"""
-    ws = [word("よろしく", 120, 42 + bob, 54, CORAL, rot=-6, scale=scale, seed=1)]
+def yoro(scale=1.0, n2=0, bob=0, dx=0):
+    """「よろしく」(強調語・コーラル)は左上にポンと出し、「お願いします」は頭に重ねて左から書いていく。
+    dx: 大きくポンと出すコマで左端が切れないよう右へずらす量。"""
+    ws = [word("よろしく", 120 + dx, 42 + bob, 54, CORAL, rot=-6, scale=scale, seed=1)]
     if n2:  # 2行目はキャラの頭に少し重ねて、文字を前に出す
         ws.append(word("お願いします", 168, 98 + bob, 38, BROWN, rot=-3, arc=0.2, seed=2, count=n2))
     return ws
@@ -314,7 +315,7 @@ STAMPS = {
            kf([SAL], f01(rs=1, bob=1), [("spark", 284, 114, 14), ("spark", 108, 150, 11)]),
            kf([SAL], f01(rs=1), SPK01)],
     "02": [kf([B2, happy], f02(rs=1), [("heart", 282, 132, 14), ("heart", 110, 156, 10)]),
-           kf([S]),
+           kf([S, happy]),
            kf([S, happy], f02(ks=1.08)),
            kf([S, happy], f02(ks=0.96)),
            kf([S, happy], f02()),
@@ -326,7 +327,7 @@ STAMPS = {
            kf([B1, happy], f02(rs=1, bob=1), [("heart", 283, 126, 15), ("heart", 110, 152, 11)]),
            kf([B2, happy], f02(rs=1), [("heart", 282, 132, 14), ("heart", 110, 156, 10)])],
     "03": [kf([W_A], f03(rs=1)),
-           kf([S]),
+           kf([S, happy]),
            kf([W_A], f03(n1=2)),
            kf([W_B], f03(n1=4)),
            kf([W_A], f03()),
@@ -338,10 +339,10 @@ STAMPS = {
            kf([W_A], f03(rs=1, bob=1)),
            kf([W_A], f03(rs=1))],
     "04": [kf([B1], yoro(1, 6), [PEKO1]),
-           kf([S]),
-           kf([S], yoro(1.12)),
-           kf([S], yoro(0.96)),
-           kf([S], yoro(1.0)),
+           kf([S, blink]),
+           kf([S, blink], yoro(1.12, dx=10)),
+           kf([S, blink], yoro(0.96)),
+           kf([S, blink], yoro(1.0)),
            kf([B1], yoro(1.0, 2)),
            kf([B2], yoro(1.0, 4)),
            kf([B2], yoro(1.0, 6), [PEKO2]),
@@ -362,7 +363,7 @@ STAMPS = {
            kf([SAL], f05(rs=1, wave=(3, 3.2)), [("spark", 292, 146, 13), ("spark", 112, 158, 10)]),
            kf([SAL], f05(rs=1), SPK05)],
     "06": [kf([B1, X], f06(), SW06),
-           kf([S]),
+           kf([B1, X]),
            kf([B1, X], f06(n1=2, last1=1.3)),
            kf([B1, X, sh(-3)], f06(n1=3, last1=1.3, shiver=(2, 4, 1)), SW06[:1]),
            kf([B1, X, sh(3)], f06(n1=5, last1=1.3, shiver=(2, 4, 2)), SW06),
@@ -386,7 +387,7 @@ STAMPS = {
            kf([N2, happy], f07(wave=(4, 4.8), rs=1), SPK07b),
            kf([N2], f07(rs=1), SPK07)],
     "08": [kf([inko.sway(0, 0)], f08(rs=1), zz(0)),
-           kf([S]),
+           kf([blink]),
            kf([blink], f08(ks=1.06)),
            kf([inko.sway(4, 5)], f08(wave=(2, 0))),
            kf([inko.sway(6, 8)], f08(wave=(2, 0.8), rs=1, n2=1), zz(1)[:1]),
