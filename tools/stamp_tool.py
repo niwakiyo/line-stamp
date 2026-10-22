@@ -103,7 +103,9 @@ def cmd_anim(a):
     # 1ループの再生時間は整数秒にそろえる(ループ数 x 再生時間 <= 4秒)
     if a.seconds * a.loops > ANIM_MAX_SECONDS:
         sys.exit(f"再生時間 {a.seconds}秒 x {a.loops}ループ が {ANIM_MAX_SECONDS}秒を超えます")
-    duration = round(a.seconds * 1000 / len(frames))
+    # 割り切れないときはコマごとに 1ms ずつ配って、合計をちょうど整数秒にする
+    total_ms, n = a.seconds * 1000, len(frames)
+    duration = [total_ms // n + (1 if i < total_ms % n else 0) for i in range(n)]
 
     data = encode_apng(frames, duration, a.loops)
     for colors in (256, 128, 64, 32):
@@ -118,7 +120,7 @@ def cmd_anim(a):
     gif = out.with_suffix(".gif")
     frames[0].save(gif, save_all=True, append_images=frames[1:], duration=duration,
                    loop=0, disposal=2, transparency=0)
-    print(f"APNG(申請用): {out} ({len(data) // 1024}KB, {len(frames)}コマ, {duration}ms/コマ)")
+    print(f"APNG(申請用): {out} ({len(data) // 1024}KB, {len(frames)}コマ, 約{total_ms // n}ms/コマ)")
     print(f"GIF(確認用) : {gif}")
     return check_file(out, "anim")
 
