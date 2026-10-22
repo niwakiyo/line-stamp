@@ -27,10 +27,13 @@ HAND_FONT = ROOT / "assets/fonts/YuseiMagic-Regular.ttf"
 COLS, ROWS = 4, 3
 CW, CH = inko.CELL_W, inko.CELL_H
 
-LINE = "#8B5E46"      # やわらかい茶色の線
+LINE = "#7A5040"      # やわらかい茶色の線
 EYE = "#4A3328"
-CHEEK = "#F7A1B0"
-BROWN, ORANGE, PINK = "#6B4A3A", "#F2894B", "#EE7D98"
+CHEEK = "#FFB3C1"
+BROWN, ORANGE, PINK = "#5B3A2E", "#F2894B", "#EE7D98"
+CORAL = "#F0607A"     # 強調語(1スタンプ1か所)
+RIM = "#E2C2AC"       # 文字の白フチのさらに外側の、淡い茶色のフチ
+FILLS = {"#FFE066": "#FFE98F", "#FFF6D6": "#FFF8E3", "#F5B83D": "#F7C766"}  # 塗りを淡く
 
 BODY_PATHS = {inko.BODY} | {d for k, (_, _, d) in inko.ALT.items() if k.startswith("BODY")}
 
@@ -72,16 +75,27 @@ def soften(c):
             e["fill"] = EYE
         if key in ("P12", "P13"):
             e["fill"] = CHEEK
+        e["fill"] = FILLS.get(e["fill"], e["fill"])
+        if key in ("P8", "P9", "P10", "P11"):
+            e["top"] += 5  # 目を少し下げて幼く
         if key == "P0":
             e["sw"] = 10
     return c
 
 
-def chara_elems(poses):
+def chara_elems(poses, scale=1.0, anchor=(160, 258)):
+    """scale>1 でキャラを大きくし、足元(160,258)を anchor に合わせる。"""
     c = copy.deepcopy(inko.BASE)
     for p in poses:
         p(c)
-    return list(soften(c).values())
+    elems = list(soften(c).values())
+    for e in elems:
+        e["left"] = anchor[0] + (e["left"] - 160) * scale
+        e["top"] = anchor[1] + (e["top"] - 258) * scale
+        e["w"], e["h"] = e["w"] * scale, e["h"] * scale  # 線の太さは変えない(太いと硬く見える)
+        e.setdefault("vw", e["w"] / scale)
+        e.setdefault("vh", e["h"] / scale)
+    return elems
 
 
 # ---- 手書き風セリフ ----------------------------------------------------------
@@ -112,10 +126,12 @@ def draw_word(layer, w, ox, oy, outline=9):
             lx, ly = jit[0] - w["arc"] * size * (4 * t * t - 1) * 0.5, lx
         x = ox + w["cx"] + lx * math.cos(r) - ly * math.sin(r)
         y = oy + w["cy"] + lx * math.sin(r) + ly * math.cos(r)
-        pad = outline + 4
+        pad = outline + 6
         g = Image.new("RGBA", (size + pad * 2, size + pad * 2), (0, 0, 0, 0))
-        ImageDraw.Draw(g).text((pad + size / 2, pad + size / 2), ch, font=font, anchor="mm",
-                               fill=w["color"], stroke_width=outline, stroke_fill="white")
+        dr = ImageDraw.Draw(g)
+        pos = (pad + size / 2, pad + size / 2)
+        dr.text(pos, ch, font=font, anchor="mm", fill=RIM, stroke_width=outline + 2, stroke_fill=RIM)
+        dr.text(pos, ch, font=font, anchor="mm", fill=w["color"], stroke_width=outline, stroke_fill="white")
         g = g.rotate(-(w["rot"] + jit[1]), resample=Image.BICUBIC, expand=True)
         layer.alpha_composite(g, (round(x - g.width / 2), round(y - g.height / 2)))
 
@@ -139,36 +155,33 @@ def draw_marks(layer, marks, ox, oy):
 
 # ---- スタンプの台本(12コマ) -----------------------------------------------
 
-def kf(poses, words=(), marks=()):
-    return dict(poses=poses, words=list(words), marks=list(marks))
-
-
-L = inko.shake(-28)  # キャラを左に寄せ、右側を縦書きのセリフに使う
+def kf(poses, words=(), marks=(), scale=1.25, anchor=(198, 246)):
+    return dict(poses=poses, words=list(words), marks=list(marks), scale=scale, anchor=anchor)
 
 
 def yoro(scale=1.0, n2=0, bob=0):
-    """「よろしく」は左上にポンと出し、「お願いします」はキャラの右に縦書きで上から書いていく。"""
-    ws = [word("よろしく", 118, 46 + bob, 50, ORANGE, rot=-6, scale=scale, seed=1)]
-    if n2:
-        ws.append(word("お願いします", 262, 140 + bob, 34, BROWN, rot=2, arc=0.15, seed=2, vertical=True, count=n2))
+    """「よろしく」(強調語・コーラル)は左上にポンと出し、「お願いします」は頭に重ねて左から書いていく。"""
+    ws = [word("よろしく", 120, 42 + bob, 54, CORAL, rot=-6, scale=scale, seed=1)]
+    if n2:  # 2行目はキャラの頭に少し重ねて、文字を前に出す
+        ws.append(word("お願いします", 168, 98 + bob, 38, BROWN, rot=-3, arc=0.2, seed=2, count=n2))
     return ws
 
 
 B1, B2, S = inko.B1, inko.B2, inko.S
-PEKO1, PEKO2 = ("peko", 196, 150, 28), ("peko", 196, 168, 32)
+PEKO1, PEKO2 = ("peko", 272, 140, 28), ("peko", 272, 156, 32)
 STAMPS = {
-    "04": [kf([B1, L], yoro(1, 6), [PEKO1]),
-           kf([S, L]),
-           kf([S, L], yoro(1.15)),
-           kf([S, L], yoro(0.95)),
-           kf([S, L], yoro(1.0)),
-           kf([B1, L], yoro(1.0, 2)),
-           kf([B2, L], yoro(1.0, 4)),
-           kf([B2, L], yoro(1.0, 6), [PEKO2]),
-           kf([B2, L], yoro(1.0, 6, bob=2), [PEKO2]),
-           kf([B1, L], yoro(1.0, 6, bob=1), [("heart", 192, 128, 13)]),
-           kf([B1, L], yoro(1.0, 6), [("heart", 194, 124, 16)]),
-           kf([B1, L], yoro(1, 6), [PEKO1])],
+    "04": [kf([B1], yoro(1, 6), [PEKO1]),
+           kf([S]),
+           kf([S], yoro(1.12)),
+           kf([S], yoro(0.96)),
+           kf([S], yoro(1.0)),
+           kf([B1], yoro(1.0, 2)),
+           kf([B2], yoro(1.0, 4)),
+           kf([B2], yoro(1.0, 6), [PEKO2]),
+           kf([B2], yoro(1.0, 6, bob=2), [PEKO2]),
+           kf([B1], yoro(1.0, 6, bob=1), [("heart", 286, 140, 13)]),
+           kf([B1], yoro(1.0, 6), [("heart", 288, 134, 16)]),
+           kf([B1], yoro(1, 6), [PEKO1])],
 }
 
 
@@ -182,7 +195,7 @@ def chara_svg(frames):
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{CW * COLS}" height="{CH * ROWS}">']
     for i, fr in enumerate(frames):
         x0, y0 = origin(i)
-        for e in chara_elems(fr["poses"]):
+        for e in chara_elems(fr["poses"], fr["scale"], fr["anchor"]):
             vw, vh = e.get("vw", e["w"]), e.get("vh", e["h"])
             tf = (f'translate({x0 + e["left"]:.1f} {y0 + e["top"]:.1f}) '
                   f'rotate({e["rot"]} {e["w"] / 2:.1f} {e["h"] / 2:.1f}) scale({e["w"] / vw:.4f} {e["h"] / vh:.4f})')
