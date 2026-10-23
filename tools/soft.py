@@ -83,6 +83,53 @@ def big_eyes(c, k=1.4, hk=1.7):
             h["left"], h["top"] = nx - h["w"] / 2, ny - h["h"] / 2
 
 
+def _unit(x, y):
+    l = math.hypot(x, y)
+    return x / l, y / l
+
+
+def round_chevron(a, b, c, r):
+    """折れ線 a-b-c を太さ 2r の線にした形(両端と外側の角を丸める)。place() が A を楕円に
+    置き換えてしまうので、丸みはすべて C で描く。"""
+    def side(a, b, c):
+        """a→b→c の左側(進む向きに対して)をたどる。b の角は内側なら交点、外側なら丸める。"""
+        d1, d2 = _unit(b[0] - a[0], b[1] - a[1]), _unit(c[0] - b[0], c[1] - b[1])
+        n1, n2 = (d1[1], -d1[0]), (d2[1], -d2[0])
+        cos = n1[0] * n2[0] + n1[1] * n2[1]
+        q = (b[0] + r * (n1[0] + n2[0]) / (1 + cos), b[1] + r * (n1[1] + n2[1]) / (1 + cos))
+        if (q[0] - b[0]) * d1[0] + (q[1] - b[1]) * d1[1] < 0:
+            segs = [("L", q)]
+        else:
+            k = 4 / 3 * math.tan(math.acos(max(-1.0, min(1.0, cos))) / 4) * r
+            p1, p2 = (b[0] + r * n1[0], b[1] + r * n1[1]), (b[0] + r * n2[0], b[1] + r * n2[1])
+            segs = [("L", p1), ("C", (p1[0] + k * d1[0], p1[1] + k * d1[1]), (p2[0] - k * d2[0], p2[1] - k * d2[1]), p2)]
+        return segs + [("L", (c[0] + r * n2[0], c[1] + r * n2[1]))], d2, n2
+
+    def cap(o, n, d):
+        """o を中心にした半円(+n 側 → 先端 o+r·d → -n 側)を C 2本で。"""
+        k = 0.5523 * r
+        p1, tip, p2 = (o[0] + r * n[0], o[1] + r * n[1]), (o[0] + r * d[0], o[1] + r * d[1]), (o[0] - r * n[0], o[1] - r * n[1])
+        return [("C", (p1[0] + k * d[0], p1[1] + k * d[1]), (tip[0] + k * n[0], tip[1] + k * n[1]), tip),
+                ("C", (tip[0] - k * n[0], tip[1] - k * n[1]), (p2[0] + k * d[0], p2[1] + k * d[1]), p2)]
+
+    go, d2, n2 = side(a, b, c)
+    back, d0, n0 = side(c, b, a)  # 逆向きにたどると、反対側のふちになる
+    d1 = _unit(b[0] - a[0], b[1] - a[1])
+    start = (a[0] + r * d1[1], a[1] - r * d1[0])
+    segs = go + cap(c, n2, d2) + back + cap(a, n0, d0)
+    return f"M{start[0]:.1f} {start[1]:.1f} " + " ".join(
+        op + " ".join(f"{x:.1f} {y:.1f}" for x, y in pts) for op, *pts in segs) + " Z"
+
+
+# 目は角を丸くする: にっこり目・閉じ目は両端を丸め、「><」目は丸い線で描き直す
+ROUND_EYES = {
+    inko.ALT["E_HAPPY"][2]: "M1 9 C3 1 11 1 13 9 C13 10.3 11 10.3 11 9 C9.5 5 4.5 5 3 9 C3 10.3 1 10.3 1 9 Z",
+    inko.ALT["E_CLOSE"][2]: "M1 1 C3 9 11 9 13 1 C13 -0.3 11 -0.3 11 1 C9.5 5 4.5 5 3 1 C3 -0.3 1 -0.3 1 1 Z",
+    inko.ALT["E_X_L"][2]: round_chevron((2.4, 3.4), (11.4, 7), (2.4, 10.6), 1.6),
+    inko.ALT["E_X_R"][2]: round_chevron((11.6, 3.4), (2.6, 7), (11.6, 10.6), 1.6),
+}
+
+
 def wobble(d, seed, amt=1.0):
     """パスの座標を少しずらして手描きの揺らぎを出す。"""
     rnd = random.Random(seed)
@@ -91,6 +138,7 @@ def wobble(d, seed, amt=1.0):
 
 def soften(c):
     for key, e in c.items():
+        e["d"] = ROUND_EYES.get(e["d"], e["d"])
         if e["d"] in BODY_PATHS:
             e["d"] = scallop(e.get("vw", e["w"]), e.get("vh", e["h"]))
         elif key in ("P6", "P7"):
@@ -110,10 +158,15 @@ def soften(c):
         if key == "P0":
             e["sw"] = 10
     big_eyes(c)
-    for key in ("P14", "P15"):  # くちばしは小さめに
+    for key in ("P14", "P15", "P15m"):  # くちばしは小さめに(口の中はくちばしの中心を基準に縮める)
         if key in c:
             e = c[key]
-            cx, cy = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
+            b = c["P15"] if key == "P15m" else e
+            cx, cy = b["left"] + b["w"] / 2, b["top"] + b["h"] / 2
+            if key == "P15m":
+                e["left"], e["top"] = cx + (e["left"] - cx) * 0.78, cy + (e["top"] - cy) * 0.78
+                e["w"], e["h"] = e["w"] * 0.78, e["h"] * 0.78
+                continue
             e.setdefault("vw", e["w"])
             e.setdefault("vh", e["h"])
             e["w"], e["h"] = e["w"] * 0.78, e["h"] * 0.78
@@ -251,8 +304,27 @@ happy, blink = inko.happy, inko.blink
 PEKO1, PEKO2 = ("peko", 272, 140, 28), ("peko", 272, 156, 32)
 
 
+# 口パク: くちばしを上下に開き、間に口の中(濃いピンク)を見せる。顔の位置はくちばしについて行く。
+BEAK_OPEN = ("M1 2 L21 2 C21 6.5 15.5 10.5 11 10.5 C6.5 10.5 1 6.5 1 2 Z "
+             "M4.5 15.5 C8 14.5 14 14.5 17.5 15.5 C17 20.5 13.5 24 11 24 C8.5 24 5 20.5 4.5 15.5 Z")
+MOUTH = "M7 0.5 C11 0.5 13.5 3.5 13.5 6 C13.5 9.5 11 12.5 7 12.5 C3 12.5 0.5 9.5 0.5 6 C0.5 3.5 3 0.5 7 0.5 Z"
+
+
+def talk(c):
+    b = c["P15"]
+    b.update(left=b["left"] - 2, w=22, h=25, d=BEAK_OPEN)  # 少し大きく開けて、口の中を見せる
+    mouth = dict(fill="#D9546A", stroke=inko.INK, sw=2, w=14, h=13, left=b["left"] + 4, top=b["top"] + 5,
+                 d=MOUTH, rot=0)
+    items = list(c.items())
+    c.clear()
+    for k, v in items:  # 口の中はくちばしの下に重ねる
+        if k == "P15":
+            c["P15m"] = mouth
+        c[k] = v
+
+
 def X(c):
-    inko.eyes(c, "X", 16)
+    inko.eyes(c, "X")
 
 
 def sh(dx):
@@ -399,6 +471,13 @@ STAMPS = {
            kf([inko.sway(0, 0)], f08(wave=(2, 5.6), rs=1), zz(0)),
            kf([inko.sway(0, 0)], f08(rs=1), zz(0))],
 }
+
+
+# 口パク: セリフが出ているあいだ、1コマおきに口を開ける(1コマ目=完成形は閉じたまま)
+TALK_FRAMES = (2, 4, 6, 8, 10)
+for frames in STAMPS.values():
+    for i in TALK_FRAMES:
+        frames[i]["poses"] = frames[i]["poses"] + [talk]
 
 
 # ---- 出力 --------------------------------------------------------------------
@@ -549,6 +628,8 @@ ORDER = list(inko.BASE)
 
 
 def inko_order(key):
+    if key == "P15m":  # 口の中はくちばしのすぐ下
+        return ORDER.index("P15") - 0.5
     return ORDER.index(key) if key in ORDER else len(ORDER)
 
 

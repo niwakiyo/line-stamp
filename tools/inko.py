@@ -104,16 +104,18 @@ def wing(c, i, cx, cy, rot):
 
 
 def eyes(c, kind, dy=0):
-    """目を差し替える(ハイライトは消す)。kind: E_HAPPY / E_CLOSE / X"""
+    """目を差し替える(ハイライトは消す)。kind: E_HAPPY / E_CLOSE / X
+    おじぎ等で顔が動いていても、くちばし(P14)の位置から同じだけずらして顔について行かせる。"""
     c.pop("P10", None)
     c.pop("P11", None)
+    ox, oy = c["P14"]["left"] - BASE["P14"]["left"], c["P14"]["top"] - BASE["P14"]["top"]
     if kind == "X":
         specs = [("P8", "E_X_L", 133, 171), ("P9", "E_X_R", 173, 171)]
     else:
         specs = [("P8", kind, 133, 173), ("P9", kind, 173, 173)]
     for i, key, left, top in specs:
         w, h, d = ALT[key]
-        c[i].update(w=w, h=h, d=d, left=left, top=top + dy)
+        c[i].update(w=w, h=h, d=d, left=left + ox, top=top + oy + dy)
 
 
 # 5-4 ポーズ(基本ポーズへの変更として順に適用する)
@@ -305,11 +307,11 @@ L05, L06 = ["了解です！"], ["すみません"]
 L07, L08 = ["おはよう", "ございます"], ["おやすみ", "なさい"]
 ONE = 20 + 56 * 1.12 / 2  # 1行セリフの中心(サイズ56基準で固定)
 
-f06 = [F([B1, lambda c: eyes(c, "X", 16), shake(-3)], T(L06, 56, dx=2), [sweat(104, 150), sweat(216, 150)]),
-       F([B1, lambda c: eyes(c, "X", 16), shake(3)], T(L06, 56, dx=-2), [sweat(94, 140), sweat(226, 140)]),
-       F([B1, lambda c: eyes(c, "X", 16), shake(-3)], T(L06, 56, dx=2),
+f06 = [F([B1, lambda c: eyes(c, "X"), shake(-3)], T(L06, 56, dx=2), [sweat(104, 150), sweat(216, 150)]),
+       F([B1, lambda c: eyes(c, "X"), shake(3)], T(L06, 56, dx=-2), [sweat(94, 140), sweat(226, 140)]),
+       F([B1, lambda c: eyes(c, "X"), shake(-3)], T(L06, 56, dx=2),
          [sweat(84, 130, 10, 15), sweat(236, 130, 10, 15)]),
-       F([B1, lambda c: eyes(c, "X", 16), shake(3)], T(L06, 56, dx=-2))]
+       F([B1, lambda c: eyes(c, "X"), shake(3)], T(L06, 56, dx=-2))]
 f07 = [F([N2], T(L07, 48, dy=-4), [spark(76, 156), spark(244, 156)]),
        F([N2], T(L07, 48, dy=-4), [spark(72, 182, 16), spark(248, 182, 16)])]
 SW = [(0, 0), (4, 5), (6, 8), (4, 5), (0, 0), (-4, -5), (-6, -8), (-4, -5)]
