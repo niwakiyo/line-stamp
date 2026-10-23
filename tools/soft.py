@@ -143,7 +143,7 @@ def soften(c):
             e["d"] = scallop(e.get("vw", e["w"]), e.get("vh", e["h"]))
         elif key in ("P6", "P7"):
             e["d"] = wobble(WING_L if key == "P6" else WING_R, key, 0.5)
-        elif e["sw"] and key not in ("P0",):
+        elif e["sw"] and key not in ("P0", "P15"):
             e["d"] = wobble(e["d"], key)
         if e["stroke"] == inko.INK:
             e["stroke"] = LINE
@@ -304,23 +304,34 @@ happy, blink = inko.happy, inko.blink
 PEKO1, PEKO2 = ("peko", 272, 140, 28), ("peko", 272, 156, 32)
 
 
-# 口パク: くちばしを上下に開き、間に口の中(濃いピンク)を見せる。顔の位置はくちばしについて行く。
-BEAK_OPEN = ("M1 2 L21 2 C21 6.5 15.5 10.5 11 10.5 C6.5 10.5 1 6.5 1 2 Z "
-             "M4.5 15.5 C8 14.5 14 14.5 17.5 15.5 C17 20.5 13.5 24 11 24 C8.5 24 5 20.5 4.5 15.5 Z")
-MOUTH = "M7 0.5 C11 0.5 13.5 3.5 13.5 6 C13.5 9.5 11 12.5 7 12.5 C3 12.5 0.5 9.5 0.5 6 C0.5 3.5 3 0.5 7 0.5 Z"
+# 口パク: くちばしを丸いおわん形に開き、中に口(ピンクの楕円)を重ねる。
+# 小さい部品なので手描きの揺らぎはかけない(揺らすと形がくずれる)。
+BEAK_OPEN = "M1 2 L19 2 C19 12 14.5 19 10 19 C5.5 19 1 12 1 2 Z"
+MOUTH = "M6 0.5 C9.5 0.5 11.5 2.5 11.5 5 C11.5 7.5 9.5 9.5 6 9.5 C2.5 9.5 0.5 7.5 0.5 5 C0.5 2.5 2.5 0.5 6 0.5 Z"
 
 
 def talk(c):
     b = c["P15"]
-    b.update(left=b["left"] - 2, w=22, h=25, d=BEAK_OPEN)  # 少し大きく開けて、口の中を見せる
-    mouth = dict(fill="#D9546A", stroke=inko.INK, sw=2, w=14, h=13, left=b["left"] + 4, top=b["top"] + 5,
+    b.update(left=b["left"] - 1, w=20, h=20, d=BEAK_OPEN)
+    mouth = dict(fill="#E8607A", stroke=None, sw=0, w=12, h=10, left=b["left"] + 4, top=b["top"] + 5,
                  d=MOUTH, rot=0)
     items = list(c.items())
     c.clear()
-    for k, v in items:  # 口の中はくちばしの下に重ねる
+    for k, v in items:  # 口の中はくちばしの上に重ねる
+        c[k] = v
         if k == "P15":
             c["P15m"] = mouth
-        c[k] = v
+
+
+def step(side):
+    """足ぶみ: 片足を少し外へけり上げる(side=0 左足, 1 右足)。体の下に隠れないよう外側へずらす。"""
+    def f(c):
+        key, dx, rot = ("P2", -6, -25) if side == 0 else ("P3", 6, 25)
+        if key in c:
+            c[key]["left"] += dx
+            c[key]["top"] -= 3
+            c[key]["rot"] = c[key].get("rot", 0) + rot
+    return f
 
 
 def X(c):
@@ -478,6 +489,11 @@ TALK_FRAMES = (2, 4, 6, 8, 10)
 for frames in STAMPS.values():
     for i in TALK_FRAMES:
         frames[i]["poses"] = frames[i]["poses"] + [talk]
+# 足ぶみ: 2コマ目から左右の足を交互に少し上げる(1コマ目=完成形は両足をつけたまま)
+STEP_FRAMES = {1: 0, 3: 1, 5: 0, 7: 1, 9: 0, 11: 1}
+for frames in STAMPS.values():
+    for i, side in STEP_FRAMES.items():
+        frames[i]["poses"] = frames[i]["poses"] + [step(side)]
 
 
 # ---- 出力 --------------------------------------------------------------------
@@ -628,8 +644,8 @@ ORDER = list(inko.BASE)
 
 
 def inko_order(key):
-    if key == "P15m":  # 口の中はくちばしのすぐ下
-        return ORDER.index("P15") - 0.5
+    if key == "P15m":  # 口の中はくちばしのすぐ上
+        return ORDER.index("P15") + 0.5
     return ORDER.index(key) if key in ORDER else len(ORDER)
 
 
