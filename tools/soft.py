@@ -158,15 +158,10 @@ def soften(c):
         if key == "P0":
             e["sw"] = 10
     big_eyes(c)
-    for key in ("P14", "P15", "P15m"):  # くちばしは小さめに(口の中はくちばしの中心を基準に縮める)
+    for key in ("P14", "P15"):  # くちばしは小さめに
         if key in c:
             e = c[key]
-            b = c["P15"] if key == "P15m" else e
-            cx, cy = b["left"] + b["w"] / 2, b["top"] + b["h"] / 2
-            if key == "P15m":
-                e["left"], e["top"] = cx + (e["left"] - cx) * 0.78, cy + (e["top"] - cy) * 0.78
-                e["w"], e["h"] = e["w"] * 0.78, e["h"] * 0.78
-                continue
+            cx, cy = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
             e.setdefault("vw", e["w"])
             e.setdefault("vh", e["h"])
             e["w"], e["h"] = e["w"] * 0.78, e["h"] * 0.78
@@ -304,32 +299,23 @@ happy, blink = inko.happy, inko.blink
 PEKO1, PEKO2 = ("peko", 272, 140, 28), ("peko", 272, 156, 32)
 
 
-# 口パク: くちばしを丸いおわん形に開き、中に口(ピンクの楕円)を重ねる。
-# 小さい部品なので手描きの揺らぎはかけない(揺らすと形がくずれる)。
-BEAK_OPEN = "M1 2 L19 2 C19 12 14.5 19 10 19 C5.5 19 1 12 1 2 Z"
-MOUTH = "M6 0.5 C9.5 0.5 11.5 2.5 11.5 5 C11.5 7.5 9.5 9.5 6 9.5 C2.5 9.5 0.5 7.5 0.5 5 C0.5 2.5 2.5 0.5 6 0.5 Z"
+# 口パク: くちばしの大きさと位置はそのまま、形を少し丸く開いた形にして色を変えるだけ。
+# 部品を重ねたり大きくしたりすると口がはみ出して見えるので、くちばし1つで表す。
+BEAK_OPEN = "M1 2 L17 2 C17 11 13 16 9 16 C5 16 1 11 1 2 Z"
+BEAK_OPEN_FILL = "#F0788A"
 
 
 def talk(c):
-    b = c["P15"]
-    b.update(left=b["left"] - 1, w=20, h=20, d=BEAK_OPEN)
-    mouth = dict(fill="#E8607A", stroke=None, sw=0, w=12, h=10, left=b["left"] + 4, top=b["top"] + 5,
-                 d=MOUTH, rot=0)
-    items = list(c.items())
-    c.clear()
-    for k, v in items:  # 口の中はくちばしの上に重ねる
-        c[k] = v
-        if k == "P15":
-            c["P15m"] = mouth
+    c["P15"].update(d=BEAK_OPEN, fill=BEAK_OPEN_FILL)
 
 
 def step(side):
-    """足ぶみ: 片足を少し外へけり上げる(side=0 左足, 1 右足)。体の下に隠れないよう外側へずらす。"""
+    """足ぶみ: 片足をほんの少し上げる(side=0 左足, 1 右足)。動かしすぎないよう小さく。"""
     def f(c):
-        key, dx, rot = ("P2", -6, -25) if side == 0 else ("P3", 6, 25)
+        key, dx, rot = ("P2", -2, -8) if side == 0 else ("P3", 2, 8)
         if key in c:
             c[key]["left"] += dx
-            c[key]["top"] -= 3
+            c[key]["top"] -= 1
             c[key]["rot"] = c[key].get("rot", 0) + rot
     return f
 
@@ -644,8 +630,6 @@ ORDER = list(inko.BASE)
 
 
 def inko_order(key):
-    if key == "P15m":  # 口の中はくちばしのすぐ上
-        return ORDER.index("P15") + 0.5
     return ORDER.index(key) if key in ORDER else len(ORDER)
 
 
