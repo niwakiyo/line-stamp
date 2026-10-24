@@ -290,3 +290,17 @@
 - 口パク: くちばしの大きさと位置はそのまま（18×18）。開いたときは形を少し丸くして、色をピンク（#F0788A）に変えるだけ。部品を重ねないので、はみ出さない。
 - 足ぶみ: 片足を横に2px、上に1px、8°だけ傾ける（前回は6px・25°）。
 - Canva の 11〜18ページを描き直して保存。8個とも LINE の規定（300KB以下ほか）を満たすことを確認。
+
+## Fix: both arms should move, independently (4th round)
+- User feedback: "The right hand on 01 isn't moving", "I want left/right motion on all of them", "Moving both sides identically is weak".
+- Every sticker now has a per-frame angle table for each wing (`ARMS` in `tools/soft.py`). Each wing rotates around its shoulder, and the two sides use different angles and timing.
+  - 01 承知しました: left hand raised to the forehead and lowered in salute; right hand flaps in small, quick movements.
+  - 02 ありがとうございます: left and right raise one after the other.
+  - 03 お疲れさまです: right hand waves big; left hand moves gently.
+  - 04 よろしくお願いします: left goes first, right follows a beat later.
+  - 05 了解です！: left hand swings up big; right hand sways slightly.
+  - 06 すみません: left and right flap alternately.
+  - 07 おはようございます: both raised at different heights, swapping back and forth.
+  - 08 おやすみなさい: slow, alternating left/right sway.
+- The tuft on top of the head now sways a little side to side.
+- Redrew pages 11–18 in Canva. All 8 meet LINE's specs; largest is 04 at 299,058 bytes.
