@@ -8,10 +8,13 @@ tools: Bash, Read, Write, Glob, Grep
 注意: LINEのアニメーションスタンプの申請形式は **APNG(アニメーションPNG)**です。GIFは申請できないので、
 APNGを申請用、GIFを確認用として両方作ります。
 
+## 最初に必ず読む
+`docs/stamp_rules.md` の「6. ファイルの規定」を守る(メイン画像は APNG、タブ画像はキャラだけ)。
+
 ## 手順
 1. `design/NN_sheet.png` を一つずつ変換する:
    ```
-   python3 tools/stamp_tool.py anim design/01_sheet.png -o anim/01.png --cols 4 --rows 2 --seconds 1 --loops 2
+   python3 tools/stamp_tool.py anim design/01_sheet.png -o anim/01.png --cols 4 --rows 3 --seconds 2 --loops 2 --key auto --tol 24
    ```
    - 背景色は四隅から自動検出(`--key auto`)。緑が残る/キャラが欠ける場合は `--tol` を 10〜60 で調整。
    - コマ割りが違う場合は `--cols` `--rows` `--gutter` `--frames` を `plan.md` に合わせる。
