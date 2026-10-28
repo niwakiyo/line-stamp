@@ -207,6 +207,7 @@ def draw_word(layer, w, ox, oy, outline=9):
     adv = size * 0.98
     total = adv * n
     r = math.radians(w["rot"])
+    tops = []
     for i, ch in enumerate(w["text"]):
         jit = (rnd.uniform(-2, 2), rnd.uniform(-7, 7))
         if i >= w["count"]:
@@ -227,14 +228,22 @@ def draw_word(layer, w, ox, oy, outline=9):
         font = ImageFont.truetype(str(HAND_FONT), csize)
         x = ox + w["cx"] + lx * math.cos(r) - ly * math.sin(r)
         y = oy + w["cy"] + lx * math.sin(r) + ly * math.cos(r)
-        pad = outline + 6
+        pad = outline + 8
         g = Image.new("RGBA", (csize + pad * 2, csize + pad * 2), (0, 0, 0, 0))
         dr = ImageDraw.Draw(g)
         pos = (pad + csize / 2, pad + csize / 2)
-        dr.text(pos, ch, font=font, anchor="mm", fill=RIM, stroke_width=outline + 2, stroke_fill=RIM)
+        rim, rim_w = w.get("rim") or RIM, w.get("rim_w", 2)
+        dr.text(pos, ch, font=font, anchor="mm", fill=rim, stroke_width=outline + rim_w, stroke_fill=rim)
         dr.text(pos, ch, font=font, anchor="mm", fill=w["color"], stroke_width=outline, stroke_fill="white")
         g = g.rotate(-rot, resample=Image.BICUBIC, expand=True)
         layer.alpha_composite(g, (round(x - g.width / 2), round(y - g.height / 2)))
+        # 文字の中身だけをもう一度、あとで上に重ねる(隣の文字のフチで欠けないように)
+        f = Image.new("RGBA", (csize + pad * 2, csize + pad * 2), (0, 0, 0, 0))
+        ImageDraw.Draw(f).text(pos, ch, font=font, anchor="mm", fill=w["color"])
+        f = f.rotate(-rot, resample=Image.BICUBIC, expand=True)
+        tops.append((f, (round(x - f.width / 2), round(y - f.height / 2))))
+    for f, xy in tops:
+        layer.alpha_composite(f, xy)
 
 
 def draw_marks(layer, marks, ox, oy):
