@@ -117,6 +117,28 @@ def fit(img, max_w, max_h, min_side=0):
     return canvas
 
 
+def encode_apng_palette(frames, duration_ms, loops, colors=255):
+    """全コマ共通の色表(最大255色+透明1色)で保存する。色の数を保ったまま容量を大きく減らせる。
+    透明は「あり/なし」の2段階なので、縁の半透明は使わない(緑抜きの縁もこの形)。"""
+    w, h = frames[0].size
+    big = Image.new("RGB", (w, h * len(frames)))
+    for i, f in enumerate(frames):
+        big.paste(f.convert("RGB"), (0, h * i))
+    pal = big.quantize(colors, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
+    palette = pal.getpalette()[:colors * 3] + [0, 0, 0]
+    out = []
+    for f in frames:
+        q = f.convert("RGB").quantize(palette=pal, dither=Image.Dither.NONE)
+        clear = f.getchannel("A").point(lambda v: 255 if v < 128 else 0)
+        q.paste(colors, mask=clear)
+        q.putpalette(palette)
+        out.append(q)
+    buf = io.BytesIO()
+    out[0].save(buf, format="PNG", save_all=True, append_images=out[1:], duration=duration_ms, loop=loops,
+                disposal=0, blend=0, optimize=True, transparency=colors)
+    return buf.getvalue()
+
+
 def encode_apng(frames, duration_ms, loops, colors=None):
     out = []
     for f in frames:
@@ -148,6 +170,9 @@ def cmd_anim(a):
     duration = [total_ms // n + (1 if i < total_ms % n else 0) for i in range(n)]
 
     data = encode_apng(frames, duration, a.loops)
+    if len(data) > ANIM_MAX_BYTES:
+        print(f"{len(data) // 1024}KB > 300KB のため、全コマ共通の255色で保存します")
+        data = encode_apng_palette(frames, duration, a.loops)
     for colors in (256, 128, 64, 32):
         if len(data) <= ANIM_MAX_BYTES:
             break
