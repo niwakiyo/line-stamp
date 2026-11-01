@@ -151,7 +151,7 @@ def sheep(c):
     - 前足(インコの羽の部品を足にする)と後ろ足: はだ色の足と、こげ茶のひづめ。肩を支点に動くのはそのまま
     顔まわりは鼻(P14)の位置から、前髪・角は頭(P1)の位置から置くので、おじぎやジャンプについて行く。"""
     fx, fy = face_off(c)
-    hx, hy = head_off(c)
+    hx, hy = fx, fy  # 前髪・角も顔と同じだけ動かす(頭の毛 P1 のずれは顔とちがうので使わない)
     for k in ("P0", "P4"):  # 体を横に広い毛のかたまりにする
         e = c[k]
         w = min(e["h"] * 1.35, 138)
@@ -159,7 +159,7 @@ def sheep(c):
         e.update(w=w, left=cx - w / 2, vw=w, vh=e["h"])
     c["P4"]["fill"] = WOOL
     c["P5"].update(fill=WOOL)
-    c["P1"].update(fill=WOOL, sw=0, stroke=None, w=1, h=1)  # 頭の毛は前髪にまとめるので消す
+    c.pop("P1", None)  # インコの頭の毛は使わない(前髪にまとめる)
     # 足: 毛のかたまりの下から、短い4本の足をのぞかせる(前足は体の前、後ろ足は体の後ろ)。
     # インコの羽のように体の前に垂らさない。前足は付け根を支点に ARMS の角度(小さめ)で動く
     bottom = c["P4"]["top"] + c["P4"]["h"]
@@ -175,7 +175,9 @@ def sheep(c):
     c["ACC1_hornL"].update(vw=112, vh=112)
     add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
-    add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
+    # 前髪: 下のふちも含めて、ぐるりと全部もこもこにする
+    add(c, "ACC3_fringe", WOOL, inko.INK, 2, 82, 34, 119 + hx, 126 + hy, _scallop(82, 34, bumps=12, depth=3.4))
+    c["ACC3_fringe"].update(vw=82, vh=34)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
     for k in ("P8", "P9", "P10", "P11"):
         if k in c:
