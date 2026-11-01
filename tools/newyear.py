@@ -8,6 +8,7 @@
 """
 import argparse
 import math
+import re
 import tempfile
 from pathlib import Path
 
@@ -91,6 +92,17 @@ EAR_IN = "#F7C9C3"    # 耳の内側(うすい桃色。ほっぺより淡く)
 EAR_IN_L = "M4 7 C8 3 17 3 23 6 C22 9 15 11 9 10 C6 10 4 9 4 7 Z"
 
 
+def _horn(mirror):
+    """角のパスを4倍の大きさの座標にする(手描きの揺れで左右の形がずれないように)。mirror で左右反転。"""
+    def tf(m):
+        x, y = float(m.group(1)), float(m.group(2))
+        return f"{(28 - x if mirror else x) * 4:g} {y * 4:g}"
+    return re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)", tf, HORN)
+
+
+HORN_L, HORN_R = _horn(False), _horn(True)
+
+
 def ear(c, key, bx, by, side, rot):
     """耳: 付け根 (bx, by) を支点に rot 度。外側(濃い色)の上に内側(桃色)を重ねて立体感を出す。
     side=-1 は左耳(先が左)、1 は右耳。顔(FACE1)より後ろに置き、付け根が顔に隠れるようにする。"""
@@ -157,8 +169,10 @@ def sheep(c):
     ear(c, "FACE0_earL", 128 + fx, 188 + fy, -1, -14 + c.get("_earL", 0))
     ear(c, "FACE0_earR", 192 + fx, 188 + fy, 1, 14 + c.get("_earR", 0))
     # 角: 付け根(とがった端)を頭のてっぺん側(前髪の下)に向け、うず巻きは顔の横に下ろす
-    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 90 + hx, 140 + hy, HORN, rot=60)
-    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN, rot=0)
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 90 + hx, 140 + hy, HORN_L, rot=60)
+    c["ACC1_hornL"].update(vw=112, vh=112)
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_R, rot=-60)  # 左の角の鏡うつし
+    c["ACC2_hornR"].update(vw=112, vh=112)
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
     for k in ("P8", "P9", "P10", "P11"):
