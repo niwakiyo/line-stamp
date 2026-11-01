@@ -101,6 +101,8 @@ def _horn(mirror):
 
 
 HORN_L, HORN_R = _horn(False), _horn(True)
+# 角は頭の上から外へ張り出し、下へ回って先が顔の側(内側)へ巻き込む向き
+HORN_SET, HORN_ROT = (HORN_R, HORN_L), -20
 
 
 def ear(c, key, bx, by, side, rot):
@@ -169,9 +171,9 @@ def sheep(c):
     ear(c, "FACE0_earL", 128 + fx, 188 + fy, -1, -14 + c.get("_earL", 0))
     ear(c, "FACE0_earR", 192 + fx, 188 + fy, 1, 14 + c.get("_earR", 0))
     # 角: 付け根(とがった端)を頭のてっぺん側(前髪の下)に向け、うず巻きは顔の横に下ろす
-    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 90 + hx, 140 + hy, HORN_L, rot=60)
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 90 + hx, 140 + hy, HORN_SET[0], rot=HORN_ROT)
     c["ACC1_hornL"].update(vw=112, vh=112)
-    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_R, rot=-60)  # 左の角の鏡うつし
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
