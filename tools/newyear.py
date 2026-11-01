@@ -75,13 +75,58 @@ _soften = soft.soften
 def soften_keep_legs(c):
     """soft.soften は P6/P7 をインコの羽の形に描き替えるので、ひつじの足(leg 印)は足の形に戻す。"""
     c = _soften(c)
-    for e in c.values():
+    for key, e in c.items():
         if e.get("leg"):
             e["d"] = LEG
+        if e.get("sw") and key != "P0":  # 輪郭の線を太くする(soften で細くなった線の約1.8倍)
+            e["sw"] = round(max(e["sw"] * 1.8, 2.6), 1)
     return c
 
 
 soft.soften = soften_keep_legs
+
+
+EAR_OUT = "#E6BC9A"   # 耳の外側(顔より少し濃い)
+EAR_IN = "#F7C9C3"    # 耳の内側(うすい桃色。ほっぺより淡く)
+EAR_IN_L = "M4 7 C8 3 17 3 23 6 C22 9 15 11 9 10 C6 10 4 9 4 7 Z"
+
+
+def ear(c, key, bx, by, side, rot):
+    """耳: 付け根 (bx, by) を支点に rot 度。外側(濃い色)の上に内側(桃色)を重ねて立体感を出す。
+    side=-1 は左耳(先が左)、1 は右耳。顔(FACE1)より後ろに置き、付け根が顔に隠れるようにする。"""
+    w, h = 34, 17
+    for suffix, fill, d, sw, kw in (("a", EAR_OUT, EAR_L if side < 0 else EAR_R, 2, 1.0),
+                                    ("b", EAR_IN, EAR_IN_L, 0, 0.72)):
+        ww, hh = w * kw, h * kw
+        ra = math.radians(rot)
+        off = side * (w / 2 - 2) * (1 if suffix == "a" else 0.9)  # 付け根から耳の中心までの距離
+        cx, cy = bx + off * math.cos(ra), by + off * math.sin(ra)
+        dd = d if side < 0 or suffix == "a" else "M23 7 C19 3 10 3 4 6 C5 9 12 11 18 10 C21 10 23 9 23 7 Z"
+        add(c, key + suffix, fill, inko.INK if sw else None, sw, ww, hh, cx - ww / 2, cy - hh / 2, dd, rot=rot)
+        c[key + suffix].update(vw=28 if suffix == "a" else 27, vh=15 if suffix == "a" else 12)
+
+
+def ears(dl, dr):
+    """耳を動かす(左右で別の角度)。sheep() より前に置く。"""
+    def f(c):
+        c["_earL"], c["_earR"] = dl, dr
+    return f
+
+
+def legs(lift_l, lift_r, ang_l, ang_r, hind):
+    """足の動き: 前足は付け根(上の端)を支点に回しながら持ち上げる。後ろ足は交互に少し持ち上げる。"""
+    def f(c):
+        for k, lift, ang in (("P6", lift_l, ang_l), ("P7", lift_r, -ang_r)):
+            e = c[k]
+            px, py = e["left"] + e["w"] / 2, e["top"]  # 付け根
+            ra = math.radians(ang)
+            # 回すと中心が付け根のまわりを動くので、中心の位置を回して置き直す
+            cx, cy = px - (e["h"] / 2) * math.sin(ra), py + (e["h"] / 2) * math.cos(ra)
+            e.update(left=cx - e["w"] / 2, top=cy - e["h"] / 2 - lift, rot=ang)
+        for k, up in (("P2", hind), ("P3", -hind)):
+            if up > 0:
+                c[k]["top"] -= up
+    return f
 
 
 def sheep(c):
@@ -109,10 +154,10 @@ def sheep(c):
     for k, x in (("P2", 160 - 40), ("P3", 160 + 40)):
         c[k].update(d=LEG, fill=SKIN, w=14, h=16, vw=14, vh=16, left=x - 7, top=bottom - 16)
     add(c, "FACE1", SKIN, inko.INK, 2, 76, 66, 122 + fx, 146 + fy, soft.ellipse_d(76, 66))
-    add(c, "FACE2_earL", SKIN, inko.INK, 2, 30, 15, 94 + fx, 164 + fy, EAR_L, rot=-12)
-    add(c, "FACE3_earR", SKIN, inko.INK, 2, 30, 15, 196 + fx, 164 + fy, EAR_R, rot=12)
-    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 30, 30, 96 + hx, 130 + hy, HORN, rot=-25)
-    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 30, 30, 194 + hx, 130 + hy, HORN, rot=-155)
+    ear(c, "FACE0_earL", 126 + fx, 170 + fy, -1, -14 + c.get("_earL", 0))
+    ear(c, "FACE0_earR", 194 + fx, 170 + fy, 1, 14 + c.get("_earR", 0))
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 98 + hx, 134 + hy, HORN, rot=-25)  # 付け根は前髪の下
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 180 + hx, 134 + hy, HORN, rot=-155)
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
     for k in ("P8", "P9", "P10", "P11"):
@@ -126,8 +171,10 @@ def sheep(c):
             e["left"], e["top"] = cx - e["w"] / 2 + (4 if k in ("P8", "P10") else -4), cy - e["h"] / 2
     c["P12"]["left"] += 10
     c["P13"]["left"] -= 10
-    c["P14"].update(d=NOSE, fill="#E7A9A0", sw=0, stroke=None)
+    c["P14"].update(d=NOSE, fill="#9C6B55", sw=0, stroke=None)  # 鼻はこげ茶(ほっぺのピンクと分ける)
     c["P15"].update(d=MOUTH, fill=soft.LINE, sw=0, stroke=None)
+    c.pop("_earL", None)
+    c.pop("_earR", None)
 
 
 def sheep_talk(c):
@@ -141,27 +188,33 @@ def cf01(i, av):
     return confetti(31, 4, i, box=(240, 30, 296, 84)) + confetti(32, 4, i, box=(30, 196, 112, 250))
 
 
+EAR01 = ([0, -12, 6, -12, 6, -10, 4, -12, 6, -10, 4, 0],     # 耳: 左右で逆に、ぴくぴく
+         [0, 6, -12, 6, -12, 4, -10, 6, -12, 4, -10, 0])
+
 STAMPS = {
     "01": make("new", [("あけまして", 46, True), ("おめでとう", 34, False), ("ございます", 34, False)], "A",
                lambda i: [[S, happy], [J0, happy], [J1, happy], [J1, happy, J2], [J1, happy], [J0, happy],
-                          [S, happy], [B1, happy], [B2, happy], [B1, happy], [S, happy], [S, happy]][i] + [sheep],
-               cf01, m=MID),
+                          [S, happy], [B1, happy], [B2, happy], [B1, happy], [S, happy], [S, happy]][i]
+               + [ears(EAR01[0][i], EAR01[1][i]), sheep], cf01, m=MID),
 }
 
-ARMS = {  # (左の前足, 右の前足) 肩を支点に最大16°。跳ぶときは開き、おじぎでは小さく
-    "01": ([0, -6, 14, 16, 12, -4, 4, 2, 4, 2, 6, 2], [0, -4, 10, 14, 16, -6, 8, 4, 2, 4, 2, 6]),
+LEGS = {  # (左前足の持ち上げpx, 右前足の持ち上げpx, 左前足の角度, 右前足の角度, 後ろ足の持ち上げpx)
+    # 前足は付け根を支点に最大16°・持ち上げ最大5px、後ろ足は最大3px。左右で交互・別の角度
+    "01": ([0, 2, 5, 5, 4, 0, 4, 0, 3, 0, 4, 0],
+           [0, 0, 4, 5, 5, 2, 0, 4, 0, 3, 0, 4],
+           [0, -6, 16, 14, 10, -4, 12, -2, 10, -2, 12, 0],
+           [0, -4, 12, 16, 12, -6, -2, 12, -2, 10, -2, 12],
+           [0, 3, -3, 0, 0, 3, -3, 3, -3, 3, -3, 0]),
 }
 
 for name, frames in STAMPS.items():
-    left, right = ARMS[name]
+    ll, lr, al, ar, hd = LEGS[name]
     for i, fr in enumerate(frames):
         extra = []
         if i in soft.TALK_FRAMES:
             extra.append(sheep_talk)
-        if i in soft.STEP_FRAMES:
-            extra.append(step(soft.STEP_FRAMES[i]))
         if i:
-            extra += [flap("P6", left[i] * 0.4), flap("P7", right[i] * 0.4)]
+            extra.append(legs(ll[i], lr[i], al[i], ar[i], hd[i]))
         fr["poses"] = fr["poses"] + extra
 
 
