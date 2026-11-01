@@ -801,6 +801,35 @@ ARMS.update({  # (左腕, 右腕) 肩を支点に。持つ・寄せる角度と�
 })
 
 
+# ---- スタンプごとの体の色 ---------------------------------------------------------
+# インコの色の仲間(ルチノー・アプリコット・スカイブルーなど)から、少しずつ変える。
+# 緑(色相70〜170°)は背景と一緒に消えるので使わない。顔・お腹・足はどれも同じ。
+BODY_COLORS = {  # (体と頭の毛, 羽)
+    "lemon": ("#FFE98F", "#F7C766"),
+    "apricot": ("#FFDDA8", "#F5B77E"),
+    "pink": ("#FFDCE4", "#F4AFC0"),
+    "sky": ("#D3E8FA", "#A2C9EE"),
+    "lavender": ("#E6DEF8", "#C3B3EB"),
+    "snow": ("#FFF6E6", "#EAD7B8"),
+}
+STAMP_COLOR = {
+    "01": "pink", "02": "apricot", "03": "lemon", "04": "apricot",
+    "05": "lemon", "06": "pink", "07": "lemon", "08": "snow", "09": "apricot", "10": "pink",
+    "11": "sky", "12": "lemon", "13": "lavender", "14": "snow", "15": "apricot", "16": "sky",
+}
+
+
+def tint(name):
+    body_c, wing_c = BODY_COLORS[name]
+
+    def f(c):
+        for k in ("P1", "P4"):
+            c[k]["fill"] = body_c
+        for k in ("P6", "P7"):
+            c[k]["fill"] = wing_c
+    return f
+
+
 # 口パク(2,4,6,8,10)・足ぶみ・腕・頭の毛は set01 と同じ決まりで足す
 for name, frames in STAMPS.items():
     left, right = ARMS[name]
@@ -812,6 +841,7 @@ for name, frames in STAMPS.items():
             extra.append(step(soft.STEP_FRAMES[i]))
         if i:
             extra += [flap("P6", left[i]), flap("P7", right[i]), tuft(TUFT[i])]
+        extra.append(tint(STAMP_COLOR[name]))
         fr["poses"] = fr["poses"] + extra
 
 
