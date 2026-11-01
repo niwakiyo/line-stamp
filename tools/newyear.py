@@ -153,11 +153,12 @@ def sheep(c):
         c[k].update(d=LEG, fill=SKIN, w=14, h=16, vw=14, vh=16, left=x - 7, top=bottom - 16, rot=0, leg=True)
     for k, x in (("P2", 160 - 40), ("P3", 160 + 40)):
         c[k].update(d=LEG, fill=SKIN, w=14, h=16, vw=14, vh=16, left=x - 7, top=bottom - 16)
-    add(c, "FACE1", SKIN, inko.INK, 2, 76, 66, 122 + fx, 146 + fy, soft.ellipse_d(76, 66))
-    ear(c, "FACE0_earL", 126 + fx, 170 + fy, -1, -14 + c.get("_earL", 0))
-    ear(c, "FACE0_earR", 194 + fx, 170 + fy, 1, 14 + c.get("_earR", 0))
-    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 98 + hx, 134 + hy, HORN, rot=-25)  # 付け根は前髪の下
-    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 180 + hx, 134 + hy, HORN, rot=-155)
+    add(c, "FACE1", SKIN, inko.INK, 3.4, 76, 66, 122 + fx, 146 + fy, soft.ellipse_d(76, 66))  # 顔の輪郭は太め
+    ear(c, "FACE0_earL", 128 + fx, 188 + fy, -1, -14 + c.get("_earL", 0))
+    ear(c, "FACE0_earR", 192 + fx, 188 + fy, 1, 14 + c.get("_earR", 0))
+    # 角: 付け根(とがった端)を頭のてっぺん側(前髪の下)に向け、うず巻きは顔の横に下ろす
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 42, 42, 90 + hx, 140 + hy, HORN, rot=60)
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN, rot=0)
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
     for k in ("P8", "P9", "P10", "P11"):
@@ -166,7 +167,7 @@ def sheep(c):
             cx, cy = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
             e.setdefault("vw", e["w"])
             e.setdefault("vh", e["h"])
-            kk = 0.62 if k in ("P8", "P9") else 0.5
+            kk = 0.76 if k in ("P8", "P9") else 0.6
             e["w"], e["h"] = e["w"] * kk, e["h"] * kk
             e["left"], e["top"] = cx - e["w"] / 2 + (4 if k in ("P8", "P10") else -4), cy - e["h"] / 2
     c["P12"]["left"] += 10
