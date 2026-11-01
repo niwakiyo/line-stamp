@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ていねいインコ set03「ひつじ年のお正月」: ひつじになったインコと、筆で書いていく年賀状。
+"""ていねいインコ set03「ひつじ年のお正月」: ひつじのキャラと、筆で書いていく年賀状。
 
   確認用シート : python3 tools/newyear.py 01 --png sheet.png
   (キャラのスタンプは 12コマ=4x3、年賀状は 20コマ=5x4 のシートになる)
@@ -22,7 +22,7 @@ from winter import add, head_off, face_off, HORN, confetti, make, MID
 ROOT = Path(__file__).resolve().parent.parent
 BRUSH_FONT = ROOT / "assets/fonts/YujiSyuku-Regular.ttf"
 
-# ---- ひつじになったインコ ---------------------------------------------------------
+# ---- ひつじ ---------------------------------------------------------
 WOOL = "#FFFDF6"
 FACE_YELLOW = "#FFE98F"
 HOOF = "#E8CFA6"
@@ -50,19 +50,40 @@ winter.inko_order = inko_order
 soft.inko_order = inko_order
 
 
+SHEEP_FACE = "#FFF1DC"
+EAR = "#F3D9C0"
+WOOL_TUFT = ("M5 20 C1 20 0 14 4 12 C3 6 9 3 13 6 C15 1 23 1 25 6 C29 5 31 10 28 13 C31 15 30 20 26 20 Z")
+EAR_L = "M2 7 C6 1 18 0 27 5 C26 10 16 14 8 13 C4 12 2 10 2 7 Z"
+EAR_R = "M26 7 C22 1 10 0 1 5 C2 10 12 14 20 13 C24 12 26 10 26 7 Z"
+NOSE = "M3 2 C3 1 17 1 17 2 C17 5 13 7 10 7 C7 7 3 5 3 2 Z"
+MOUTH = ("M3 6 C5 10 8 10 9 7 C10 10 13 10 15 6 C15 5 14 5 13.5 6 C12.5 8 10.5 8 9.8 5.5 L8.2 5.5 "
+         "C7.5 8 5.5 8 4.5 6 C4 5 3 5 3 6 Z")
+MOUTH_OPEN = "M4 4 C4 3 14 3 14 4 C14 10 12 13 9 13 C6 13 4 10 4 4 Z"
+
+
 def sheep(c):
-    """インコをひつじの姿にする: 白い毛の体・羽、顔のまわりだけインコの黄色、くるんとした角。
-    顔の黄色はくちばしの位置から、角は頭の毛の位置から置くので、おじぎやジャンプについて行く。"""
-    for k in ("P1", "P4", "P6", "P7"):
+    """ひつじ: もこもこの白い毛の体と前足、生成りの顔、たれた耳、くるんとした角、頭の毛のかたまり。
+    くちばしの代わりに小さな鼻と「ω」の口。目とほっぺはシリーズで同じ描き方。
+    顔・耳は顔(P14)の位置から、角・頭の毛は頭(P1)の位置から置くので、おじぎやジャンプについて行く。"""
+    fx, fy = face_off(c)  # 鼻(P14)を描き替える前に、顔のずれを取っておく
+    hx, hy = head_off(c)
+    for k in ("P4", "P5", "P6", "P7"):
         c[k]["fill"] = WOOL
-    c["P5"]["fill"] = WOOL
+    c["P1"].update(fill=WOOL, d=WOOL_TUFT, w=32, h=24, left=c["P1"]["left"] - 1, top=c["P1"]["top"] + 2)
     for k in ("P2", "P3"):
         c[k]["fill"] = HOOF
-    fx, fy = face_off(c)
-    add(c, "FACE1", FACE_YELLOW, inko.INK, 1.5, 86, 60, 117 + fx, 150 + fy, soft.ellipse_d(86, 60))
-    hx, hy = head_off(c)
-    add(c, "ACC1_hornL", "#F3D9A8", inko.INK, 2, 28, 28, 94 + hx, 150 + hy, HORN, rot=-10)
-    add(c, "ACC2_hornR", "#F3D9A8", inko.INK, 2, 28, 28, 198 + hx, 150 + hy, HORN, rot=-170)
+    add(c, "FACE1", SHEEP_FACE, inko.INK, 1.5, 84, 62, 118 + fx, 149 + fy, soft.ellipse_d(84, 62))
+    add(c, "FACE2_earL", EAR, inko.INK, 2, 30, 15, 92 + fx, 162 + fy, EAR_L, rot=-18)
+    add(c, "FACE3_earR", EAR, inko.INK, 2, 30, 15, 198 + fx, 162 + fy, EAR_R, rot=18)
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 26, 26, 104 + hx, 134 + hy, HORN, rot=-20)
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 26, 26, 190 + hx, 134 + hy, HORN, rot=-160)
+    c["P14"].update(d=NOSE, fill="#C9957A", sw=0, stroke=None)
+    c["P15"].update(d=MOUTH, fill=soft.LINE, sw=0, stroke=None)
+
+
+def sheep_talk(c):
+    """ひつじの口パク: 口の形を少し開いた丸にして、色を変えるだけ(大きさ・位置はそのまま)。"""
+    c["P15"].update(d=MOUTH_OPEN, fill=soft.BEAK_OPEN_FILL, sw=1.5, stroke=inko.INK)
 
 
 # ---- 01 あけまして/おめでとう/ございます(ひつじのインコ) ----------------------------
@@ -87,7 +108,7 @@ for name, frames in STAMPS.items():
     for i, fr in enumerate(frames):
         extra = []
         if i in soft.TALK_FRAMES:
-            extra.append(talk)
+            extra.append(sheep_talk)
         if i in soft.STEP_FRAMES:
             extra.append(step(soft.STEP_FRAMES[i]))
         if i:
@@ -103,7 +124,7 @@ SHU = "#D8402F"
 
 
 def sheep_icon(height):
-    """年賀状のすみに描く、小さなひつじのインコ(キャラと同じ図形を描いて縮める)。"""
+    """年賀状のすみに描く、小さなひつじ(キャラと同じ図形を描いて縮める)。"""
     frames = [kf([S, happy, sheep], scale=1.0, anchor=(160, 258))]
     with tempfile.TemporaryDirectory() as tmp:
         p = Path(tmp) / "s.png"
@@ -135,15 +156,17 @@ def glyph(ch, size, color=INK_BLACK):
     return g
 
 
-def reveal(g, p):
-    """書いている途中: 字の上から p(0〜1)の所までだけ見せる(縦に筆を運ぶ)。戻り値は (画像, 筆先の高さ)。"""
+def reveal(g, k, n=4):
+    """書いている途中: 字を上から n 本の帯に分け、k 本目まで見せる。
+    筆は帯ごとに左右へ振れながら下りる(偶数本目は右端、奇数本目は左端で止まる)。戻り値は (画像, 筆先の位置)。"""
     bb = g.getbbox()
-    if not bb or p >= 1:
-        return g, bb[3] if bb else 0
-    y = bb[1] + (bb[3] - bb[1]) * p
+    x0, y0, x1, y1 = bb
+    y = y0 + (y1 - y0) * (k + 1) / n
     out = g.copy()
-    ImageDraw.Draw(out).rectangle((0, round(y), g.width, g.height), fill=(0, 0, 0, 0))
-    return out, y
+    if k < n - 1:
+        ImageDraw.Draw(out).rectangle((0, round(y), g.width, g.height), fill=(0, 0, 0, 0))
+    bx = x1 - 4 if k % 2 == 0 else x0 + 4
+    return out, (bx, y)
 
 
 def brush(layer, x, y):
@@ -165,7 +188,7 @@ def seal(layer, cx, cy, s, ch="未"):
 
 
 def card05(icon):
-    """05 謹賀新年: 縦書きの4文字を、1文字3コマずつ筆で書く → ひつじが出る → はんこを押す。"""
+    """05 謹賀新年: 縦書きの4文字を、1文字4コマずつ筆を左右に振りながら書く → ひつじが出て、はんこを押す。"""
     text, size, cx, top, step_y = "謹賀新年", 50, 176, 26, 48
     glyphs = [glyph(ch, size) for ch in text]
 
@@ -177,9 +200,10 @@ def card05(icon):
             if k < n_full:
                 im.alpha_composite(g, (round(cx - g.width / 2), round(y)))
             elif k == n_full and partial is not None:
-                pg, by = reveal(g, partial)
-                im.alpha_composite(pg, (round(cx - g.width / 2), round(y)))
-                brush_at = (cx + 2, y + by)
+                pg, (bx, by) = reveal(g, partial)
+                gx = round(cx - g.width / 2)
+                im.alpha_composite(pg, (gx, round(y)))
+                brush_at = (gx + bx, y + by)
         d = ImageDraw.Draw(im)
         d.ellipse((94, 28, 106, 40), fill="#F49CB4", outline=soft.LINE, width=2)  # 左上の小さな梅
         d.ellipse((98, 32, 102, 36), fill="#FFD24D")
@@ -196,13 +220,9 @@ def card05(icon):
 
     frames = [draw(4, show_icon=1.0, seal_s=26)]                       # 0: 完成形
     frames.append(draw(0, brush_at=(cx + 2, top + 30)))                 # 1: 何も書いていない
-    for i in range(12):                                                # 2〜13: 1文字3コマずつ
-        frames.append(draw(i // 3, partial=(i % 3 + 1) / 3 - 0.01 if i % 3 < 2 else 0.999))
-    frames.append(draw(4, brush_at=(214, 150)))                        # 14: 書き終わり、筆を上げる
-    frames.append(draw(4, show_icon=1.2))                              # 15: ひつじがぽん
-    frames.append(draw(4, show_icon=1.0))
-    frames.append(draw(4, show_icon=1.0, seal_s=36))                   # 17: はんこを押す
-    frames.append(draw(4, show_icon=1.0, seal_s=26, pops=True))
+    for i in range(16):                                                # 2〜17: 1文字4コマ、筆を左右に振りながら下へ
+        frames.append(draw(i // 4, partial=i % 4))
+    frames.append(draw(4, show_icon=1.2, seal_s=36, pops=True))         # 18: ひつじがぽん、はんこを押す
     frames.append(draw(4, show_icon=1.0, seal_s=26))                   # 19: 完成形
     return frames
 
