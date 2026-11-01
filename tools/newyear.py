@@ -81,6 +81,9 @@ def soften_keep_legs(c):
             e["d"] = LEG
         if e.get("sw") and key != "P0":  # 輪郭の線を太くする(soften で細くなった線の約1.8倍)
             e["sw"] = round(max(e["sw"] * 1.8, 2.6), 1)
+        if e.get("sw") and e.get("vw", e["w"]) > e["w"] * 1.5:
+            # 大きな座標で描いた部品(角・前髪)は、縮めると線も細くなるので、その分だけ太くしておく
+            e["sw"] = round(e["sw"] * e["vw"] / e["w"], 1)
     return c
 
 
@@ -103,6 +106,28 @@ def _horn(mirror):
 HORN_L, HORN_R = _horn(False), _horn(True)
 # 角は頭の上から外へ張り出し、下へ回って先が顔の側(内側)へ巻き込む向き
 HORN_SET, HORN_ROT = (HORN_R, HORN_L), -20
+
+
+def _circles(cx, cy, rx, ry, n, r, shrink=0.0):
+    """楕円の上に n 個の丸を並べたパス(丸は C で描く)。4倍の座標で作り、手描きの揺れを目立たなくする。"""
+    out = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        x, y, rr = cx + rx * math.cos(a), cy + ry * math.sin(a), r - shrink
+        out.append(soft.ellipse_d(2 * rr, 2 * rr).replace("M", f"M", 1))
+        # ellipse_d は (0,0)〜(2rr,2rr) の箱なので、丸の左上へずらす
+        out[-1] = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
+                         lambda m: f"{float(m.group(1)) + x - rr:.1f} {float(m.group(2)) + y - rr:.1f}", out[-1])
+    out.append(soft.ellipse_d(2 * (rx - shrink), 2 * (ry + r * 0.6 - shrink)))
+    out[-1] = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
+                     lambda m: f"{float(m.group(1)) + cx - rx + shrink:.1f} {float(m.group(2)) + cy - ry - r * 0.6 + shrink:.1f}",
+                     out[-1])
+    return " ".join(out)
+
+
+# 前髪(84x38 を 4倍の座標 336x152 で): 丸 9 個を輪に並べる
+FRINGE_OUT = _circles(168, 76, 118, 34, 9, 40)
+FRINGE_IN = _circles(168, 76, 118, 34, 9, 40, shrink=9)
 
 
 def ear(c, key, bx, by, side, rot):
@@ -175,9 +200,11 @@ def sheep(c):
     c["ACC1_hornL"].update(vw=112, vh=112)
     add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
-    # 前髪: 下のふちも含めて、ぐるりと全部もこもこにする
-    add(c, "ACC3_fringe", WOOL, inko.INK, 2, 82, 34, 119 + hx, 126 + hy, _scallop(82, 34, bumps=12, depth=3.4))
-    c["ACC3_fringe"].update(vw=82, vh=34)
+    # 前髪: 丸を輪に並べた雲の形(とがった谷を作らない)。輪郭の丸の上に、少し小さい白い丸を重ねて内側の線を消す
+    add(c, "ACC3_fringe", WOOL, inko.INK, 2, 84, 38, 118 + hx, 124 + hy, FRINGE_OUT)
+    add(c, "ACC4_fringefill", WOOL, None, 0, 84, 38, 118 + hx, 124 + hy, FRINGE_IN)
+    for k in ("ACC3_fringe", "ACC4_fringefill"):
+        c[k].update(vw=336, vh=152)
     # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
     for k in ("P8", "P9", "P10", "P11"):
         if k in c:
