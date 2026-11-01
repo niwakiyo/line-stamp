@@ -61,23 +61,72 @@ MOUTH = ("M3 6 C5 10 8 10 9 7 C10 10 13 10 15 6 C15 5 14 5 13.5 6 C12.5 8 10.5 8
 MOUTH_OPEN = "M4 4 C4 3 14 3 14 4 C14 10 12 13 9 13 C6 13 4 10 4 4 Z"
 
 
+SKIN = "#F6E4D2"     # 顔と足(はだ色)
+HOOF_DARK = "#7A5A48"
+CLOUD_FRINGE = ("M8 28 C2 28 1 20 6 17 C4 9 12 5 18 9 C21 2 31 1 36 7 C40 1 52 2 54 9 C60 5 70 9 68 17 "
+                "C74 20 73 28 67 28 Z")
+LEG = "M2 1 L12 1 L12 11 C12 14 10 15 7 15 C4 15 2 14 2 11 Z"  # 14x16 の短い足
+HOOF_P = "M3 2 L17 2 C19 2 20 4 20 6 L20 12 L0 12 L0 6 C0 4 1 2 3 2 Z"
+
+
+_soften = soft.soften
+
+
+def soften_keep_legs(c):
+    """soft.soften は P6/P7 をインコの羽の形に描き替えるので、ひつじの足(leg 印)は足の形に戻す。"""
+    c = _soften(c)
+    for e in c.values():
+        if e.get("leg"):
+            e["d"] = LEG
+    return c
+
+
+soft.soften = soften_keep_legs
+
+
 def sheep(c):
-    """ひつじ: もこもこの白い毛の体と前足、生成りの顔、たれた耳、くるんとした角、頭の毛のかたまり。
-    くちばしの代わりに小さな鼻と「ω」の口。目とほっぺはシリーズで同じ描き方。
-    顔・耳は顔(P14)の位置から、角・頭の毛は頭(P1)の位置から置くので、おじぎやジャンプについて行く。"""
-    fx, fy = face_off(c)  # 鼻(P14)を描き替える前に、顔のずれを取っておく
+    """ひつじ(インコの形は使わない):
+    - 体: 横に広い雲のような毛のかたまり(高さはポーズのまま、幅を高さの1.35倍に広げる)
+    - 顔: はだ色の大きな顔に、おでこを覆う毛の前髪。横にたれた耳、くるんとした角
+    - 目: 小さな黒い目(インコの大きな目にしない)、小さな鼻と「ω」の口
+    - 前足(インコの羽の部品を足にする)と後ろ足: はだ色の足と、こげ茶のひづめ。肩を支点に動くのはそのまま
+    顔まわりは鼻(P14)の位置から、前髪・角は頭(P1)の位置から置くので、おじぎやジャンプについて行く。"""
+    fx, fy = face_off(c)
     hx, hy = head_off(c)
-    for k in ("P4", "P5", "P6", "P7"):
-        c[k]["fill"] = WOOL
-    c["P1"].update(fill=WOOL, d=WOOL_TUFT, w=32, h=24, left=c["P1"]["left"] - 1, top=c["P1"]["top"] + 2)
-    for k in ("P2", "P3"):
-        c[k]["fill"] = HOOF
-    add(c, "FACE1", SHEEP_FACE, inko.INK, 1.5, 84, 62, 118 + fx, 149 + fy, soft.ellipse_d(84, 62))
-    add(c, "FACE2_earL", EAR, inko.INK, 2, 30, 15, 92 + fx, 162 + fy, EAR_L, rot=-18)
-    add(c, "FACE3_earR", EAR, inko.INK, 2, 30, 15, 198 + fx, 162 + fy, EAR_R, rot=18)
-    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 26, 26, 104 + hx, 134 + hy, HORN, rot=-20)
-    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 26, 26, 190 + hx, 134 + hy, HORN, rot=-160)
-    c["P14"].update(d=NOSE, fill="#C9957A", sw=0, stroke=None)
+    for k in ("P0", "P4"):  # 体を横に広い毛のかたまりにする
+        e = c[k]
+        w = min(e["h"] * 1.35, 138)
+        cx = e["left"] + e["w"] / 2
+        e.update(w=w, left=cx - w / 2, vw=w, vh=e["h"])
+    c["P4"]["fill"] = WOOL
+    c["P5"].update(fill=WOOL)
+    c["P1"].update(fill=WOOL, sw=0, stroke=None, w=1, h=1)  # 頭の毛は前髪にまとめるので消す
+    # 足: 毛のかたまりの下から、短い4本の足をのぞかせる(前足は体の前、後ろ足は体の後ろ)。
+    # インコの羽のように体の前に垂らさない。前足は付け根を支点に ARMS の角度(小さめ)で動く
+    bottom = c["P4"]["top"] + c["P4"]["h"]
+    for k, x in (("P6", 160 - 18), ("P7", 160 + 18)):
+        c[k].update(d=LEG, fill=SKIN, w=14, h=16, vw=14, vh=16, left=x - 7, top=bottom - 16, rot=0, leg=True)
+    for k, x in (("P2", 160 - 40), ("P3", 160 + 40)):
+        c[k].update(d=LEG, fill=SKIN, w=14, h=16, vw=14, vh=16, left=x - 7, top=bottom - 16)
+    add(c, "FACE1", SKIN, inko.INK, 2, 76, 66, 122 + fx, 146 + fy, soft.ellipse_d(76, 66))
+    add(c, "FACE2_earL", SKIN, inko.INK, 2, 30, 15, 94 + fx, 164 + fy, EAR_L, rot=-12)
+    add(c, "FACE3_earR", SKIN, inko.INK, 2, 30, 15, 196 + fx, 164 + fy, EAR_R, rot=12)
+    add(c, "ACC1_hornL", "#E9C98F", inko.INK, 2, 30, 30, 96 + hx, 130 + hy, HORN, rot=-25)
+    add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 30, 30, 194 + hx, 130 + hy, HORN, rot=-155)
+    add(c, "ACC3_fringe", WOOL, inko.INK, 2, 76, 30, 122 + hx, 128 + hy, CLOUD_FRINGE)
+    # 目は小さく(あとで soften が 1.4 倍にするので、先に小さくしておく)・ほっぺは顔の内側へ
+    for k in ("P8", "P9", "P10", "P11"):
+        if k in c:
+            e = c[k]
+            cx, cy = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2
+            e.setdefault("vw", e["w"])
+            e.setdefault("vh", e["h"])
+            kk = 0.62 if k in ("P8", "P9") else 0.5
+            e["w"], e["h"] = e["w"] * kk, e["h"] * kk
+            e["left"], e["top"] = cx - e["w"] / 2 + (4 if k in ("P8", "P10") else -4), cy - e["h"] / 2
+    c["P12"]["left"] += 10
+    c["P13"]["left"] -= 10
+    c["P14"].update(d=NOSE, fill="#E7A9A0", sw=0, stroke=None)
     c["P15"].update(d=MOUTH, fill=soft.LINE, sw=0, stroke=None)
 
 
@@ -112,7 +161,7 @@ for name, frames in STAMPS.items():
         if i in soft.STEP_FRAMES:
             extra.append(step(soft.STEP_FRAMES[i]))
         if i:
-            extra += [flap("P6", left[i]), flap("P7", right[i]), tuft(TUFT[i])]
+            extra += [flap("P6", left[i] * 0.4), flap("P7", right[i] * 0.4)]
         fr["poses"] = fr["poses"] + extra
 
 
@@ -141,9 +190,9 @@ def card_base():
     im = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     x0, y0, x1, y1 = 82, 16, 238, 254
-    d.rounded_rectangle((x0 - 4, y0 - 4, x1 + 4, y1 + 4), radius=12, fill="white")
-    d.rounded_rectangle((x0, y0, x1, y1), radius=9, fill=CARD, outline=soft.LINE, width=3)
-    d.rounded_rectangle((x0 + 8, y0 + 8, x1 - 8, y1 - 8), radius=5, outline=SHU, width=2)
+    d.rectangle((x0 - 4, y0 - 4, x1 + 4, y1 + 4), fill="white")  # はがきらしく、角は丸くしない
+    d.rectangle((x0, y0, x1, y1), fill=CARD, outline=soft.LINE, width=3)
+    d.rectangle((x0 + 8, y0 + 8, x1 - 8, y1 - 8), outline=SHU, width=2)
     return im
 
 
