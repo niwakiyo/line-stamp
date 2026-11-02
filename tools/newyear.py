@@ -237,11 +237,10 @@ def sheep(c):
     c["ACC1_hornL"].update(vw=112, vh=112)
     add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
-    # うず巻きの中を抜いて、スタンプの背景が見えるようにする: 背景と同じ緑の丸を一番上に重ねる
-    # (緑は書き出したあと透明にされるので、その所だけ穴になる)。角と同じ箱・同じ回転で置く
+    # うず巻きの内側は角ではなく体: 体の毛と同じ白で埋める(角と同じ箱・同じ回転で、角の上に重ねる)
     for key, hole in (("ACC1_hornL", HORN_IN_R), ("ACC2_hornR", HORN_IN_L)):
         e = c[key]
-        add(c, "ACC9_" + key[5:] + "_hole", inko.BG, None, 0, e["w"], e["h"], e["left"], e["top"], hole, rot=e["rot"])
+        add(c, "ACC9_" + key[5:] + "_hole", WOOL, None, 0, e["w"], e["h"], e["left"], e["top"], hole, rot=e["rot"])
         c["ACC9_" + key[5:] + "_hole"].update(vw=112, vh=112)
 
     # 前髪: 丸を輪に並べた雲の形(とがった谷を作らない)。輪郭の丸の上に、少し小さい白い丸を重ねて内側の線を消す
