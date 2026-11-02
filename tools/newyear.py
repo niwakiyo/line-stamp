@@ -111,8 +111,38 @@ HORN_IN_L = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
                    lambda m: f"{float(m.group(1)) + 41:.1f} {float(m.group(2)) + 49:.1f}", HORN_IN_L)
 HORN_IN_R = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
                    lambda m: f"{112 - float(m.group(1)):.1f} {float(m.group(2)):.1f}", HORN_IN_L)
-HORN_SET, HORN_ROT = (HORN_R, HORN_L), -20
-HORN_IN = (HORN_IN_R, HORN_IN_L)
+def _area(d):
+    pts = [(float(x), float(y)) for x, y in re.findall(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)", d)]
+    return sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]))
+
+
+def _reverse_circle(d):
+    """ellipse_d の丸(M + C4本)を逆回りにする。"""
+    nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", d)]
+    pts = [(nums[i], nums[i + 1]) for i in range(0, len(nums), 2)]
+    start, rest = pts[0], pts[1:]
+    segs = [rest[i:i + 3] for i in range(0, len(rest), 3)]
+    out, cur = f"M{start[0]:.1f} {start[1]:.1f}", start
+    for c1, c2, end in reversed([(sg[0], sg[1], sg[2]) for sg in segs]):
+        pass
+    # 逆回り: 各区間を (終点→始点) の順に、制御点を入れ替えて並べる
+    ends = [start] + [sg[2] for sg in segs]
+    out = f"M{ends[-1][0]:.1f} {ends[-1][1]:.1f}"
+    for k in range(len(segs) - 1, -1, -1):
+        c1, c2, _ = segs[k]
+        e0 = ends[k]
+        out += f" C{c2[0]:.1f} {c2[1]:.1f} {c1[0]:.1f} {c1[1]:.1f} {e0[0]:.1f} {e0[1]:.1f}"
+    return out + " Z"
+
+
+def _with_hole(horn, hole):
+    """角のパスに、うず巻きの内側の穴を足す。穴の丸を角と逆回りにして、内側だけ塗らない(角が無い)ようにする。"""
+    if (_area(horn) > 0) == (_area(hole) > 0):
+        hole = _reverse_circle(hole)
+    return horn + " " + hole
+
+
+HORN_SET, HORN_ROT = (_with_hole(HORN_R, HORN_IN_R), _with_hole(HORN_L, HORN_IN_L)), -20
 
 
 def _circles(cx, cy, rx, ry, n, r, shrink=0.0):
@@ -207,11 +237,7 @@ def sheep(c):
     c["ACC1_hornL"].update(vw=112, vh=112)
     add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
-    # 角のうず巻きの内側は、角より濃い色にして巻いているのが分かるようにする(角と同じ箱・同じ回転で重ねる)
-    for key, horn, path in (("ACC1_hornL", HORN_SET[0], HORN_IN[0]), ("ACC2_hornR", HORN_SET[1], HORN_IN[1])):
-        e = c[key]
-        add(c, key + "_in", "#C99A5B", inko.INK, 1.5, e["w"], e["h"], e["left"], e["top"], path, rot=e["rot"])
-        c[key + "_in"].update(vw=112, vh=112)
+
     # 前髪: 丸を輪に並べた雲の形(とがった谷を作らない)。輪郭の丸の上に、少し小さい白い丸を重ねて内側の線を消す
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 84, 38, 118 + hx, 124 + hy, FRINGE_OUT)
     add(c, "ACC4_fringefill", WOOL, None, 0, 84, 38, 118 + hx, 124 + hy, FRINGE_IN)
