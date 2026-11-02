@@ -323,6 +323,13 @@ def sheep_icon(height):
         soft.chara_png(frames, p)
         im = Image.open(p).convert("RGBA").crop((0, 0, CW, CH))
     im.putalpha(im.getchannel("A").point(lambda v: 255 if v >= 128 else 0))
+    # 角の穴の緑は、はがきの上では透明にする(はがきの色が見えるように)
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a and g > 200 and r < 90 and b < 90:
+                px[x, y] = (0, 0, 0, 0)
     im = im.crop(im.getbbox())
     k = height / im.height
     return im.resize((round(im.width * k), height), Image.LANCZOS)
