@@ -105,7 +105,14 @@ def _horn(mirror):
 
 HORN_L, HORN_R = _horn(False), _horn(True)
 # 角は頭の上から外へ張り出し、下へ回って先が顔の側(内側)へ巻き込む向き
+# うず巻きの内側(4倍の座標の丸)。HORN_L / HORN_R の巻きの中心に置く
+HORN_IN_L = soft.ellipse_d(26, 26).replace("M", "M", 1)
+HORN_IN_L = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
+                   lambda m: f"{float(m.group(1)) + 41:.1f} {float(m.group(2)) + 49:.1f}", HORN_IN_L)
+HORN_IN_R = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
+                   lambda m: f"{112 - float(m.group(1)):.1f} {float(m.group(2)):.1f}", HORN_IN_L)
 HORN_SET, HORN_ROT = (HORN_R, HORN_L), -20
+HORN_IN = (HORN_IN_R, HORN_IN_L)
 
 
 def _circles(cx, cy, rx, ry, n, r, shrink=0.0):
@@ -200,6 +207,11 @@ def sheep(c):
     c["ACC1_hornL"].update(vw=112, vh=112)
     add(c, "ACC2_hornR", "#E9C98F", inko.INK, 2, 42, 42, 188 + hx, 140 + hy, HORN_SET[1], rot=-HORN_ROT)  # 左の角の鏡うつし
     c["ACC2_hornR"].update(vw=112, vh=112)
+    # 角のうず巻きの内側は、角より濃い色にして巻いているのが分かるようにする(角と同じ箱・同じ回転で重ねる)
+    for key, horn, path in (("ACC1_hornL", HORN_SET[0], HORN_IN[0]), ("ACC2_hornR", HORN_SET[1], HORN_IN[1])):
+        e = c[key]
+        add(c, key + "_in", "#C99A5B", inko.INK, 1.5, e["w"], e["h"], e["left"], e["top"], path, rot=e["rot"])
+        c[key + "_in"].update(vw=112, vh=112)
     # 前髪: 丸を輪に並べた雲の形(とがった谷を作らない)。輪郭の丸の上に、少し小さい白い丸を重ねて内側の線を消す
     add(c, "ACC3_fringe", WOOL, inko.INK, 2, 84, 38, 118 + hx, 124 + hy, FRINGE_OUT)
     add(c, "ACC4_fringefill", WOOL, None, 0, 84, 38, 118 + hx, 124 + hy, FRINGE_IN)
