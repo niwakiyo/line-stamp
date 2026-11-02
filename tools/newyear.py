@@ -685,10 +685,12 @@ def write_frames(base, chars, deco, tool, n_frames=20, pop=None):
     frames.append(draw(-1, tool_at=(x0 + bb0[0] + 4, y0 + bb0[1] + 30)))  # 持ち手が上にはみ出さない高さ
     for idx, b, per in states:
         frames.append(draw(idx, band=b, per=per) if b is not None else draw(idx))
-    while len(frames) < n_frames - 2:
-        frames.append(draw(N - 1, tool_on=False))  # 書き終わったら筆(ペン)を上げる
+    # 書き終わったら筆(ペン)を上げ、飾りがぽんと出て、そのあと小さく弾み続ける
     frames.append(draw(N - 1, deco_k=pop or 1.25, tool_on=False))
-    frames.append(draw(N - 1, deco_k=1.0, tool_on=False))
+    t = 0
+    while len(frames) < n_frames:
+        t += 1
+        frames.append(draw(N - 1, deco_k=1.0 + 0.1 * (t % 2), tool_on=False))
     return frames[:n_frames]
 
 
@@ -751,8 +753,8 @@ def hand_frames(lines, deco, n_frames=20):
         layers = []
         for i, (ch, x, y, size, col, rim, strong) in enumerate(chars[:shown]):
             k = 1.2 if pop_last and i >= shown - cpf else 1.0
-            if wave is not None and strong:
-                y += 3 * math.sin(wave + i * 0.8)
+            if wave is not None:  # 書き終わったら、文字が順番に波のように跳ねる(強調語は大きめ)
+                y += (7 if strong else 4) * math.sin(wave + i * 0.9)
             a, b = rim_glyph(ch, round(size * k), col, rim)
             layers.append((a, b, (round(x - a.width / 2), round(y - a.height / 2))))
         for a, b, xy in layers:
@@ -772,10 +774,10 @@ def hand_frames(lines, deco, n_frames=20):
         shown = min(N, shown + cpf)
         frames.append(draw(shown, pop_last=True))
     t = 0
-    while len(frames) < n_frames - 2:
-        frames.append(draw(N, wave=t * 1.2, twinkle=t))
+    frames.append(draw(N, wave=0, deco_k=1.25, twinkle=0))  # 書き終わったら、飾りがぽんと出る
+    while len(frames) < n_frames - 1:
         t += 1
-    frames.append(draw(N, wave=t * 1.2, deco_k=1.25, twinkle=t))
+        frames.append(draw(N, wave=t * 1.1, deco_k=1.0 + 0.08 * (t % 2), twinkle=t))
     frames.append(draw(N, deco_k=1.0, twinkle=t + 1))
     return frames[:n_frames]
 

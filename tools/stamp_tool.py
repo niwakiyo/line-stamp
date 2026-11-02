@@ -183,8 +183,13 @@ def cmd_anim(a):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)
     gif = out.with_suffix(".gif")
-    frames[0].save(gif, save_all=True, append_images=frames[1:], duration=duration,
-                   loop=0, disposal=2, transparency=0)
+    # 確認用 GIF は白い背景に重ねて作る(透過のままだと、前のコマが消えずに重なって見える表示ソフトがある)
+    flat = []
+    for f in frames:
+        bg = Image.new("RGBA", f.size, (255, 255, 255, 255))
+        bg.alpha_composite(f)
+        flat.append(bg.convert("RGB"))
+    flat[0].save(gif, save_all=True, append_images=flat[1:], duration=duration, loop=0, disposal=1)
     print(f"APNG(申請用): {out} ({len(data) // 1024}KB, {len(frames)}コマ, 約{total_ms // n}ms/コマ)")
     print(f"GIF(確認用) : {gif}")
     return check_file(out, "anim")
