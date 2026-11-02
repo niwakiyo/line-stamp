@@ -635,9 +635,9 @@ def frame_words(pal, base, typ, i, wave_amp=3, shiver=None):
     if typ == "A":  # 強調語がポンと出て、残りの行が順に出る
         steps = {1: 0, 2: 0.5, 3: 1, 4: 1, 5: 1.5, 6: 2, 7: 2.5, 8: 3}
         if i in steps:
-            st = steps[i]
+            st = min(steps[i], n)  # 行が少ないときは、出し終わったらそのまま
             show = math.ceil(st) if st else 0
-            if st and st != int(st):  # 書いている途中の行
+            if st and st != int(st) and int(st) < n:  # 書いている途中の行
                 k = int(st)
                 extras[k] = dict(count=max(1, len(base[k][0]) // 2), last=1.3)
             if i == 3:
