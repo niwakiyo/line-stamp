@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 import inko
 import soft
 import winter
-from soft import kf, S, J0, J1, J2, B1, B2, happy, blink, talk, step, flap, tuft, TUFT
+from soft import kf, word, S, J0, J1, J2, B1, B2, happy, blink, talk, step, flap, tuft, TUFT
 from winter import add, head_off, face_off, HORN, confetti, make, MID, SMALL, daruma, omikuji, sh, SWAY, HOP, STRIPE, DOT
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -273,6 +273,37 @@ def sheep_talk(c):
 
 
 # ---- 01 あけまして/おめでとう/ございます(ひつじのインコ) ----------------------------
+
+def say_curved(pal, *parts):
+    """set03 のセリフ: ゆるいカーブ・文字ごとの大きさの変化と段差・漢字は筆の書体。"""
+    key, rest, rim = winter.PAL[pal]
+    ws = []
+    for i, (text, x, y, size, rot, strong, extra) in enumerate(parts):
+        w = word(text, x, y, size, key if strong else rest, rot=rot, seed=i + 1, arc=0.32 if strong else 0.2,
+                 **extra)
+        w.update(vary=True, kanji_font=BRUSH_FONT)
+        if strong and rim:
+            w.update(rim=rim, rim_w=4)
+        ws.append(w)
+    return ws
+
+
+def block_staggered(pal, lines, x0=28, y0=24, indent=8):
+    """行ごとに、横の位置と傾きを交互にずらす(左ぞろえの直列にしない)。"""
+    out, y = [], y0 + 10
+    x0 += 12  # 先頭の大きな字とカーブの分だけ内側へ
+    for i, (text, size, strong) in enumerate(lines):
+        w = len(text) * size * 0.98
+        cy = y + size * 0.62
+        shift = (0, 22, 8, 26)[i % 4]
+        out.append((text, x0 + shift + w / 2, cy, size, (-7, 4, -3, 5)[i % 4], strong))
+        y += size * 1.3
+    return out
+
+
+winter.say = say_curved
+winter.block = block_staggered
+
 
 def kazari(c):
     """前髪の右上に、紅白の水引の髪飾り(顔と同じ基準で動く)。"""
@@ -601,9 +632,15 @@ def card05(icon):
 HAND_FONT = soft.HAND_FONT
 
 
-def rim_glyph(ch, size, color, rim=None):
-    """手書きのセリフ1文字: (フチの画像, 中身の画像)。フチを全部描いてから中身を重ねるために分ける。"""
-    font = ImageFont.truetype(str(HAND_FONT), size)
+def rim_glyph(ch, size, color, rim=None, rot=0):
+    """手書きのセリフ1文字: (フチの画像, 中身の画像)。フチを全部描いてから中身を重ねるために分ける。
+    漢字は筆の書体(Yuji Syuku)、かなは手書きの書体(Yusei Magic)にして、書体を混ぜる。"""
+    if rot:
+        a, b = rim_glyph(ch, size, color, rim)
+        return (a.rotate(-rot, resample=Image.BICUBIC, expand=True),
+                b.rotate(-rot, resample=Image.BICUBIC, expand=True))
+    is_kanji = "\u4e00" <= ch <= "\u9fff"
+    font = ImageFont.truetype(str(BRUSH_FONT if is_kanji else HAND_FONT), round(size * (1.08 if is_kanji else 1)))
     pad = 16
     n = size + pad * 2
     a = Image.new("RGBA", (n, n), (0, 0, 0, 0))
@@ -732,17 +769,51 @@ RED, GOLD_RIM = "#E0352B", "#E8B33A"
 KOUBAI = "#E8577A"
 
 
-def hand_frames(lines, deco, n_frames=20):
+def sheep_frames(poses_fn, n, scale=0.95, anchor=(240, 258)):
+    """ひつじだけを n コマ描く(12コマずつまとめて描く)。poses_fn(i) はポーズの並び。"""
+    out = []
+    for start in range(0, n, 12):
+        fr = []
+        for i in range(start, min(n, start + 12)):
+            fr.append(kf(poses_fn(i) + [ears(EAR01[0][i % 12], EAR01[1][i % 12]), sheep, kazari]
+                         + [legs(*(LEGS["01"][k][i % 12] for k in range(5)))] + ([sheep_talk] if i % 2 == 0 and i else []),
+                         scale=scale, anchor=anchor))
+        with tempfile.TemporaryDirectory() as tmp:
+            soft.chara_png(fr, f"{tmp}/s.png")
+            sheet = Image.open(f"{tmp}/s.png").convert("RGBA")
+        for j in range(len(fr)):
+            x0, y0 = (j % soft.COLS) * CW, (j // soft.COLS) * CH
+            im = sheet.crop((x0, y0, x0 + CW, y0 + CH))
+            im.putalpha(im.getchannel("A").point(lambda v: 255 if v >= 128 else 0))
+            out.append(im)
+    return out
+
+
+def hand_frames(lines, deco, n_frames=20, sheep_poses=None):
     """筆なしの手書きセリフ。lines: (文字, 中心x, 中心y, 大きさ, 強調?)。
     1コマ目は完成形、2コマ目は空、そのあと一文字ずつポン(出た文字は 1.3 倍 → 1 倍)。
     書き終わったら、強調語がゆるく波打ち、金のキラキラが2つだけまたたく。最後に飾りがぽんと出る。"""
     chars = []
-    for text, cx, cy, size, strong in lines:
-        adv = size * 0.98
-        x = cx - adv * len(text) / 2
+    for li, line in enumerate(lines):
+        text, cx, cy, size, strong = line[:5]
+        arc = line[5] if len(line) > 5 else (0.35 if strong else 0.2)   # ゆるいカーブ(山なり)
+        tilt = line[6] if len(line) > 6 else (-6 if li % 2 == 0 else 4)  # 行ごとに傾きを変える
+        rnd = random.Random(li * 31 + len(text))
+        sizes = [size * (1.22 if j == 0 and strong else rnd.uniform(0.9, 1.06)) for j in range(len(text))]
+        total = sum(sz * 0.96 for sz in sizes)
+        x = -total / 2
+        n = len(text)
+        ra = math.radians(tilt)
         for j, ch in enumerate(text):
+            adv = sizes[j] * 0.96
+            lx = x + adv / 2
+            t = (j + 0.5) / n - 0.5
+            ly = arc * size * (4 * t * t - 1) * 0.5 + (4 if j % 2 else -3)  # カーブ + 少しの段差
+            px = cx + lx * math.cos(ra) - ly * math.sin(ra)
+            py = cy + lx * math.sin(ra) + ly * math.cos(ra)
             col = (RED if j % 2 == 0 else KOUBAI) if strong else soft.BROWN
-            chars.append((ch, x + adv / 2, cy, size, col, GOLD_RIM if strong else None, strong))
+            chars.append((ch, px, py, round(sizes[j]), col, GOLD_RIM if strong else None, strong,
+                          tilt + rnd.uniform(-6, 6)))
             x += adv
     N = len(chars)
     n_write = n_frames - 6
@@ -751,11 +822,11 @@ def hand_frames(lines, deco, n_frames=20):
     def draw(shown, pop_last=False, wave=None, deco_k=None, twinkle=None):
         im = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
         layers = []
-        for i, (ch, x, y, size, col, rim, strong) in enumerate(chars[:shown]):
+        for i, (ch, x, y, size, col, rim, strong, rot) in enumerate(chars[:shown]):
             k = 1.2 if pop_last and i >= shown - cpf else 1.0
             if wave is not None:  # 書き終わったら、文字が順番に波のように跳ねる(強調語は大きめ)
                 y += (7 if strong else 4) * math.sin(wave + i * 0.9)
-            a, b = rim_glyph(ch, round(size * k), col, rim)
+            a, b = rim_glyph(ch, round(size * k), col, rim, rot=rot)
             layers.append((a, b, (round(x - a.width / 2), round(y - a.height / 2))))
         for a, b, xy in layers:
             im.alpha_composite(a, xy)
@@ -766,6 +837,18 @@ def hand_frames(lines, deco, n_frames=20):
                                0, 0)
         if deco_k is not None:
             deco(im, deco_k)
+        return im
+
+    # ひつじも一緒に出す(さびしくならないように)。ひつじはコマごとに動く
+    sheep_ims = sheep_frames(sheep_poses, n_frames) if sheep_poses else None
+    _draw = draw
+
+    def draw(shown, pop_last=False, wave=None, deco_k=None, twinkle=None, _fi=[0]):
+        im = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
+        if sheep_ims:
+            im.alpha_composite(sheep_ims[min(_fi[0], n_frames - 1)])
+        _fi[0] += 1
+        im.alpha_composite(_draw(shown, pop_last, wave, deco_k, twinkle))
         return im
 
     frames = [draw(N, deco_k=1.0, twinkle=0), draw(0)]
@@ -782,27 +865,38 @@ def hand_frames(lines, deco, n_frames=20):
     return frames[:n_frames]
 
 
+HOP20 = [S, J0, S, J0, S, J0, S, J0, S, J0, S, J0, S, J0, S, J0, S, J0, S, S]
+BOW20 = [B1, S, S, S, S, B1, B2, B1, S, S, B1, B2, B1, S, S, B1, B2, B1, S, S]
+
+
 def hand13(icon):
-    return hand_frames([("あけおめ!", 160, 96, 54, True)], lambda im, k: paste_center(im, icon, 232, 258, 1.15 * k))
+    """あけおめ!: 大きく山なりに。ひつじがぴょんぴょん跳ねる。"""
+    return hand_frames([("あけおめ!", 160, 80, 52, True, 0.5, -4)], lambda im, k: None,
+                       sheep_poses=lambda i: [HOP20[i], happy])
 
 
 def hand14(icon):
-    return hand_frames([("ことよろ!", 160, 96, 54, True)], lambda im, k: kagami(im, 236, 254, k))
+    """ことよろ!: 右上がりに。鏡餅の横で、ひつじがぺこり。"""
+    return hand_frames([("ことよろ!", 166, 84, 50, True, 0.3, -8)], lambda im, k: kagami(im, 62, 252, 0.9 * k),
+                       sheep_poses=lambda i: [BOW20[i], happy])
 
 
 def hand15(icon):
+    """今年も/よろしく/お願いします: 行ごとに傾きと位置をずらす。ひつじがぺこり。梅の枝。"""
     def deco(im, k):
-        winter.draw_marks2(im, [("branch", 0, 0, 0, [(304, 216), (282, 228), (256, 248)]),
-                                ("ume", 280, 226, 13 * k), ("ume", 254, 246, 10 * k)], 0, 0)
-    return hand_frames([("今年も", 150, 52, 52, True), ("よろしく", 160, 114, 42, False),
-                        ("お願いします", 160, 172, 38, False)], deco)
+        winter.draw_marks2(im, [("branch", 0, 0, 0, [(20, 236), (44, 226), (70, 240)]),
+                                ("ume", 44, 226, 12 * k), ("ume", 68, 242, 9 * k)], 0, 0)
+    return hand_frames([("今年も", 116, 58, 50, True, 0.3, -7), ("よろしく", 152, 118, 38, False, 0.2, 3),
+                        ("お願いします", 136, 170, 28, False, 0.15, -3)], deco,
+                       sheep_poses=lambda i: [BOW20[i], happy])
 
 
 def hand16(icon):
+    """おめでとう/ございます: 大きなカーブと、小さく段差。ひつじが跳ねて、紙ふぶき。"""
     def deco(im, k):
-        winter.draw_marks(im, confetti(12, 7, round(k * 10), box=(30, 196, 170, 250)), 0, 0)
-        paste_center(im, icon, 246, 258, 1.0 * k)
-    return hand_frames([("おめでとう", 160, 74, 50, True), ("ございます", 160, 140, 42, False)], deco)
+        winter.draw_marks(im, confetti(16, 6, round(k * 10), box=(24, 190, 130, 250)), 0, 0)
+    return hand_frames([("おめでとう", 150, 66, 46, True, 0.45, -5), ("ございます", 156, 130, 36, False, 0.25, 4)],
+                       deco, sheep_poses=lambda i: [HOP20[i], happy])
 
 
 # ---- B. 年賀状(残り) ----------------------------------------------------------------

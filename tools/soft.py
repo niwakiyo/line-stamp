@@ -225,7 +225,12 @@ def draw_word(layer, w, ox, oy, outline=9):
         if w["vertical"]:
             lx, ly = jit[0] - w["arc"] * size * (4 * t * t - 1) * 0.5, lx
         csize = round(size * (w["last"] if i == w["count"] - 1 else 1))
-        font = ImageFont.truetype(str(HAND_FONT), csize)
+        if w.get("vary"):  # 文字ごとに大きさを少し変える(先頭の字は大きめ)。直列に見せないため
+            vr = random.Random(w["seed"] * 97 + i)
+            csize = round(csize * (1.16 if i == 0 else vr.uniform(0.9, 1.06)))
+            ly += vr.uniform(-4, 4)  # 少し段差をつける
+        is_kanji = "\u4e00" <= ch <= "\u9fff"
+        font = ImageFont.truetype(str(w["kanji_font"] if w.get("kanji_font") and is_kanji else HAND_FONT), csize)
         x = ox + w["cx"] + lx * math.cos(r) - ly * math.sin(r)
         y = oy + w["cy"] + lx * math.sin(r) + ly * math.cos(r)
         pad = outline + 8
