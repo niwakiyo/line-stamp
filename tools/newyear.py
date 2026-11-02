@@ -8,6 +8,7 @@
 """
 import argparse
 import math
+import random
 import re
 import tempfile
 from pathlib import Path
@@ -273,6 +274,22 @@ def sheep_talk(c):
 
 # ---- 01 あけまして/おめでとう/ございます(ひつじのインコ) ----------------------------
 
+def kazari(c):
+    """前髪の右上に、紅白の水引の髪飾り(顔と同じ基準で動く)。"""
+    ox, oy = face_off(c)
+    x, y, k = 196 + ox, 130 + oy, 1.1
+
+    def put(key, fill, w, h, dx, dy, d, rot):
+        add(c, key, fill, inko.INK, 2, w * k, h * k, x + dx * k, y + dy * k, d, rot=rot)
+        c[key].update(vw=w, vh=h)
+    put("ACC90_tailW", "#FFFFFF", 9, 18, -8, 1, winter.TAIL, 18)
+    put("ACC91_tailR", SHU, 9, 18, -1, 1, winter.TAIL, -12)
+    put("ACC92_loopW", "#FFFFFF", 18, 14, -17, -9, winter.LOOP_L, -8)
+    put("ACC93_loopR", SHU, 18, 14, 0, -10, winter.LOOP_R, 8)
+    put("ACC94_knot", "#E8B33A", 10, 10, -5, -5, DOT, 0)
+    c["ACC94_knot"].update(vw=40, vh=40)
+
+
 def cf01(i, av):
     return confetti(31, 4, i, box=(240, 30, 296, 84)) + confetti(32, 4, i, box=(30, 196, 112, 250))
 
@@ -284,7 +301,7 @@ STAMPS = {
     "01": make("new", [("あけまして", 46, True), ("おめでとう", 34, False), ("ございます", 34, False)], "A",
                lambda i: [[S, happy], [J0, happy], [J1, happy], [J1, happy, J2], [J1, happy], [J0, happy],
                           [S, happy], [B1, happy], [B2, happy], [B1, happy], [S, happy], [S, happy]][i]
-               + [ears(EAR01[0][i], EAR01[1][i]), sheep], cf01, m=MID),
+               + [ears(EAR01[0][i], EAR01[1][i]), sheep, kazari], cf01, m=MID),
 }
 
 # ---- 残りのひつじのスタンプ(02〜04・13〜16) ------------------------------------------
@@ -329,10 +346,20 @@ def sun(c):
 
 
 def sheep_stamp(lines, typ, poses, marks, props=(), m=MID, **kw):
-    """ひつじのスタンプ: poses(i) のあとに 耳 → ひつじ → 小物 の順で足す。"""
+    """ひつじのスタンプ: poses(i) のあとに 耳 → ひつじ → 髪飾り → 小物 の順で足す。"""
     return make("new", lines, typ,
-                lambda i: poses(i) + [ears(EAR01[0][i], EAR01[1][i]), sheep] + list(props),
+                lambda i: poses(i) + [ears(EAR01[0][i], EAR01[1][i]), sheep, kazari] + list(props),
                 marks, m=m, **kw)
+
+
+def wa_marks(pts):
+    """和風の飾り: 梅の花と金のキラキラを交互に置き、キラキラだけ少しまたたく。"""
+    def f(i, av):
+        out = []
+        for j, (x, y, sz) in enumerate(pts):
+            out.append(("ume", x, y, sz + 2) if j % 2 == 0 else ("spark", x, y, sz + (3 if (i + j) % 2 else 0)))
+        return out
+    return f
 
 
 BOW02 = [[B2], [S, blink], [S, blink], [S, blink], [B1], [B2], [B2], [B2], [B2], [B2], [B1], [S, blink]]
@@ -343,37 +370,64 @@ SWAY2 = [0, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, 0]
 STAMPS.update({
     # 02 本年も/よろしく/お願い/いたします(A): 両前足をそろえて深くおじぎ
     "02": sheep_stamp([("本年も", 48, True), ("よろしく", 32, False), ("お願い", 30, False), ("いたします", 28, False)],
-                      "A", lambda i: list(BOW02[i]), winter.sparks([(292, 118, 9), (292, 206, 7)]), m=SMALL),
+                      "A", lambda i: list(BOW02[i]), wa_marks([(292, 118, 9), (292, 206, 7)]), m=SMALL),
     # 03 謹賀新年(C): もこもこの体でぽよんと弾む。金の紙ふぶき
     "03": sheep_stamp([("謹賀新年", 58, True)], "C", lambda i: [HOP[i], happy, sh(SWAY[i])],
                       lambda i, av: confetti(33, 7, i, box=(24, 100, 116, 250)) + confetti(34, 3, i, box=(262, 40, 288, 90)),
                       wave_amp=5, m=dict(scale=1.12, anchor=(220, 254))),
     # 04 旧年中は/お世話に/なりました(B): だるまを抱えてゆらゆら
     "04": sheep_stamp([("旧年中は", 50, True), ("お世話に", 34, False), ("なりました", 34, False)], "B",
-                      lambda i: [S, happy, sh(SWAY[i])], winter.sparks([(288, 110, 10), (44, 222, 9)]),
+                      lambda i: [S, happy, sh(SWAY[i])], wa_marks([(288, 110, 10), (44, 222, 9)]),
                       props=()),
-    # 13 初日の出/きれいです(A): 頭のうしろに初日の出。目を閉じてうっとり、ゆらゆら
-    "13": sheep_stamp([("初日の出", 46, True), ("きれいです", 34, False)], "A",
-                      lambda i: [S, blink, sh(SWAY2[i])], winter.sparks([(40, 228, 8), (120, 236, 6)]),
+    # 17 初日の出/きれいです(A): 頭のうしろに初日の出。目を閉じてうっとり、ゆらゆら
+    "17": sheep_stamp([("初日の出", 46, True), ("きれいです", 34, False)], "A",
+                      lambda i: [S, blink, sh(SWAY2[i])], wa_marks([(40, 228, 8), (120, 236, 6)]),
                       props=(sun,), m=dict(scale=1.0, anchor=(230, 256))),
-    # 14 大吉/でした!(B): おみくじを持って、うれしくてぴょんぴょん
-    "14": sheep_stamp([("大吉", 60, True), ("でした!", 38, False)], "B", lambda i: [HOP[i]],
+    # 18 大吉/でした!(B): おみくじを持って、うれしくてぴょんぴょん
+    "18": sheep_stamp([("大吉", 60, True), ("でした!", 38, False)], "B", lambda i: [HOP[i]],
                       lambda i, av: confetti(14, 6, i, box=(250, 30, 296, 100)) + [("spark", 290, 150, 10 + i % 2 * 3)],
                       props=(omikuji,)),
-    # 15 お年玉/ありがとう/ございます(A): ぽち袋を持ってぺこり
-    "15": sheep_stamp([("お年玉", 50, True), ("ありがとう", 32, False), ("ございます", 32, False)], "A",
-                      lambda i: list(BOW15[i]), winter.sparks([(290, 120, 9), (44, 230, 8)]), props=(pochi,)),
-    # 16 おせち/いただきます(A): 重箱の前でにっこり、ゆらゆら
-    "16": sheep_stamp([("おせち", 54, True), ("いただきます", 32, False)], "A",
-                      lambda i: [S, happy, sh(SWAY2[i])], winter.sparks([(292, 120, 9), (40, 120, 7)]),
+    # 19 お年玉/ありがとう/ございます(A): ぽち袋を持ってぺこり
+    "19": sheep_stamp([("お年玉", 50, True), ("ありがとう", 32, False), ("ございます", 32, False)], "A",
+                      lambda i: list(BOW15[i]), wa_marks([(290, 120, 9), (44, 230, 8)]), props=(pochi,)),
+    # 20 おせち/いただきます(A): 重箱の前でにっこり。前足を交互に大きく上げ下げ(食べる手の動き)
+    "20": sheep_stamp([("おせち", 54, True), ("いただきます", 32, False)], "A",
+                      lambda i: [S, happy, sh(SWAY2[i])], wa_marks([(292, 120, 9), (40, 120, 7)]),
                       props=(jubako,)),
 })
+STAMPS.update({
+    # 21 今年も/がんばります!(B): ぴょんぴょん跳ねて、前足でガッツ
+    "21": sheep_stamp([("今年も", 50, True), ("がんばります!", 34, False)], "B", lambda i: [HOP[i], happy],
+                      lambda i, av: confetti(21, 4, i, box=(250, 40, 290, 100))),
+    # 22 寝正月/中です(C): こたつでうとうと(目を閉じて、ゆっくりゆれる)
+    "22": sheep_stamp([("寝正月", 54, True), ("中です", 36, False)], "C", lambda i: [S, blink, sh(SWAY2[i])],
+                      lambda i, av: [("steam", 120 + j * 10, 186, 12 + (i + j) % 3 * 3, i * 0.9 + j) for j in range(2)],
+                      props=(winter.kotatsu,), m=dict(scale=1.12, anchor=(214, 254))),
+    # 23 笑う門には/福来たる(A): にっこり左右にゆれる、金の紙ふぶき
+    "23": sheep_stamp([("笑う門には", 36, True), ("福来たる", 34, True)], "A", lambda i: [S, happy, sh(SWAY2[i])],
+                      lambda i, av: confetti(23, 5, i, box=(36, 170, 110, 246)), x0=36),
+    # 24 新年会/楽しみです(B): うれしくて弾む
+    "24": sheep_stamp([("新年会", 54, True), ("楽しみです", 36, False)], "B", lambda i: [HOP[i], happy],
+                      wa_marks([(290, 120, 9), (44, 228, 8)])),
+})
+
 # 04 のだるまは、ゆれの角度をコマごとに変えるので、台本を作り直す
 STAMPS["04"] = sheep_stamp([("旧年中は", 50, True), ("お世話に", 34, False), ("なりました", 34, False)], "B",
-                           lambda i: [S, happy, sh(SWAY[i])], winter.sparks([(286, 110, 10), (44, 222, 9)]),
+                           lambda i: [S, happy, sh(SWAY[i])], wa_marks([(286, 110, 10), (44, 222, 9)]),
                            m=dict(scale=1.12, anchor=(220, 254)))
 for i, fr in enumerate(STAMPS["04"]):
     fr["poses"] = fr["poses"] + [daruma(SWAY[i] * 4)]
+
+LEGS_EAT = ([0, 7, 2, 7, 2, 7, 2, 7, 2, 7, 2, 0],      # 20 おせち: 左右の前足を交互に大きく上げ下げ
+            [0, 2, 7, 2, 7, 2, 7, 2, 7, 2, 7, 0],
+            [0, 16, 4, 16, 4, 16, 4, 16, 4, 16, 4, 0],
+            [0, 4, 16, 4, 16, 4, 16, 4, 16, 4, 16, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+LEGS_CHEER = ([0, 3, 7, 7, 4, 0, 6, 0, 7, 0, 6, 0],   # 21 がんばります: 跳ぶたびに前足を上げる
+              [0, 0, 6, 7, 7, 3, 0, 7, 0, 6, 0, 6],
+              [0, -6, 16, 16, 10, -4, 14, -2, 16, -2, 14, 0],
+              [0, -4, 14, 16, 16, -6, -2, 16, -2, 14, -2, 14],
+              [0, 3, -3, 0, 0, 3, -3, 3, -3, 3, -3, 0])
 
 LEGS = {  # (左前足の持ち上げpx, 右前足の持ち上げpx, 左前足の角度, 右前足の角度, 後ろ足の持ち上げpx)
     # 前足は付け根を支点に最大16°・持ち上げ最大5px、後ろ足は最大3px。左右で交互・別の角度
@@ -385,7 +439,7 @@ LEGS = {  # (左前足の持ち上げpx, 右前足の持ち上げpx, 左前足�
 }
 
 for name, frames in STAMPS.items():
-    ll, lr, al, ar, hd = LEGS.get(name, LEGS["01"])
+    ll, lr, al, ar, hd = {"20": LEGS_EAT, "21": LEGS_CHEER}.get(name) or LEGS.get(name, LEGS["01"])
     for i, fr in enumerate(frames):
         extra = []
         if i in soft.TALK_FRAMES:
@@ -393,6 +447,18 @@ for name, frames in STAMPS.items():
         if i:
             extra.append(legs(ll[i], lr[i], al[i], ar[i], hd[i]))
         fr["poses"] = fr["poses"] + extra
+
+
+def hands_up(c):
+    """20 おせち: 前足を重箱より前に出して、台の上で動いているのが見えるようにする。"""
+    for k in ("P6", "P7"):
+        e = c.pop(k)
+        e["top"] -= 36
+        c["ACC99_" + k] = e
+
+
+for fr in STAMPS["20"]:
+    fr["poses"] = fr["poses"] + [hands_up]
 
 
 # ---- 年賀状(筆で書いていく) --------------------------------------------------------
@@ -430,6 +496,16 @@ def card_base():
     d.rectangle((x0 - 4, y0 - 4, x1 + 4, y1 + 4), fill="white")  # はがきらしく、角は丸くしない
     d.rectangle((x0, y0, x1, y1), fill=CARD, outline=soft.LINE, width=3)
     d.rectangle((x0 + 8, y0 + 8, x1 - 8, y1 - 8), outline=SHU, width=2)
+    # 和風の飾り: 左上に金の扇(要は角)、右下の角に紅白の水引の線
+    fx, fy = x0 + 8, y0 + 8
+    d.pieslice((fx - 30, fy - 30, fx + 30, fy + 30), 0, 90, fill="#E8B33A", outline=soft.LINE, width=2)
+    for a in (22, 45, 68):
+        ra = math.radians(a)
+        d.line([(fx, fy), (fx + 29 * math.cos(ra), fy + 29 * math.sin(ra))], fill=soft.LINE, width=1)
+    d.pieslice((fx - 10, fy - 10, fx + 10, fy + 10), 0, 90, fill=SHU)
+    for k, col in enumerate((SHU, "white", SHU)):
+        o = 14 + k * 4
+        d.arc((x1 - 8 - o, y1 - 8 - o, x1 - 8 + o, y1 - 8 + o), 180, 270, fill=col, width=3)
     return im
 
 
@@ -442,6 +518,16 @@ def glyph(ch, size, color=INK_BLACK):
     return g
 
 
+def brush_point(bb, k, n, seed):
+    """筆先の位置: 上から下へ・右と左に交互に振れる向きは変えず、止まる所は帯ごとにランダムにする。"""
+    x0, y0, x1, y1 = bb
+    rnd = random.Random(seed * 13 + k)
+    mid = (x0 + x1) / 2
+    bx = rnd.uniform(mid + 2, x1 - 2) if k % 2 == 0 else rnd.uniform(x0 + 2, mid - 2)
+    by = y0 + (y1 - y0) * (k + 1) / n + rnd.uniform(-4, 3)
+    return bx, by
+
+
 def reveal(g, k, n=4):
     """書いている途中: 字を上から n 本の帯に分け、k 本目まで見せる。
     筆は帯ごとに左右へ振れながら下りる(偶数本目は右端、奇数本目は左端で止まる)。戻り値は (画像, 筆先の位置)。"""
@@ -451,8 +537,8 @@ def reveal(g, k, n=4):
     out = g.copy()
     if k < n - 1:
         ImageDraw.Draw(out).rectangle((0, round(y), g.width, g.height), fill=(0, 0, 0, 0))
-    bx = x1 - 4 if k % 2 == 0 else x0 + 4
-    return out, (bx, y)
+    bx, by = brush_point(bb, k, n, seed=x0 * 31 + y0)
+    return out, (bx, by)
 
 
 def brush(layer, x, y):
@@ -490,9 +576,6 @@ def card05(icon):
                 gx = round(cx - g.width / 2)
                 im.alpha_composite(pg, (gx, round(y)))
                 brush_at = (gx + bx, y + by)
-        d = ImageDraw.Draw(im)
-        d.ellipse((94, 28, 106, 40), fill="#F49CB4", outline=soft.LINE, width=2)  # 左上の小さな梅
-        d.ellipse((98, 32, 102, 36), fill="#FFD24D")
         if show_icon:
             ic = icon.resize((round(icon.width * show_icon), round(icon.height * show_icon)), Image.LANCZOS)
             im.alpha_composite(ic, (round(114 - ic.width / 2), round(246 - ic.height)))
@@ -580,8 +663,7 @@ def write_frames(base, chars, deco, tool, n_frames=20, pop=None):
             if i == upto and band is not None:
                 rim = band_cut(rim, band, per, bb) if rim else None
                 body = band_cut(body, band, per, bb)
-                yb = bb[1] + (bb[3] - bb[1]) * (band + 1) / per
-                xb = bb[2] - 3 if band % 2 == 0 else bb[0] + 3
+                xb, yb = brush_point(bb, band, per, seed=i * 101 + x)
                 tool_at = (x + xb, y + yb)
             elif i == upto and band is None and tool_at is None and tool_on:
                 tool_at = (x + (bb[2] if i % 2 == 0 else bb[0]), y + bb[3])
@@ -645,33 +727,80 @@ def kagami(im, cx, bottom, k):
 RED, GOLD_RIM = "#E0352B", "#E8B33A"
 
 
-def hand09(icon):
-    chars = line_chars("あけおめ!", 160, 100, 56, RED, GOLD_RIM)
-    return write_frames(clear_base, chars, lambda im, k: paste_center(im, icon, 232, 258, 1.15 * k), pen)
+KOUBAI = "#E8577A"
 
 
-def hand10(icon):
-    chars = line_chars("ことよろ!", 160, 100, 56, RED, GOLD_RIM)
-    return write_frames(clear_base, chars, lambda im, k: kagami(im, 236, 254, k), pen)
+def hand_frames(lines, deco, n_frames=20):
+    """筆なしの手書きセリフ。lines: (文字, 中心x, 中心y, 大きさ, 強調?)。
+    1コマ目は完成形、2コマ目は空、そのあと一文字ずつポン(出た文字は 1.3 倍 → 1 倍)。
+    書き終わったら、強調語がゆるく波打ち、金のキラキラが2つだけまたたく。最後に飾りがぽんと出る。"""
+    chars = []
+    for text, cx, cy, size, strong in lines:
+        adv = size * 0.98
+        x = cx - adv * len(text) / 2
+        for j, ch in enumerate(text):
+            col = (RED if j % 2 == 0 else KOUBAI) if strong else soft.BROWN
+            chars.append((ch, x + adv / 2, cy, size, col, GOLD_RIM if strong else None, strong))
+            x += adv
+    N = len(chars)
+    n_write = n_frames - 6
+    cpf = max(1, math.ceil(N / n_write))
+
+    def draw(shown, pop_last=False, wave=None, deco_k=None, twinkle=None):
+        im = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
+        layers = []
+        for i, (ch, x, y, size, col, rim, strong) in enumerate(chars[:shown]):
+            k = 1.2 if pop_last and i >= shown - cpf else 1.0
+            if wave is not None and strong:
+                y += 3 * math.sin(wave + i * 0.8)
+            a, b = rim_glyph(ch, round(size * k), col, rim)
+            layers.append((a, b, (round(x - a.width / 2), round(y - a.height / 2))))
+        for a, b, xy in layers:
+            im.alpha_composite(a, xy)
+        for a, b, xy in layers:
+            im.alpha_composite(b, xy)
+        if twinkle is not None:
+            winter.draw_marks2(im, [("spark", 28, 30, 7 + twinkle % 2 * 3), ("spark", 292, 34, 9 - twinkle % 2 * 3)],
+                               0, 0)
+        if deco_k is not None:
+            deco(im, deco_k)
+        return im
+
+    frames = [draw(N, deco_k=1.0, twinkle=0), draw(0)]
+    shown = 0
+    while shown < N:
+        shown = min(N, shown + cpf)
+        frames.append(draw(shown, pop_last=True))
+    t = 0
+    while len(frames) < n_frames - 2:
+        frames.append(draw(N, wave=t * 1.2, twinkle=t))
+        t += 1
+    frames.append(draw(N, wave=t * 1.2, deco_k=1.25, twinkle=t))
+    frames.append(draw(N, deco_k=1.0, twinkle=t + 1))
+    return frames[:n_frames]
 
 
-def hand11(icon):
-    chars = (line_chars("今年も", 150, 52, 50, RED, GOLD_RIM) + line_chars("よろしく", 160, 114, 42, soft.BROWN)
-             + line_chars("お願いします", 160, 172, 38, soft.BROWN))
+def hand13(icon):
+    return hand_frames([("あけおめ!", 160, 96, 54, True)], lambda im, k: paste_center(im, icon, 232, 258, 1.15 * k))
 
+
+def hand14(icon):
+    return hand_frames([("ことよろ!", 160, 96, 54, True)], lambda im, k: kagami(im, 236, 254, k))
+
+
+def hand15(icon):
     def deco(im, k):
         winter.draw_marks2(im, [("branch", 0, 0, 0, [(304, 216), (282, 228), (256, 248)]),
                                 ("ume", 280, 226, 13 * k), ("ume", 254, 246, 10 * k)], 0, 0)
-    return write_frames(clear_base, chars, deco, pen)
+    return hand_frames([("今年も", 150, 52, 52, True), ("よろしく", 160, 114, 42, False),
+                        ("お願いします", 160, 172, 38, False)], deco)
 
 
-def hand12(icon):
-    chars = line_chars("おめでとう", 160, 74, 50, RED, GOLD_RIM) + line_chars("ございます", 160, 140, 42, soft.BROWN)
-
+def hand16(icon):
     def deco(im, k):
-        winter.draw_marks(im, confetti(12, 8, round(k * 10), box=(30, 186, 180, 250)), 0, 0)
+        winter.draw_marks(im, confetti(12, 7, round(k * 10), box=(30, 196, 170, 250)), 0, 0)
         paste_center(im, icon, 246, 258, 1.0 * k)
-    return write_frames(clear_base, chars, deco, pen)
+    return hand_frames([("おめでとう", 160, 74, 50, True), ("ございます", 160, 140, 42, False)], deco)
 
 
 # ---- B. 年賀状(残り) ----------------------------------------------------------------
@@ -725,8 +854,53 @@ def card08(icon):
     return write_frames(card_base, chars, lambda im, k: paste_center(im, icon, 160, 248, 1.15 * k), pen)
 
 
-CARDS = {"05": card05, "06": card06, "07": card07, "08": card08,
-         "09": hand09, "10": hand10, "11": hand11, "12": hand12}
+def card09(icon):
+    """09 謹んで/新春の/お慶びを/申し上げます(縦書き)+ 日付・ひつじ・はんこ。"""
+    chars = (vertical_chars("謹んで新春の", 208, 30, 28, 31) + vertical_chars("お慶びを", 174, 30, 28, 31)
+             + vertical_chars("申し上げます", 140, 30, 28, 31))
+    date = vertical_chars("令和九年元旦", 108, 40, 16, 18)
+
+    def deco(im, k):
+        for _, g, xy in date:
+            im.alpha_composite(g, xy)
+        paste_center(im, icon, 104, 246, 0.8 * k)
+        seal(im, 214, 230, 24 * min(k, 1.3))
+    return write_frames(card_base, chars, deco, brush)
+
+
+def card10(icon):
+    """10 福: 大きな1文字 → 梅と金のキラキラ、はんこ。"""
+    g = glyph("福", 136)
+    chars = [(None, g, (round(162 - g.width / 2), 44))]
+
+    def deco(im, k):
+        winter.draw_marks2(im, [("ume", 112, 222, 13 * k), ("ume", 134, 238, 9 * k), ("spark", 206, 60, 8 * k)], 0, 0)
+        seal(im, 212, 226, 26 * min(k, 1.3))
+    return write_frames(card_base, chars, deco, brush)
+
+
+def card11(icon):
+    """11 初春(縦に大きく2文字)→ ひつじ・はんこ。"""
+    chars = vertical_chars("初春", 176, 34, 84, 86)
+
+    def deco(im, k):
+        paste_center(im, icon, 112, 246, 0.9 * k)
+        seal(im, 214, 230, 24 * min(k, 1.3))
+    return write_frames(card_base, chars, deco, brush)
+
+
+def card12(icon):
+    """12 あけおめ/ことよろ(縦書き2列、友だち向け)→ ひつじ。"""
+    chars = vertical_chars("あけおめ", 192, 34, 42, 44) + vertical_chars("ことよろ", 142, 34, 42, 44)
+
+    def deco(im, k):
+        paste_center(im, icon, 112, 248, 0.8 * k)
+        winter.draw_marks2(im, [("ume", 214, 230, 11 * k)], 0, 0)
+    return write_frames(card_base, chars, deco, brush)
+
+
+CARDS = {"05": card05, "06": card06, "07": card07, "08": card08, "09": card09, "10": card10, "11": card11,
+         "12": card12, "13": hand13, "14": hand14, "15": hand15, "16": hand16}
 
 
 def card_sheet(frames, path, cols=5, rows=4):
