@@ -239,12 +239,13 @@ def draw_word(layer, w, ox, oy, outline=9):
         pos = (pad + csize / 2, pad + csize / 2)
         rim, rim_w = w.get("rim") or RIM, w.get("rim_w", 2)
         dr.text(pos, ch, font=font, anchor="mm", fill=rim, stroke_width=outline + rim_w, stroke_fill=rim)
-        dr.text(pos, ch, font=font, anchor="mm", fill=w["color"], stroke_width=outline, stroke_fill="white")
+        col = w["colors"][i % len(w["colors"])] if w.get("colors") else w["color"]
+        dr.text(pos, ch, font=font, anchor="mm", fill=col, stroke_width=outline, stroke_fill="white")
         g = g.rotate(-rot, resample=Image.BICUBIC, expand=True)
         layer.alpha_composite(g, (round(x - g.width / 2), round(y - g.height / 2)))
         # 文字の中身だけをもう一度、あとで上に重ねる(隣の文字のフチで欠けないように)
         f = Image.new("RGBA", (csize + pad * 2, csize + pad * 2), (0, 0, 0, 0))
-        ImageDraw.Draw(f).text(pos, ch, font=font, anchor="mm", fill=w["color"])
+        ImageDraw.Draw(f).text(pos, ch, font=font, anchor="mm", fill=col)
         f = f.rotate(-rot, resample=Image.BICUBIC, expand=True)
         tops.append((f, (round(x - f.width / 2), round(y - f.height / 2))))
     for f, xy in tops:

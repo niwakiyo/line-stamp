@@ -60,7 +60,10 @@ def key_out(img, color, tol):
     alpha = ImageChops.darker(a, ImageChops.invert(bg))
     if color[1] > max(color[0], color[2]):
         # グリーンバックの色かぶり除去: 輪郭のなじみ部分に残る緑を G<=max(R,B) に抑える
-        g = ImageChops.darker(g, ImageChops.lighter(r, b))
+        # 輪郭のまわり(透明から3px以内)だけにする。絵の中の緑(ツリー・緑の文字)は消さない
+        from PIL import ImageFilter
+        edge = ImageChops.invert(alpha).filter(ImageFilter.MaxFilter(7))
+        g = Image.composite(ImageChops.darker(g, ImageChops.lighter(r, b)), g, edge)
     img = Image.merge("RGBA", (r, g, b, alpha))
     return img
 
