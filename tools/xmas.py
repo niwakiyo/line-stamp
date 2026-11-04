@@ -104,8 +104,8 @@ def arm_part(c, key, sx, sy, ang, length, width, fill, cap_fill, cap_w, front=Tr
 
 
 # ---- トナカイ ---------------------------------------------------------------------
-DEER, DEER_FACE, DEER_D, DEER_FRONT, HOOF = "#AF7C52", "#C99C70", "#7E5638", "#D2AC82", "#4A3328"
-MUZZLE, ANTLER, ANTLER_L2 = "#F4E6D2", "#8A5E40", "#B58758"
+DEER, DEER_FACE, DEER_D, DEER_FRONT, HOOF = "#8C5A3A", "#DDB383", "#6B4329", "#D2A675", "#3E2A22"  # 体はこい茶、顔は明るい黄土、前足は明るい茶、後ろ足はこげ茶
+MUZZLE, ANTLER, ANTLER_L2 = "#FFF3E2", "#5E3B24", "#B58758"
 EAR_IN = "#F7C9C3"
 # 角(左): 4倍の座標(200x200)。根元(下・太い)は頭のてっぺんに重ねる。大きく枝分かれ。右は鏡うつし
 ANTLER_LP = ("M150 196 C146 168 138 140 124 118 C108 94 84 80 56 70 C40 64 28 52 30 38 C34 26 48 28 52 40 "
@@ -171,24 +171,23 @@ def reindeer(c):
     arm_part(c, "P6", bcx - 28, by + bh - 38, fl, 34, 20, DEER_FRONT, HOOF, 20, lift=p.get("lfl", 0))
     arm_part(c, "P7", bcx + 28, by + bh - 38, -fr_, 34, 20, DEER_FRONT, HOOF, 20, lift=p.get("lfr", 0))
     # 角: 頭のてっぺんから(根元は顔に重ねて隠す)。顔より後ろ、体より前
-    put(c, "ANTL1", ANTLER, 2.4, 64, 64, 96 + fx, 82 + fy, ANTLER_LP, vw=200, vh=200)
-    put(c, "ANTL2", ANTLER, 2.4, 64, 64, 160 + fx, 82 + fy, ANTLER_RP, vw=200, vh=200)
-    # 根元のこぶ(頭のてっぺんにのせる)
-    put(c, "ANTL3", ANTLER_L2, 2, 16, 10, 136 + fx, 141 + fy, soft.ellipse_d(16, 10))
-    put(c, "ANTL4", ANTLER_L2, 2, 16, 10, 168 + fx, 141 + fy, soft.ellipse_d(16, 10))
+    # 大きく(86px)・太く。根元(下のはし)は頭のてっぺん(顔の上のふち)にかくし、外へ大きく広げる
+    put(c, "ANTL1", ANTLER, 3.2, 88, 88, 74 + fx, 62 + fy, ANTLER_LP, vw=200, vh=200)
+    put(c, "ANTL2", ANTLER, 3.2, 88, 88, 158 + fx, 62 + fy, ANTLER_RP, vw=200, vh=200)
     deer_ear(c, 130 + fx, 160 + fy, -1, -20 + p.get("el", 0))
     deer_ear(c, 190 + fx, 160 + fy, 1, 20 + p.get("er", 0))
     put(c, "FACE1", DEER_FACE, 3.4, 80, 70, 120 + fx, 140 + fy, soft.ellipse_d(80, 70))
-    put(c, "FACE2_muzzle", MUZZLE, 2, 46, 28, 137 + fx, 182 + fy, soft.ellipse_d(46, 28))
+    put(c, "FACE2_muzzle", MUZZLE, 2.4, 54, 32, 133 + fx, 176 + fy, soft.ellipse_d(54, 32))
     small_eyes(c)
+    inko.move(c, ["P8", "P9", "P10", "P11"], dy=-9)  # 目は口元より上(顔の上半分)
     c["P12"]["left"] += 8
     c["P13"]["left"] -= 8
     glow = False  # 鼻は点滅させない(目のまわりがちかちかしないように)
-    nx, ny = 160 + fx, 188 + fy
+    nx, ny = 160 + fx, 185 + fy
     c["P14"].update(d=soft.ellipse_d(20, 16), fill="#FF6157" if glow else "#E2463F", w=20, h=16, vw=20, vh=16,
                     left=nx - 10, top=ny - 9, sw=2, stroke=inko.INK, keep=soft.ellipse_d(20, 16))
     put(c, "P14z_shine", WHITE, 0, 6, 4, nx - 6, ny - 6, soft.ellipse_d(6, 4))
-    c["P15"].update(d=MOUTH, fill=soft.LINE, sw=0, stroke=None, top=ny + 6)
+    c["P15"].update(d=MOUTH, fill=soft.LINE, sw=0, stroke=None, top=ny + 5)
 
 
 _order = winter.inko_order
@@ -199,8 +198,8 @@ def xmas_order(key):
         return winter.ORDER.index("P5") - 0.7
     if key.startswith("FACE0b"):  # 耳
         return winter.ORDER.index("P5") - 0.6
-    if key.startswith("ANTL"):  # 角: 顔より前(根元が頭のてっぺんにのって見える)、目より後ろ
-        return winter.ORDER.index("P5") - 0.3
+    if key.startswith("ANTL"):  # 角: 体より前、顔より後ろ(根元は顔の上のふちでかくれる)
+        return winter.ORDER.index("P5") - 0.8
     if key.startswith("NECK"):  # トナカイの首輪と鈴: 体より前、角・顔より後ろ…ではなく、あごの下に見せるので顔より前
         return winter.ORDER.index("P5") - 0.4
     if key.startswith("BEARD"):  # サンタのひげ: ベルトより前、鼻と口より後ろ
@@ -229,10 +228,15 @@ def santa(c):
     黒いベルトと金のバックルは体について行く。太い袖の腕と白い手、黒い長ぐつ。"""
     p = c.pop("_p", {})
     fx, fy = face_off(c)
+    HEAD = -18  # 頭を体の上にのせる(顔の部品ごと上へ)
+    inko.move(c, ["P8", "P9", "P10", "P11", "P12", "P13", "P14", "P15"], dy=HEAD)
+    fy += HEAD
     b = c["P4"]
-    for k in ("P0", "P4"):
+    for k in ("P0", "P4"):  # 体は短く(上を下げる)、横に広い丸
         e = c[k]
-        w = min(e["h"] * 1.16, 124)
+        e["top"] += 18
+        e["h"] -= 18
+        w = min(e["h"] * 1.25, 122)
         cx = e["left"] + e["w"] / 2
         e.update(w=w, left=cx - w / 2, vw=w, vh=e["h"])
         e["d"] = e["keep"] = soft.ellipse_d(w, e["h"])
@@ -243,20 +247,28 @@ def santa(c):
     bcx = bx + bw / 2
     # すその白い毛・ベルト・バックル(すべて体の位置から置く → 体と一緒に動く)
     put(c, "MID0_hem", WHITE, 2.4, bw * 0.7, 12, bcx - bw * 0.35, by + bh - 12, soft.ellipse_d(bw * 0.7, 12))
-    put(c, "MID1_belt", "#3A2E2E", 2, bw * 0.9, 13, bcx - bw * 0.45, by + bh * 0.74, soft.ellipse_d(bw * 0.9, 13))
-    put(c, "MID2_buckle", GOLD, 2, 20, 16, bcx - 10, by + bh * 0.74 - 2, "M3 1 L17 1 C19 1 19 3 19 3 L19 13 C19 15 17 15 17 15 L3 15 C1 15 1 13 1 13 L1 3 C1 1 3 1 3 1 Z")
+    put(c, "MID1_belt", "#3A2E2E", 2, bw * 0.92, 13, bcx - bw * 0.46, by + bh * 0.66, soft.ellipse_d(bw * 0.92, 13))
+    put(c, "MID2_buckle", GOLD, 2, 20, 16, bcx - 10, by + bh * 0.66 - 2, "M3 1 L17 1 C19 1 19 3 19 3 L19 13 C19 15 17 15 17 15 L3 15 C1 15 1 13 1 13 L1 3 C1 1 3 1 3 1 Z")
     # 長ぐつ(黒+白い毛のふち)
     for k, x, up in (("P2", bcx - 22, p.get("hl", 0)), ("P3", bcx + 22, p.get("hr", 0))):
         d = BOOT if k == "P3" else mirror(BOOT, 28)
         c[k].update(d=d, fill="#3A2E2E", w=28, h=20, vw=28, vh=20, left=x - 14, top=by + bh - 10 - up, keep=d)
     # 腕: 太い袖(赤)+白い毛の袖口+白い手ぶくろ。肩を支点に大きく動く
     al, ar = p.get("al", 0), p.get("ar", 0)
-    arm_part(c, "P6", bx + 10, by + bh * 0.45, 30 + al, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
-    arm_part(c, "P7", bx + bw - 10, by + bh * 0.45, -30 - ar, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
+    arm_part(c, "P6", bx + 12, by + bh * 0.3, 30 + al, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
+    arm_part(c, "P7", bx + bw - 12, by + bh * 0.3, -30 - ar, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
+    if p.get("gift", True):  # 右手でプレゼントの箱を持つ(手について行く)
+        h_ = c["P7_hand"]
+        hx_, hy_ = h_["left"] + h_["w"] / 2, h_["top"] + h_["h"] / 2
+        put(c, "P7zz_box", GREEN, 2.4, 28, 24, hx_ - 6, hy_ - 22, "M3 1 L25 1 C27 1 27 3 27 3 L27 21 C27 23 25 23 25 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
+        put(c, "P7zz_rib1", GOLD, 0, 6, 24, hx_ + 5, hy_ - 22, soft.ellipse_d(6, 24))
+        put(c, "P7zz_rib2", GOLD, 0, 28, 6, hx_ - 6, hy_ - 13, soft.ellipse_d(28, 6))
+        put(c, "P7zz_bowL", GOLD, 2, 12, 9, hx_ - 4, hy_ - 29, winter.LOOP_L, vw=18, vh=14)
+        put(c, "P7zz_bowR", GOLD, 2, 12, 9, hx_ + 8, hy_ - 29, winter.LOOP_R, vw=18, vh=14)
     # 顔
     put(c, "FACE1", SKIN, 3.4, 80, 72, 120 + fx, 140 + fy, soft.ellipse_d(80, 72))
-    put(c, "BEARD1", WHITE, 2, 86, 42, 117 + fx, 190 + fy, BEARD, vw=368, vh=192)
-    put(c, "BEARD2_in", WHITE, 0, 86, 42, 117 + fx, 190 + fy, BEARD_IN, vw=368, vh=192)
+    put(c, "BEARD1", WHITE, 2, 80, 36, 120 + fx, 190 + fy, BEARD, vw=368, vh=192)
+    put(c, "BEARD2_in", WHITE, 0, 80, 36, 120 + fx, 190 + fy, BEARD_IN, vw=368, vh=192)
     small_eyes(c, 0.86)
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
@@ -322,7 +334,7 @@ def star_path(r):
     return d + " Z"
 
 
-def tree(x, y, k=1.0, lights=0):
+def tree(x, y, k=1.0, lights=0, style="ball"):
     """ツリー(左上 x, y、高さ約 150*k)。深い緑の3段、赤と金の玉、てっぺんに金の星、茶色の幹。
     lights: 玉の色を順番に入れかえる(点滅ではなく、ゆっくり色が変わる)。"""
     def f(c):
@@ -332,11 +344,34 @@ def tree(x, y, k=1.0, lights=0):
         tp("BG4_t3", GREEN, 2.4, 120, 54, 0, 80, tier_path(120, 54))
         tp("BG5_t2", GREEN, 2.4, 96, 50, 12, 46, tier_path(96, 50))
         tp("BG6_t1", GREEN, 2.4, 70, 48, 25, 12, tier_path(70, 48))
-        cols = [RED, GOLD, "#FFFFFF", RED, GOLD, RED]
-        spots = [(44, 50), (74, 64), (30, 90), (62, 100), (92, 108), (52, 72)]
-        for j, (ox, oy) in enumerate(spots):
-            tp(f"BG7_orn{j}", cols[(j + lights) % len(cols)], 2, 12, 12, ox - 6, oy - 6, soft.ellipse_d(12, 12))
-        tp("BG8_star", GOLD, 2.4, 30, 30, 45, -8, star_path(15))
+        if style == "ball":  # 金のモール(ゆるい弧)と赤・金の玉、てっぺんに金の星
+            for j, (y0, w0) in enumerate(((40, 34), (74, 54), (110, 76))):  # 段の内側に収まる幅
+                tp(f"BG7_garland{j}", GOLD, 0, w0, 7, 60 - w0 / 2, y0, "M1 1 C30 9 60 9 89 1 L89 4 C60 12 30 12 1 4 Z")
+                c[f"BG7_garland{j}"].update(vw=90, vh=12)
+            cols = [RED, GOLD, RED, "#FFFFFF", RED, GOLD]
+            spots = [(44, 38), (76, 60), (30, 88), (62, 98), (94, 108), (50, 66)]
+            for j, (ox, oy) in enumerate(spots):
+                tp(f"BG7_orn{j}", cols[(j + lights) % len(cols)], 2, 13, 13, ox - 6.5, oy - 6.5, soft.ellipse_d(13, 13))
+            tp("BG8_star", GOLD, 2.4, 32, 32, 44, -10, star_path(16))
+        else:  # 雪をかぶったツリー: 段の上に白い雪、赤いリボン、てっぺんは赤い大きなリボン、根元にプレゼント
+            snowcap = "M2 10 C8 2 20 0 30 4 C40 0 52 2 58 10 C52 14 46 12 42 16 C36 12 24 12 18 16 C14 12 8 14 2 10 Z"
+            for j, (oy, w0) in enumerate(((10, 34), (46, 54), (82, 74))):  # 段の上のふちにのる白い雪
+                tp(f"BG7_snow{j}", WHITE, 2, w0, 12, 60 - w0 / 2, oy + 4, snowcap)
+                c[f"BG7_snow{j}"].update(vw=60, vh=18)
+            for j, (ox, oy) in enumerate(((60, 42), (40, 80), (82, 84), (60, 116))):  # 大きめの赤いリボン4つ
+                tp(f"BG7_bowL{j}", RED, 2, 18, 14, ox - 18, oy - 7, winter.LOOP_L)
+                c[f"BG7_bowL{j}"].update(vw=18, vh=14)
+                tp(f"BG7_bowR{j}", RED, 2, 18, 14, ox, oy - 7, winter.LOOP_R)
+                c[f"BG7_bowR{j}"].update(vw=18, vh=14)
+                tp(f"BG7_bowK{j}", GOLD, 1.5, 7, 7, ox - 3.5, oy - 3.5, soft.ellipse_d(7, 7))
+            tp("BG8_topL", RED, 2, 20, 16, 40, -6, winter.LOOP_L)
+            tp("BG8_topR", RED, 2, 20, 16, 60, -6, winter.LOOP_R)
+            c["BG8_topL"].update(vw=18, vh=14)
+            c["BG8_topR"].update(vw=18, vh=14)
+            tp("BG9_giftA", RED, 2.4, 30, 24, -6, 126, "M3 1 L27 1 C29 1 29 3 29 3 L29 21 C29 23 27 23 27 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
+            tp("BG9_ribA", GOLD, 0, 6, 24, 6, 126, soft.ellipse_d(6, 24))
+            tp("BG9_giftB", GOLD, 2.4, 26, 20, 94, 130, "M3 1 L23 1 C25 1 25 3 25 3 L25 17 C25 19 23 19 23 19 L3 19 C1 19 1 17 1 17 L1 3 C1 1 3 1 3 1 Z")
+            tp("BG9_ribB", RED, 0, 5, 20, 104, 130, soft.ellipse_d(5, 20))
     return f
 
 
@@ -389,10 +424,10 @@ STAMPS = {
                lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa, tree(300, 104, 0.9, i // 3)],
                both(bells_travel, snowf(1)),
                m=dict(scale=0.76, anchor=(100, 253)), x0=22),
-    "05": make("xmas", [("おつかれ", 40, True), ("さまです", 30, False)], "A",
+    "05": make("xmas", [("おつかれ", 38, True), ("さまです", 28, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree(-80, 118, 0.77, i // 3)],
-               lambda i, av: winter.snow(5, 5, i, avoid=av), m=dict(scale=0.88, anchor=(232, 258)), x0=20),
+                          tree(-90, 118, 0.86, i // 3, style="snow")],
+               lambda i, av: winter.snow(5, 5, i, avoid=av), m=dict(scale=0.86, anchor=(238, 258)), x0=16),
 }
 
 for name, frames in STAMPS.items():
