@@ -303,6 +303,14 @@ def santa(c):
     for side, x0 in ((-1, 121), (1, 199)):  # もみあげ: 帽子のふちの下から、ひげへなめらかにつながる白い楕円
         put(c, f"BEARD0_hair{side}", WHITE, 2.4, 18, 40, x0 - 9 + fx, 160 + fy, soft.ellipse_d(18, 40))
     small_eyes(c, 0.86)
+    # 黒ぶちの丸い眼鏡(目のまわり。目は soften で 5px 下がるので、その分だけ下げて置く)
+    for side, key in ((-1, "P8"), (1, "P9")):
+        e = c[key]
+        ex, ey = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2 + 5
+        put(c, f"P11z_glass{side}", "none", 3.2, 28, 26, ex - 14, ey - 13, soft.ellipse_d(28, 26), stroke="#2B2222")
+    gl, gr = c["P11z_glass-1"], c["P11z_glass1"]
+    put(c, "P11z_bridge", "none", 3.2, gr["left"] - gl["left"] - 28 + 4, 6, gl["left"] + 26, gl["top"] + 9,
+        "M1 5 C4 1 10 1 13 5", vw=14, vh=6, stroke="#2B2222")
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
     # 鼻(目の間の少し下)
@@ -428,8 +436,8 @@ def draw_marks_x(layer, marks, ox, oy):
 
         def B(x0, y0, x1, y1):
             return (x + x0 * k, y + y0 * k, x + x1 * k, y + y1 * k)
-        for j in range(3):  # うしろ(右)に金の星くず
-            sx, sy, r = 40 + j * 7, 6 - j * 3, 3.2 - j * 0.6
+        for j in range(5):  # うしろ(右)に長い金の星くず(速さを出す)
+            sx, sy, r = 40 + j * 9, 6 - j * 1, 3.6 - j * 0.5
             d.ellipse(B(sx - r, sy - r, sx + r, sy + r), fill=GOLD, outline=soft.LINE)
         # すべり木: 金。前(左)は上へくるっと巻く
         d.rounded_rectangle(B(-36, 16, 34, 20), radius=2, fill=GOLD, outline=soft.LINE, width=2)
@@ -463,9 +471,9 @@ def bells_travel(i, av):
     """ベル2つ: ゆれながら、上の方を左から右へ跳ねて進む(その場でゆれるだけにしない)。"""
     # 文字の四角(av)にかからない右上だけで、跳ねながら左右に行き来する
     t = i / 11 * 2 * math.pi
-    x = 272 + 18 * math.sin(t)
+    x = 262 + 14 * math.sin(t)
     y = 34 - 10 * abs(math.sin(t * 2))
-    return [("bell", x, y, 14, 18 * math.sin(i * 1.3)), ("bell", x + 16 * math.cos(t), y + 30, 11, -18 * math.sin(i * 1.3))]
+    return [("bell", x, y + 4, 21, 18 * math.sin(i * 1.3)), ("bell", x + 20 * math.cos(t) - 6, y + 44, 17, -18 * math.sin(i * 1.3))]
 
 
 def both(*fs):
@@ -503,24 +511,33 @@ def bob(dy):
 
 
 # 01 サンタ: ツリーの方(右)から、跳ねながら左へ歩いてきて、止まって手をふる
-WALK01 = [(100, 253), (128, 250), (122, 244), (115, 250), (108, 244), (102, 250), (100, 253), (100, 253), (100, 253),
-          (100, 253), (100, 247), (100, 253)]
+WALK01 = [(132, 256), (168, 252), (162, 246), (160, 252), (150, 246), (140, 252), (132, 256), (132, 256), (132, 251),
+          (132, 252), (132, 250), (132, 256)]
+S01, S05 = 0.92, 0.92
+
+
+def tree_page(px, py, ph, anchor, scale, lights, style="ball"):
+    """ツリーを、スタンプの上の位置(左上 px,py・高さ ph)で置く(キャラの拡大・位置に左右されない)。"""
+    k = ph / 160 / scale
+    return tree(160 + (px - anchor[0]) / scale, 258 + (py - anchor[1]) / scale + 10 * k, k, lights, style)
 # 05 トナカイ: 右から走ってきて(体がはずむ)、止まって、ぴょんと跳ねる
 # 空を飛ぶ大きなそり: 右から左上へ、波打ちながら(文字の右側の空)。1コマ目は完成形の位置
-SLEIGH05 = [(230, 56)] + [(236 - k * 1.6, 56 - 5 * math.sin(k * 1.1)) for k in range(11)]  # 空をゆらゆら左へ
-RUN05 = [(234, 258), (240, 252), (239, 258), (238, 250), (236, 258), (235, 252), (234, 258), (234, 258), (234, 250),
-         (234, 245), (234, 252), (234, 258)]
+# そり: 右から左へ、空を一気に駆け抜ける(1コマ約45px)。駆け抜けたあとは消える。1コマ目は真ん中
+SLEIGH05 = [(170, 50)] + [(196 - k * 40, 62 - k * 5 - 6 * math.sin(k * 1.3)) for k in range(4)] + [None] * 7
+RUN05 = [(206, 258), (228, 252), (223, 258), (218, 250), (216, 258), (210, 252), (206, 258), (206, 258), (206, 250),
+         (206, 245), (206, 252), (206, 258)]
 STAMPS = {
     "01": make("xmas", [("メリー", 44, True), ("クリスマス", 32, True)], "B",
                lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa,
-                          tree(300 - (WALK01[i][0] - 100) / 0.76, 104 - (WALK01[i][1] - 253) / 0.76, 0.9, i)],
+                          tree_page(120, 34, 222, WALK01[i], S01, i)],
                both(bells_travel, snowf(1)),
-               m=dict(scale=0.76, anchor=(100, 253)), x0=22),
-    "05": make("xmas", [("おつかれ", 34, True), ("さまです", 26, False)], "A",
+               m=dict(scale=S01, anchor=(132, 256)), x0=18),
+    "05": make("xmas", [("おつかれ", 33, True), ("さまです", 27, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree(-90 - (RUN05[i][0] - 234) / 0.86, 118 - (RUN05[i][1] - 258) / 0.86, 0.86, i, style="snow")],
+                          tree_page(30, 46, 206, RUN05[i], S05, i, style="snow")],
                lambda i, av: winter.snow(5, 5, i, avoid=av)
-               + [("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 1.3)], m=dict(scale=0.86, anchor=(234, 258)), x0=16),
+               + ([("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 1.3)] if SLEIGH05[i] else []),
+               m=dict(scale=S05, anchor=(206, 258)), x0=138),
 }
 
 for name, path in (("01", WALK01), ("05", RUN05)):
