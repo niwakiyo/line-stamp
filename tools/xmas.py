@@ -103,16 +103,34 @@ def arm_part(c, key, sx, sy, ang, length, width, fill, cap_fill, cap_w, front=Tr
         soft.ellipse_d(cap_w, cap_w * 0.9), rot=ang)
 
 
+HOLLY_LEAF = "M2 8 C6 2 10 6 13 2 C16 6 20 2 24 6 C28 4 32 6 34 8 C30 10 28 14 24 12 C20 16 16 12 13 14 C10 12 6 14 2 8 Z"
+
+
+def holly(c, key, x, y, k=1.0, rot=0):
+    """ヒイラギ: 深い緑の葉2枚と赤い実3つ(クリスマスの目印)。"""
+    put(c, key + "a", GREEN, 2, 34 * k, 16 * k, x - 32 * k, y - 10 * k, HOLLY_LEAF, rot=rot - 20, vw=36, vh=16)
+    put(c, key + "b", GREEN, 2, 34 * k, 16 * k, x - 2 * k, y - 10 * k, mirror(HOLLY_LEAF, 36), rot=rot + 20, vw=36, vh=16)
+    for j, (dx, dy) in enumerate(((-6, -4), (2, -8), (5, 0))):
+        put(c, key + f"c{j}", RED, 2, 9 * k, 9 * k, x + dx * k - 4.5 * k, y + dy * k - 4.5 * k, soft.ellipse_d(9, 9))
+
+
 # ---- トナカイ ---------------------------------------------------------------------
 DEER, DEER_FACE, DEER_D, DEER_FRONT, HOOF = "#8C5A3A", "#DDB383", "#6B4329", "#D2A675", "#3E2A22"  # 体はこい茶、顔は明るい黄土、前足は明るい茶、後ろ足はこげ茶
-MUZZLE, ANTLER, ANTLER_L2 = "#FFF3E2", "#5E3B24", "#B58758"
+MUZZLE, ANTLER, ANTLER_L2 = "#FFF3E2", "#E8C690", "#B58758"   # 角は明るいベージュ(こい茶だと木の枝に見える)
 EAR_IN = "#F7C9C3"
 # 角(左): 4倍の座標(200x200)。根元(下・太い)は頭のてっぺんに重ねる。大きく枝分かれ。右は鏡うつし
-ANTLER_LP = ("M150 196 C146 168 138 140 124 118 C108 94 84 80 56 70 C40 64 28 52 30 38 C34 26 48 28 52 40 "
+ANTLER_OLD = ("M150 196 C146 168 138 140 124 118 C108 94 84 80 56 70 C40 64 28 52 30 38 C34 26 48 28 52 40 "
              "C56 52 70 60 86 66 C82 50 74 34 62 20 C56 12 62 0 74 6 C90 18 98 40 102 62 "
              "C106 74 112 82 118 86 C118 66 120 46 128 30 C132 20 146 20 146 32 C142 56 136 78 140 100 "
              "C146 128 158 160 170 196 Z")
-ANTLER_RP = mirror(ANTLER_LP, 200)
+# 角(左・ベージュ・小さめ): 100x100。下が根元、枝先は丸い。右は鏡うつし
+ANTLER_LP = ("M70 98 C68 80 62 64 52 52 C44 42 32 38 22 36 C14 34 10 26 16 22 C22 18 28 24 32 28 "
+             "C38 32 44 34 48 34 C46 26 42 18 36 12 C32 6 36 0 42 2 C50 6 54 18 56 30 "
+             "C58 36 60 40 62 42 C64 32 68 24 74 18 C78 14 86 16 84 24 C80 32 74 40 72 50 "
+             "C72 66 78 82 82 98 Z")
+ANTLER_RP = mirror(ANTLER_LP, 100)
+TUFT = _circles(120, 60, 70, 26, 7, 30)        # 頭のてっぺんの毛のかたまり(4倍 240x120 → 60x30)
+TUFT_IN = _circles(120, 60, 70, 26, 7, 30, shrink=8)
 EAR_DEER_L = "M2 10 C7 2 22 0 34 7 C33 14 21 18 10 17 C5 16 2 14 2 10 Z"
 EAR_DEER_R = mirror(EAR_DEER_L, 36)
 EAR_DEER_IN_L = "M7 10 C11 5 21 4 29 8 C27 12 19 14 12 14 C9 14 7 12 7 10 Z"
@@ -171,15 +189,19 @@ def reindeer(c):
     arm_part(c, "P6", bcx - 28, by + bh - 38, fl, 34, 20, DEER_FRONT, HOOF, 20, lift=p.get("lfl", 0))
     arm_part(c, "P7", bcx + 28, by + bh - 38, -fr_, 34, 20, DEER_FRONT, HOOF, 20, lift=p.get("lfr", 0))
     # 角: 頭のてっぺんから(根元は顔に重ねて隠す)。顔より後ろ、体より前
-    # 大きく(86px)・太く。根元(下のはし)は頭のてっぺん(顔の上のふち)にかくし、外へ大きく広げる
-    put(c, "ANTL1", ANTLER, 3.2, 88, 88, 74 + fx, 62 + fy, ANTLER_LP, vw=200, vh=200)
-    put(c, "ANTL2", ANTLER, 3.2, 88, 88, 158 + fx, 62 + fy, ANTLER_RP, vw=200, vh=200)
+    # 角: 前髪(毛のかたまり)の両わきから、外へ広がる。根元は前髪と顔にかくす
+    put(c, "ANTL1", ANTLER, 2.6, 56, 56, 96 + fx, 92 + fy, ANTLER_LP, vw=100, vh=100)
+    put(c, "ANTL2", ANTLER, 2.6, 56, 56, 168 + fx, 92 + fy, ANTLER_RP, vw=100, vh=100)
     deer_ear(c, 130 + fx, 160 + fy, -1, -20 + p.get("el", 0))
     deer_ear(c, 190 + fx, 160 + fy, 1, 20 + p.get("er", 0))
     put(c, "FACE1", DEER_FACE, 3.4, 80, 70, 120 + fx, 140 + fy, soft.ellipse_d(80, 70))
     put(c, "FACE2_muzzle", MUZZLE, 2.4, 54, 32, 133 + fx, 176 + fy, soft.ellipse_d(54, 32))
+    # 頭のてっぺんの毛のかたまり(つるつるに見えないように)とヒイラギ
+    put(c, "P7y_tuft", DEER, 2.4, 60, 30, 130 + fx, 128 + fy, TUFT, vw=240, vh=120)
+    put(c, "P7y_tuftin", DEER, 0, 60, 30, 130 + fx, 128 + fy, TUFT_IN, vw=240, vh=120)
+    holly(c, "P7z_holly", 182 + fx, 140 + fy, 0.8)
     small_eyes(c)
-    inko.move(c, ["P8", "P9", "P10", "P11"], dy=-9)  # 目は口元より上(顔の上半分)
+    inko.move(c, ["P8", "P9", "P10", "P11"], dy=-6)  # 目は口元より上(顔の上半分)
     c["P12"]["left"] += 8
     c["P13"]["left"] -= 8
     glow = False  # 鼻は点滅させない(目のまわりがちかちかしないように)
@@ -198,6 +220,8 @@ def xmas_order(key):
         return winter.ORDER.index("P5") - 0.7
     if key.startswith("FACE0b"):  # 耳
         return winter.ORDER.index("P5") - 0.6
+    if key.startswith("P0a") or key.startswith("P0b"):  # サンタの袋: 体の後ろ
+        return -0.2
     if key.startswith("ANTL"):  # 角: 体より前、顔より後ろ(根元は顔の上のふちでかくれる)
         return winter.ORDER.index("P5") - 0.8
     if key.startswith("NECK"):  # トナカイの首輪と鈴: 体より前、角・顔より後ろ…ではなく、あごの下に見せるので顔より前
@@ -228,7 +252,7 @@ def santa(c):
     黒いベルトと金のバックルは体について行く。太い袖の腕と白い手、黒い長ぐつ。"""
     p = c.pop("_p", {})
     fx, fy = face_off(c)
-    HEAD = -18  # 頭を体の上にのせる(顔の部品ごと上へ)
+    HEAD = -12  # 頭を体の上にのせる(顔の部品ごと上へ)
     inko.move(c, ["P8", "P9", "P10", "P11", "P12", "P13", "P14", "P15"], dy=HEAD)
     fy += HEAD
     b = c["P4"]
@@ -245,6 +269,10 @@ def santa(c):
     c.pop("P5", None)
     bx, by, bw, bh = b["left"], b["top"], b["w"], b["h"]
     bcx = bx + bw / 2
+    if p.get("sack", True):  # 白い大きな袋を背中にかつぐ(体の後ろ・体について行く)
+        sack = "M30 4 C44 2 60 8 66 22 C72 38 66 58 48 64 C30 70 10 62 4 46 C-2 30 8 10 30 4 Z"
+        put(c, "P0a_sack", "#F4EEE2", 2.6, 70, 66, bx - 34, by - 30, sack, vw=70, vh=68)
+        put(c, "P0b_sacktie", RED, 2, 20, 10, bx + 18, by - 26, soft.ellipse_d(20, 10), rot=30)
     # すその白い毛・ベルト・バックル(すべて体の位置から置く → 体と一緒に動く)
     put(c, "MID0_hem", WHITE, 2.4, bw * 0.7, 12, bcx - bw * 0.35, by + bh - 12, soft.ellipse_d(bw * 0.7, 12))
     put(c, "MID1_belt", "#3A2E2E", 2, bw * 0.92, 13, bcx - bw * 0.46, by + bh * 0.66, soft.ellipse_d(bw * 0.92, 13))
@@ -267,32 +295,38 @@ def santa(c):
         put(c, "P7zz_bowR", GOLD, 2, 12, 9, hx_ + 8, hy_ - 29, winter.LOOP_R, vw=18, vh=14)
     # 顔
     put(c, "FACE1", SKIN, 3.4, 80, 72, 120 + fx, 140 + fy, soft.ellipse_d(80, 72))
-    put(c, "BEARD1", WHITE, 2, 80, 36, 120 + fx, 190 + fy, BEARD, vw=368, vh=192)
-    put(c, "BEARD2_in", WHITE, 0, 80, 36, 120 + fx, 190 + fy, BEARD_IN, vw=368, vh=192)
+    # ひげ: ほっぺの横から胸まで覆う大きなもこもこ。横の白い髪(帽子のふちの下)とつながる
+    put(c, "BEARD1", WHITE, 2.4, 96, 52, 112 + fx, 194 + fy, BEARD, vw=368, vh=192)
+    put(c, "BEARD2_in", WHITE, 0, 96, 52, 112 + fx, 194 + fy, BEARD_IN, vw=368, vh=192)
+    for side, x0 in ((-1, 116), (1, 204)):  # 横の白い髪: 顔のふちの外側(目にかけない)
+        hair = _circles(52, 80, 14, 48, 4, 24)
+        put(c, f"BEARD0_hair{side}", WHITE, 2.4, 22, 48, x0 - 11 + fx, 154 + fy, hair, vw=104, vh=200)
+        put(c, f"BEARD0_hairin{side}", WHITE, 0, 22, 48, x0 - 11 + fx, 154 + fy, _circles(52, 80, 14, 48, 4, 24, shrink=7),
+            vw=104, vh=200)
     small_eyes(c, 0.86)
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
     # 鼻(目の間の少し下)
     c["P14"].update(d=soft.ellipse_d(15, 12), fill=SKIN_D, w=15, h=12, vw=15, vh=12,
-                    left=152.5 + fx, top=184 + fy, sw=2, stroke=inko.INK, keep=soft.ellipse_d(15, 12))
+                    left=152.5 + fx, top=194 + fy, sw=2, stroke=inko.INK, keep=soft.ellipse_d(15, 12))
     # 口ひげ(鼻の下)と口(口ひげの下、人のにっこり)
-    put(c, "P14y_stacheL", WHITE, 2, 24, 11, 136 + fx, 193 + fy, STACHE_L, vw=34, vh=16)
-    put(c, "P14y_stacheR", WHITE, 2, 24, 11, 160 + fx, 193 + fy, STACHE_R, vw=34, vh=16)
-    c["P15"].update(d=SMILE, fill=soft.LINE, sw=0, stroke=None, w=20, h=10, vw=22, vh=12, left=150 + fx, top=203 + fy,
+    put(c, "P14y_stacheL", WHITE, 2, 24, 11, 136 + fx, 203 + fy, STACHE_L, vw=34, vh=16)
+    put(c, "P14y_stacheR", WHITE, 2, 24, 11, 160 + fx, 203 + fy, STACHE_R, vw=34, vh=16)
+    c["P15"].update(d=SMILE, fill=soft.LINE, sw=0, stroke=None, w=20, h=10, vw=22, vh=12, left=150 + fx, top=213 + fy,
                     keep=SMILE)
     # 帽子: ふち(白)は顔について行く。円すい部分は、ぼんぼりと一緒に swing 度だけ遅れてゆれる
     sw_ = p.get("hat", 0)
-    band_cx, band_cy = 160 + fx, 146 + fy
+    band_cx, band_cy = 160 + fx, 158 + fy  # 帽子のふちは眉の高さ(はだ色のおでこを見せない)
     r = math.radians(sw_)
-    cone_cx, cone_cy = band_cx + 4, band_cy - 20
+    cone_cx, cone_cy = band_cx + 4, band_cy - 24
     ccx = band_cx + (cone_cx - band_cx) * math.cos(r) - (cone_cy - band_cy) * math.sin(r)
     ccy = band_cy + (cone_cx - band_cx) * math.sin(r) + (cone_cy - band_cy) * math.cos(r)
-    put(c, "ACC1_hat", RED, 2.4, 86, 48, ccx - 43, ccy - 24, HAT_CONE, rot=sw_, vw=80, vh=46)
-    tip_x, tip_y = 77 / 80 * 86 - 43, 22 / 46 * 48 - 24  # 帽子の先(箱の中心から)
+    put(c, "ACC1_hat", RED, 2.6, 100, 56, ccx - 50, ccy - 28, HAT_CONE, rot=sw_, vw=80, vh=46)  # 顔より広く
+    tip_x, tip_y = 77 / 80 * 100 - 50, 22 / 46 * 56 - 28  # 帽子の先(箱の中心から)
     px_ = ccx + tip_x * math.cos(r) - tip_y * math.sin(r)
     py_ = ccy + tip_x * math.sin(r) + tip_y * math.cos(r)
     band = "M10 6 C60 0 120 0 170 6 C180 8 182 14 182 20 C182 28 176 32 168 32 C120 26 60 26 12 32 C4 32 -2 28 -2 20 C-2 12 2 7 10 6 Z"
-    put(c, "ACC2_hatband", WHITE, 2.4, 92, 20, band_cx - 46, band_cy - 10, band, vw=180, vh=36)  # ふちもゆるく弧に
+    put(c, "ACC2_hatband", WHITE, 2.6, 100, 22, band_cx - 50, band_cy - 11, band, vw=180, vh=36)  # ふちもゆるく弧に
     put(c, "ACC3_pom", WHITE, 2.4, 22, 22, px_ - 11, py_ - 11, soft.ellipse_d(22, 22))
 
 
@@ -407,28 +441,45 @@ MOVE01 = [dict(), dict(al=10, ar=-8, hat=-6, hl=3), dict(al=34, ar=-4, hat=-14),
           dict(al=-4, ar=-14, hat=-10), dict(al=-12, ar=-20, hat=6), dict(al=-6, ar=-12, hat=14),
           dict(al=24, ar=0, hat=-4, hl=3), dict(al=40, ar=10, hat=4, hr=3)]
 # 05 トナカイ「おつかれ/さまです」: 左に置いて、文字は右に。前足を交互に大きく上げて歩く。鼻がぴかっ
-MOVE05 = [dict(), dict(fl=26, lfl=8, el=-14, er=8, bell=3, glow=True), dict(fr=26, lfr=8, el=8, er=-14, bell=-3),
+MOVE05_OLD = [dict(), dict(fl=26, lfl=8, el=-14, er=8, bell=3, glow=True), dict(fr=26, lfr=8, el=8, er=-14, bell=-3),
           dict(fl=30, lfl=10, el=-12, er=6, bell=3, glow=True), dict(fr=30, lfr=10, el=6, er=-12, bell=-3),
           dict(fl=24, lfl=8, hr=3, el=-14, er=8, bell=3, glow=True), dict(fr=24, lfr=8, hl=3, el=8, er=-14, bell=-3),
           dict(fl=30, lfl=10, el=-10, er=6, bell=2, glow=True), dict(fr=30, lfr=10, el=6, er=-10, bell=-2),
           dict(fl=20, lfl=6, el=-12, er=8, bell=3, glow=True), dict(fr=20, lfr=6, el=8, er=-12, bell=-3), dict(glow=True)]
-BOB05 = [0, -3, 0, -3, 0, -3, 0, -3, 0, -3, 0, 0]
+MOVE05 = [dict(), dict(fl=30, lfl=10, hr=5, el=-16, er=8, bell=4), dict(fr=30, lfr=10, hl=5, el=8, er=-16, bell=-4),
+          dict(fl=30, lfl=10, hr=5, el=-16, er=8, bell=4), dict(fr=30, lfr=10, hl=5, el=8, er=-16, bell=-4),
+          dict(fl=24, lfl=8, hr=4, el=-12, er=6, bell=3), dict(el=6, er=-6, bell=-2), dict(el=-8, er=8, bell=2),
+          dict(fl=28, fr=28, lfl=8, lfr=8, el=-14, er=-14, bell=4), dict(fl=34, fr=34, lfl=12, lfr=12, hl=4, hr=4, el=-18, er=-18, bell=-4),
+          dict(fl=20, fr=20, lfl=6, lfr=6, el=-8, er=-8, bell=3), dict(el=4, er=-4)]
+BOB05 = [0] * 12
 
 
 def bob(dy):
     return lambda c: winter.move(c, list(c), dy=dy) if hasattr(winter, "move") else inko.move(c, list(c), dy=dy)
 
 
+# 01 サンタ: ツリーの方(右)から、跳ねながら左へ歩いてきて、止まって手をふる
+WALK01 = [(100, 253), (128, 250), (122, 244), (115, 250), (108, 244), (102, 250), (100, 253), (100, 253), (100, 253),
+          (100, 253), (100, 247), (100, 253)]
+# 05 トナカイ: 右から走ってきて(体がはずむ)、止まって、ぴょんと跳ねる
+RUN05 = [(238, 258), (252, 252), (249, 258), (246, 250), (242, 258), (238, 252), (238, 258), (238, 258), (238, 250),
+         (238, 245), (238, 252), (238, 258)]
 STAMPS = {
     "01": make("xmas", [("メリー", 44, True), ("クリスマス", 32, True)], "B",
-               lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa, tree(300, 104, 0.9, i // 3)],
+               lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa,
+                          tree(300 - (WALK01[i][0] - 100) / 0.76, 104 - (WALK01[i][1] - 253) / 0.76, 0.9, i // 3)],
                both(bells_travel, snowf(1)),
                m=dict(scale=0.76, anchor=(100, 253)), x0=22),
     "05": make("xmas", [("おつかれ", 38, True), ("さまです", 28, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree(-90, 118, 0.86, i // 3, style="snow")],
-               lambda i, av: winter.snow(5, 5, i, avoid=av), m=dict(scale=0.86, anchor=(238, 258)), x0=16),
+                          tree(-90 - (RUN05[i][0] - 238) / 0.86, 118 - (RUN05[i][1] - 258) / 0.86, 0.86, i // 3, style="snow")],
+               lambda i, av: winter.snow(5, 5, i, avoid=av)
+               + ([("breath", min(RUN05[i][0] + 36, 286), 248, 6 + (i % 2) * 2)] if 1 <= i <= 5 else []), m=dict(scale=0.86, anchor=(238, 258)), x0=16),
 }
+
+for name, path in (("01", WALK01), ("05", RUN05)):
+    for i, fr in enumerate(STAMPS[name]):
+        fr["anchor"] = path[i]
 
 for name, frames in STAMPS.items():
     for i, fr in enumerate(frames):
