@@ -201,7 +201,9 @@ def reindeer(c):
     put(c, "P7y_tuftin", DEER, 0, 60, 30, 130 + fx, 128 + fy, TUFT_IN, vw=240, vh=120)
     holly(c, "P7z_holly", 182 + fx, 140 + fy, 0.8)
     small_eyes(c)
-    inko.move(c, ["P8", "P9", "P10", "P11"], dy=-6)  # 目は口元より上(顔の上半分)
+    inko.move(c, ["P8", "P9", "P10", "P11"], dy=-13)  # 目は口元よりはっきり上(顔の上半分)
+    inko.move(c, ["P8", "P10"], dx=-3)
+    inko.move(c, ["P9", "P11"], dx=3)
     c["P12"]["left"] += 8
     c["P13"]["left"] -= 8
     glow = False  # 鼻は点滅させない(目のまわりがちかちかしないように)
@@ -298,21 +300,18 @@ def santa(c):
     # ひげ: ほっぺの横から胸まで覆う大きなもこもこ。横の白い髪(帽子のふちの下)とつながる
     put(c, "BEARD1", WHITE, 2.4, 96, 52, 112 + fx, 194 + fy, BEARD, vw=368, vh=192)
     put(c, "BEARD2_in", WHITE, 0, 96, 52, 112 + fx, 194 + fy, BEARD_IN, vw=368, vh=192)
-    for side, x0 in ((-1, 116), (1, 204)):  # 横の白い髪: 顔のふちの外側(目にかけない)
-        hair = _circles(52, 80, 14, 48, 4, 24)
-        put(c, f"BEARD0_hair{side}", WHITE, 2.4, 22, 48, x0 - 11 + fx, 154 + fy, hair, vw=104, vh=200)
-        put(c, f"BEARD0_hairin{side}", WHITE, 0, 22, 48, x0 - 11 + fx, 154 + fy, _circles(52, 80, 14, 48, 4, 24, shrink=7),
-            vw=104, vh=200)
+    for side, x0 in ((-1, 121), (1, 199)):  # もみあげ: 帽子のふちの下から、ひげへなめらかにつながる白い楕円
+        put(c, f"BEARD0_hair{side}", WHITE, 2.4, 18, 40, x0 - 9 + fx, 160 + fy, soft.ellipse_d(18, 40))
     small_eyes(c, 0.86)
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
     # 鼻(目の間の少し下)
     c["P14"].update(d=soft.ellipse_d(15, 12), fill=SKIN_D, w=15, h=12, vw=15, vh=12,
-                    left=152.5 + fx, top=194 + fy, sw=2, stroke=inko.INK, keep=soft.ellipse_d(15, 12))
+                    left=152.5 + fx, top=187 + fy, sw=2, stroke=inko.INK, keep=soft.ellipse_d(15, 12))
     # 口ひげ(鼻の下)と口(口ひげの下、人のにっこり)
-    put(c, "P14y_stacheL", WHITE, 2, 24, 11, 136 + fx, 203 + fy, STACHE_L, vw=34, vh=16)
-    put(c, "P14y_stacheR", WHITE, 2, 24, 11, 160 + fx, 203 + fy, STACHE_R, vw=34, vh=16)
-    c["P15"].update(d=SMILE, fill=soft.LINE, sw=0, stroke=None, w=20, h=10, vw=22, vh=12, left=150 + fx, top=213 + fy,
+    put(c, "P14y_stacheL", WHITE, 2, 24, 11, 136 + fx, 195 + fy, STACHE_L, vw=34, vh=16)
+    put(c, "P14y_stacheR", WHITE, 2, 24, 11, 160 + fx, 195 + fy, STACHE_R, vw=34, vh=16)
+    c["P15"].update(d=SMILE, fill=soft.LINE, sw=0, stroke=None, w=20, h=10, vw=22, vh=12, left=150 + fx, top=204 + fy,
                     keep=SMILE)
     # 帽子: ふち(白)は顔について行く。円すい部分は、ぼんぼりと一緒に swing 度だけ遅れてゆれる
     sw_ = p.get("hat", 0)
@@ -398,6 +397,9 @@ def tree(x, y, k=1.0, lights=0, style="ball"):
                 tp(f"BG7_bowR{j}", RED, 2, 18, 14, ox, oy - 7, winter.LOOP_R)
                 c[f"BG7_bowR{j}"].update(vw=18, vh=14)
                 tp(f"BG7_bowK{j}", GOLD, 1.5, 7, 7, ox - 3.5, oy - 3.5, soft.ellipse_d(7, 7))
+            lcols = [GOLD, RED, "#FFFFFF", "#7FC4FF"]  # 電球はコマごとに色が入れかわる(サンタのツリーと同じ)
+            for j, (ox, oy) in enumerate(((50, 28), (70, 34), (30, 62), (90, 64), (22, 98), (48, 96), (74, 100), (98, 100))):
+                tp(f"BG7_light{j}", lcols[(j + lights) % 4], 1.5, 9, 9, ox - 4.5, oy - 4.5, soft.ellipse_d(9, 9))
             tp("BG8_topL", RED, 2, 20, 16, 40, -6, winter.LOOP_L)
             tp("BG8_topR", RED, 2, 20, 16, 60, -6, winter.LOOP_R)
             c["BG8_topL"].update(vw=18, vh=14)
@@ -407,6 +409,46 @@ def tree(x, y, k=1.0, lights=0, style="ball"):
             tp("BG9_giftB", GOLD, 2.4, 26, 20, 94, 130, "M3 1 L23 1 C25 1 25 3 25 3 L25 17 C25 19 23 19 23 19 L3 19 C1 19 1 17 1 17 L1 3 C1 1 3 1 3 1 Z")
             tp("BG9_ribB", RED, 0, 5, 20, 104, 130, soft.ellipse_d(5, 20))
     return f
+
+
+_dm = soft.draw_marks
+
+
+def draw_marks_x(layer, marks, ox, oy):
+    """空を飛ぶそり(赤いそり・金のふち・白い袋と緑のプレゼント、うしろに金の星くず)。"""
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(layer)
+    rest = []
+    for m in marks:
+        if m[0] != "sleigh":
+            rest.append(m)
+            continue
+        _, x, y, k = m
+        x, y = ox + x, oy + y
+
+        def B(x0, y0, x1, y1):
+            return (x + x0 * k, y + y0 * k, x + x1 * k, y + y1 * k)
+        for j in range(3):  # うしろ(右)に金の星くず
+            sx, sy, r = 40 + j * 7, 6 - j * 3, 3.2 - j * 0.6
+            d.ellipse(B(sx - r, sy - r, sx + r, sy + r), fill=GOLD, outline=soft.LINE)
+        # すべり木: 金。前(左)は上へくるっと巻く
+        d.rounded_rectangle(B(-36, 16, 34, 20), radius=2, fill=GOLD, outline=soft.LINE, width=2)
+        d.arc(B(-46, 2, -30, 20), 80, 270, fill=soft.LINE, width=round(6 * k))
+        d.arc(B(-46, 2, -30, 20), 80, 270, fill=GOLD, width=round(3.5 * k))
+        d.line([B(-20, 12, -20, 18)[:2], B(-20, 12, -20, 18)[2:]], fill=soft.LINE, width=3)
+        d.line([B(20, 12, 20, 18)[:2], B(20, 12, 20, 18)[2:]], fill=soft.LINE, width=3)
+        # 荷物: 白い袋と緑・赤のプレゼント
+        d.ellipse(B(-18, -26, 10, 2), fill="#F4EEE2", outline=soft.LINE, width=2)
+        d.rounded_rectangle(B(4, -18, 18, -4), radius=2, fill=GREEN, outline=soft.LINE, width=2)
+        d.rounded_rectangle(B(-28, -14, -16, -2), radius=2, fill=GOLD, outline=soft.LINE, width=2)
+        # そりの本体: 赤。うしろ(右)は背もたれが高く、前は丸くそり上がる
+        d.rounded_rectangle(B(14, -22, 36, 12), radius=round(8 * k), fill=RED, outline=soft.LINE, width=3)
+        d.rounded_rectangle(B(-32, -6, 30, 12), radius=round(7 * k), fill=RED, outline=soft.LINE, width=3)
+        d.line([B(-28, 2, 32, 2)[:2], B(-28, 2, 32, 2)[2:]], fill=GOLD, width=round(2.5 * k))
+    _dm(layer, rest, ox, oy)
+
+
+soft.draw_marks = draw_marks_x
 
 
 # ---- 台本 -------------------------------------------------------------------------
@@ -419,9 +461,11 @@ def snowf(seed, n=6):
 
 def bells_travel(i, av):
     """ベル2つ: ゆれながら、上の方を左から右へ跳ねて進む(その場でゆれるだけにしない)。"""
-    x = 40 + (i * 20) % 220
-    y = 26 + abs(math.sin(i * 0.9)) * -10 + 14
-    return [("bell", x, y, 14, 18 * math.sin(i * 1.3)), ("bell", (x + 110) % 230 + 40, y + 8, 12, -18 * math.sin(i * 1.3))]
+    # 文字の四角(av)にかからない右上だけで、跳ねながら左右に行き来する
+    t = i / 11 * 2 * math.pi
+    x = 272 + 18 * math.sin(t)
+    y = 34 - 10 * abs(math.sin(t * 2))
+    return [("bell", x, y, 14, 18 * math.sin(i * 1.3)), ("bell", x + 16 * math.cos(t), y + 30, 11, -18 * math.sin(i * 1.3))]
 
 
 def both(*fs):
@@ -462,19 +506,21 @@ def bob(dy):
 WALK01 = [(100, 253), (128, 250), (122, 244), (115, 250), (108, 244), (102, 250), (100, 253), (100, 253), (100, 253),
           (100, 253), (100, 247), (100, 253)]
 # 05 トナカイ: 右から走ってきて(体がはずむ)、止まって、ぴょんと跳ねる
-RUN05 = [(238, 258), (252, 252), (249, 258), (246, 250), (242, 258), (238, 252), (238, 258), (238, 258), (238, 250),
-         (238, 245), (238, 252), (238, 258)]
+# 空を飛ぶ大きなそり: 右から左上へ、波打ちながら(文字の右側の空)。1コマ目は完成形の位置
+SLEIGH05 = [(230, 56)] + [(236 - k * 1.6, 56 - 5 * math.sin(k * 1.1)) for k in range(11)]  # 空をゆらゆら左へ
+RUN05 = [(234, 258), (240, 252), (239, 258), (238, 250), (236, 258), (235, 252), (234, 258), (234, 258), (234, 250),
+         (234, 245), (234, 252), (234, 258)]
 STAMPS = {
     "01": make("xmas", [("メリー", 44, True), ("クリスマス", 32, True)], "B",
                lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa,
-                          tree(300 - (WALK01[i][0] - 100) / 0.76, 104 - (WALK01[i][1] - 253) / 0.76, 0.9, i // 3)],
+                          tree(300 - (WALK01[i][0] - 100) / 0.76, 104 - (WALK01[i][1] - 253) / 0.76, 0.9, i)],
                both(bells_travel, snowf(1)),
                m=dict(scale=0.76, anchor=(100, 253)), x0=22),
-    "05": make("xmas", [("おつかれ", 38, True), ("さまです", 28, False)], "A",
+    "05": make("xmas", [("おつかれ", 34, True), ("さまです", 26, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree(-90 - (RUN05[i][0] - 238) / 0.86, 118 - (RUN05[i][1] - 258) / 0.86, 0.86, i // 3, style="snow")],
+                          tree(-90 - (RUN05[i][0] - 234) / 0.86, 118 - (RUN05[i][1] - 258) / 0.86, 0.86, i, style="snow")],
                lambda i, av: winter.snow(5, 5, i, avoid=av)
-               + ([("breath", min(RUN05[i][0] + 36, 286), 248, 6 + (i % 2) * 2)] if 1 <= i <= 5 else []), m=dict(scale=0.86, anchor=(238, 258)), x0=16),
+               + [("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 1.3)], m=dict(scale=0.86, anchor=(234, 258)), x0=16),
 }
 
 for name, path in (("01", WALK01), ("05", RUN05)):
