@@ -680,9 +680,9 @@ def avoid_boxes(base, m):
     return tuple(boxes)
 
 
-def make(pal, lines, typ, poses, marks, m=MID, x0=28, **kw):
+def make(pal, lines, typ, poses, marks, m=MID, x0=28, y0=24, **kw):
     """12コマぶんの台本を作る。poses/marks は i を受け取る関数。"""
-    base = block(pal, lines, x0=x0)
+    base = block(pal, lines, x0=x0, y0=y0)
     return [kf(poses(i), frame_words(pal, base, typ, i, **kw), marks(i, avoid_boxes(base, m)), **m)
             for i in range(12)]
 

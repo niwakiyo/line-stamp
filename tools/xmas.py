@@ -307,26 +307,15 @@ def santa(c):
     for side, x0 in ((-1, 121), (1, 199)):  # もみあげ: 帽子のふちの下から、ひげへなめらかにつながる白い楕円
         put(c, f"BEARD0_hair{side}", WHITE, 2.4, 18, 40, x0 - 9 + fx, 160 + fy, soft.ellipse_d(18, 40))
     small_eyes(c, 0.86)
-    # 黒ぶち眼鏡(ボストン形・太いふち)。レンズは淡い水色で、斜めに2本の光。ふちの外の上に金の飾りびょう、
-    # 耳の方へのびるつる。ブリッジは鼻の上でゆるく下がる弧。目は soften で 5px 下がるので、その分だけ下げて置く
-    BOSTON = "M5 3 C11 1 21 1 27 3 C30 5 31 10 30 15 C28 22 22 26 16 26 C10 26 4 22 2 15 C1 10 2 5 5 3 Z"
-    INK2 = "#2B2222"
+    # 白くてふさふさの眉毛(おじいさん)。外側は少し下がる。左右は鏡うつし
+    # ふさふさ: 上のふちを小さく3つ波打たせ、外側の毛先が下へたれる
+    BROW_R = ("M2 13 C2 7 6 4 10 5 C12 1 18 0 21 3 C24 1 30 3 31 8 C34 10 35 15 33 18 "
+              "C31 15 28 14 25 15 C21 12 16 13 12 15 C8 13 5 14 2 13 Z")
     for side, key in ((-1, "P8"), (1, "P9")):
         e = c[key]
         ex, ey = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2 + 5
-        gx, gy = ex - 16, ey - 13
-        put(c, f"GLS1_lens{side}", "#E3F3FF", 0, 32, 27, gx, gy, BOSTON, vw=32, vh=27)
-        put(c, f"GLS2_shineA{side}", WHITE, 0, 5, 12, gx + 20, gy + 4, soft.ellipse_d(5, 12), rot=35)
-        put(c, f"GLS2_shineB{side}", WHITE, 0, 3, 7, gx + 25, gy + 10, soft.ellipse_d(3, 7), rot=35)
-        put(c, f"GLS4_rim{side}", "none", 1.9, 32, 27, gx, gy, BOSTON, vw=32, vh=27, stroke=INK2)
-        tx = gx - 9 if side < 0 else gx + 32
-        put(c, f"GLS3_temple{side}", INK2, 0, 11, 4, tx, gy + 7, soft.ellipse_d(11, 4))
-        rx = gx + 3 if side < 0 else gx + 25
-        put(c, f"GLS5_rivet{side}", GOLD, 1.2, 5, 5, rx, gy + 3, soft.ellipse_d(5, 5))
-    gl, gr = c["GLS4_rim-1"], c["GLS4_rim1"]
-    bw_ = gr["left"] - (gl["left"] + 32) + 6
-    put(c, "GLS4_bridge", "none", 1.9, bw_, 7, gl["left"] + 29, gl["top"] + 7, "M1 2 C5 7 11 7 15 2",
-        vw=16, vh=7, stroke=INK2)
+        d = BROW_R if side > 0 else mirror(BROW_R, 35)
+        put(c, f"GLS4_brow{side}", WHITE, 2.4, 32, 17, ex - 16 + side * 3, ey - 18, d, vw=35, vh=19)
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
     # 鼻(目の間の少し下)
@@ -454,8 +443,74 @@ def tree(x, y, k=1.0, lights=0, style="ball"):
 _dm = soft.draw_marks
 
 
+def _bez(p0, p1, p2, p3, n=14):
+    return [((1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t * t * p2[0] + t ** 3 * p3[0],
+             (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t * t * p2[1] + t ** 3 * p3[1])
+            for t in [i / n for i in range(n + 1)]]
+
+
+def sleigh_image(k=1.0, tilt=0):
+    """そり(右向き)を1枚の画像に描く。3倍の大きさで描いてから縮めて、線をなめらかにする。
+    - 本体: 赤。うしろ(左)は丸く高い背もたれ、前(右)は大きく反り上がってくるっと巻く。金のふちどりと金のうず飾り
+    - すべり木: 金。前は上へ大きく巻き上がる。本体とは金の支柱2本でつなぐ
+    - 荷物: プレゼントの箱を3つ積む(緑+金のリボン、金+赤のリボン、水色+白のリボン)。どれもリボン結び付き"""
+    from PIL import ImageDraw
+    S = 3 * k
+    W, H = int(150 * S), int(110 * S)
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    L = soft.LINE
+    lw = max(2, round(2.6 * S))
+
+    def P(pts):
+        return [(x * S, y * S) for x, y in pts]
+
+    def box(x, y, w, h, fill, rib, bow=True):
+        d.rounded_rectangle(P([(x, y), (x + w, y + h)]), radius=2 * S, fill=fill, outline=L, width=lw)
+        d.rectangle(P([(x + w / 2 - 2.5, y + 1), (x + w / 2 + 2.5, y + h - 1)]), fill=rib)
+        d.rectangle(P([(x + 1, y + h / 2 - 2.2), (x + w - 1, y + h / 2 + 2.2)]), fill=rib)
+        if bow:
+            cx, cy = x + w / 2, y
+            d.ellipse(P([(cx - 9, cy - 7), (cx - 1, cy + 1)]), fill=rib, outline=L, width=lw)
+            d.ellipse(P([(cx + 1, cy - 7), (cx + 9, cy + 1)]), fill=rib, outline=L, width=lw)
+            d.ellipse(P([(cx - 2.5, cy - 4), (cx + 2.5, cy + 1)]), fill=rib, outline=L, width=lw)
+
+    # 荷物(本体のうしろにのせる): 左から大・中・上に小
+    box(40, 22, 32, 30, GREEN, GOLD)
+    box(70, 30, 26, 24, GOLD, RED)
+    box(50, 2, 22, 20, "#7FC4FF", WHITE)
+    # すべり木(金): 下の線と、前の巻き上がり
+    run = _bez((14, 92), (40, 98), (96, 98), (116, 90)) + _bez((116, 90), (134, 84), (140, 64), (128, 60)) \
+        + _bez((128, 60), (120, 58), (116, 68), (124, 70))
+    d.line(P(run), fill=L, width=round(7 * S), joint="curve")
+    d.line(P(run), fill=GOLD, width=round(4 * S), joint="curve")
+    for x in (36, 88):  # 支柱
+        d.line(P([(x, 80), (x, 92)]), fill=L, width=round(6 * S))
+        d.line(P([(x, 80), (x, 92)]), fill=GOLD, width=round(3 * S))
+    # 本体(赤): 背もたれは丸く高く、前は反り上がってくるっと巻く
+    body = (_bez((10, 48), (6, 30), (14, 22), (26, 26)) + _bez((26, 26), (32, 30), (30, 46), (40, 52))
+            + _bez((40, 52), (64, 58), (90, 54), (106, 44)) + _bez((106, 44), (116, 36), (128, 34), (128, 44))
+            + _bez((128, 44), (128, 52), (120, 56), (114, 54)) + _bez((114, 54), (112, 70), (100, 82), (80, 84))
+            + _bez((80, 84), (56, 86), (28, 84), (16, 74)) + _bez((16, 74), (10, 66), (10, 56), (10, 48)))
+    d.polygon(P(body), fill=RED, outline=L)
+    d.line(P(body + body[:1]), fill=L, width=lw, joint="curve")
+    # 金のふちどり(本体のふちに沿う線)と、横の金のうず飾り
+    trim = _bez((18, 70), (40, 78), (80, 78), (108, 60))
+    d.line(P(trim), fill=GOLD, width=round(3.2 * S), joint="curve")
+    swirl = _bez((60, 66), (52, 60), (60, 54), (66, 58)) + _bez((66, 58), (70, 62), (66, 66), (63, 63))
+    d.line(P(swirl), fill=GOLD, width=round(2.6 * S), joint="curve")
+    d.ellipse(P([(118, 39), (124, 45)]), fill=GOLD, outline=L, width=max(1, lw // 2))  # 巻きの先の金の玉
+    im = im.resize((W // 3, H // 3), Image.LANCZOS)
+    if tilt:
+        im = im.rotate(tilt, resample=Image.BICUBIC, expand=True)
+    return im
+
+
+_SLEIGH_CACHE = {}
+
+
 def draw_marks_x(layer, marks, ox, oy):
-    """空を飛ぶそり(赤いそり・金のふち・白い袋と緑のプレゼント、うしろに金の星くず)。"""
+    """空を飛ぶそり(右向き・プレゼントを積む)と、うしろに続く金の星くず。"""
     from PIL import ImageDraw
     d = ImageDraw.Draw(layer)
     rest = []
@@ -463,28 +518,19 @@ def draw_marks_x(layer, marks, ox, oy):
         if m[0] != "sleigh":
             rest.append(m)
             continue
-        _, x, y, k = m
+        _, x, y, k, tilt = m
         x, y = ox + x, oy + y
-
-        def B(x0, y0, x1, y1):
-            return (x + x0 * k, y + y0 * k, x + x1 * k, y + y1 * k)
-        for j in range(6):  # うしろ(右)に長い金の星くず(速さを出す)
-            sx, sy, r = 40 + j * 8, 8 + j * 1.5, 3.8 - j * 0.45
-            d.ellipse(B(sx - r, sy - r, sx + r, sy + r), fill=GOLD, outline=soft.LINE)
-        # すべり木: 金。前(左)は上へくるっと巻く
-        d.rounded_rectangle(B(-36, 16, 34, 20), radius=2, fill=GOLD, outline=soft.LINE, width=2)
-        d.arc(B(-46, 2, -30, 20), 80, 270, fill=soft.LINE, width=round(6 * k))
-        d.arc(B(-46, 2, -30, 20), 80, 270, fill=GOLD, width=round(3.5 * k))
-        d.line([B(-20, 12, -20, 18)[:2], B(-20, 12, -20, 18)[2:]], fill=soft.LINE, width=3)
-        d.line([B(20, 12, 20, 18)[:2], B(20, 12, 20, 18)[2:]], fill=soft.LINE, width=3)
-        # 荷物: 白い袋と緑・赤のプレゼント
-        d.ellipse(B(-18, -26, 10, 2), fill="#F4EEE2", outline=soft.LINE, width=2)
-        d.rounded_rectangle(B(4, -18, 18, -4), radius=2, fill=GREEN, outline=soft.LINE, width=2)
-        d.rounded_rectangle(B(-28, -14, -16, -2), radius=2, fill=GOLD, outline=soft.LINE, width=2)
-        # そりの本体: 赤。うしろ(右)は背もたれが高く、前は丸くそり上がる
-        d.rounded_rectangle(B(14, -22, 36, 12), radius=round(8 * k), fill=RED, outline=soft.LINE, width=3)
-        d.rounded_rectangle(B(-32, -6, 30, 12), radius=round(7 * k), fill=RED, outline=soft.LINE, width=3)
-        d.line([B(-28, 2, 32, 2)[:2], B(-28, 2, 32, 2)[2:]], fill=GOLD, width=round(2.5 * k))
+        for j in range(5):  # 星くず: そりのうしろ(左下)へ、だんだん小さく
+            r = 4.6 - j * 0.55
+            sx, sy = x - 44 * k - j * 9, y + 22 * k + j * 4
+            if sx - r < 12:
+                break
+            d.ellipse((sx - r, sy - r, sx + r, sy + r), fill=GOLD if j % 2 == 0 else WHITE, outline=soft.LINE)
+        key = (round(k, 2), round(tilt))
+        if key not in _SLEIGH_CACHE:
+            _SLEIGH_CACHE[key] = sleigh_image(k, tilt)
+        im = _SLEIGH_CACHE[key]
+        layer.alpha_composite(im, (round(x - im.width / 2), round(y - im.height / 2)))
     _dm(layer, rest, ox, oy)
 
 
@@ -555,7 +601,8 @@ def tree_page(px, py, ph, anchor, scale, lights, style="ball"):
 # 05 トナカイ: 右から走ってきて(体がはずむ)、止まって、ぴょんと跳ねる
 # 空を飛ぶ大きなそり: 右から左上へ、波打ちながら(文字の右側の空)。1コマ目は完成形の位置
 # そり: 右から左へ、空を一気に駆け抜ける(1コマ約45px)。駆け抜けたあとは消える。1コマ目は真ん中
-SLEIGH05 = [(190, 47)] + [(200 - k * 13, 66 - k * 1.4 - 5 * math.sin(k * 1.2)) for k in range(11)]
+# そり: 左下から右上へ、だんだん速く空へかけ上がる(12コマずっと見える)。1コマ目は真ん中
+SLEIGH05 = [(150, 54)] + [(78 + 10 * t + 0.7 * t * t, 74 - 2.0 * t) for t in range(11)]
 RUN05 = [(206, 258), (228, 252), (223, 258), (218, 250), (216, 258), (210, 252), (206, 258), (206, 258), (206, 250),
          (206, 245), (206, 252), (206, 258)]
 STAMPS = {
@@ -564,12 +611,12 @@ STAMPS = {
                           tree_page(120, 34, 222, WALK01[i], S01, i)],
                both(bells_travel, snowf(1)),
                m=dict(scale=S01, anchor=(132, 256)), x0=18),
-    "05": make("xmas", [("おつかれ", 33, True), ("さまです", 27, False)], "A",
+    "05": make("xmas", [("おつかれ", 30, True), ("さまです", 24, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree_page(34, 50, 190, RUN05[i], S05, i, style="snow")],
+                          tree_page(30, 70, 176, RUN05[i], S05, i, style="snow")],
                lambda i, av: winter.snow(5, 5, i, avoid=av)
-               + ([("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 1.3)] if SLEIGH05[i] else []),
-               m=dict(scale=S05, anchor=(206, 258)), x0=138),
+               + ([("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 0.68, 12)] if SLEIGH05[i] else []),
+               m=dict(scale=S05, anchor=(206, 258)), x0=18, y0=166),
 }
 
 for name, path in (("01", WALK01), ("05", RUN05)):
