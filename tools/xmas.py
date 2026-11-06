@@ -224,6 +224,10 @@ def xmas_order(key):
         return winter.ORDER.index("P5") - 0.6
     if key.startswith("P0a") or key.startswith("P0b"):  # サンタの袋: 体の後ろ
         return -0.2
+    if key.startswith("GLS1") or key.startswith("GLS2"):  # レンズと光: 目より後ろ(目は見える)
+        return winter.ORDER.index("P8") - 0.2 + (0.05 if key.startswith("GLS2") else 0)
+    if key.startswith("GLS"):  # つる・ふち・びょう: 目より前
+        return len(winter.ORDER) + 0.5
     if key.startswith("ANTL"):  # 角: 体より前、顔より後ろ(根元は顔の上のふちでかくれる)
         return winter.ORDER.index("P5") - 0.8
     if key.startswith("NECK"):  # トナカイの首輪と鈴: 体より前、角・顔より後ろ…ではなく、あごの下に見せるので顔より前
@@ -303,14 +307,26 @@ def santa(c):
     for side, x0 in ((-1, 121), (1, 199)):  # もみあげ: 帽子のふちの下から、ひげへなめらかにつながる白い楕円
         put(c, f"BEARD0_hair{side}", WHITE, 2.4, 18, 40, x0 - 9 + fx, 160 + fy, soft.ellipse_d(18, 40))
     small_eyes(c, 0.86)
-    # 黒ぶちの丸い眼鏡(目のまわり。目は soften で 5px 下がるので、その分だけ下げて置く)
+    # 黒ぶち眼鏡(ボストン形・太いふち)。レンズは淡い水色で、斜めに2本の光。ふちの外の上に金の飾りびょう、
+    # 耳の方へのびるつる。ブリッジは鼻の上でゆるく下がる弧。目は soften で 5px 下がるので、その分だけ下げて置く
+    BOSTON = "M5 3 C11 1 21 1 27 3 C30 5 31 10 30 15 C28 22 22 26 16 26 C10 26 4 22 2 15 C1 10 2 5 5 3 Z"
+    INK2 = "#2B2222"
     for side, key in ((-1, "P8"), (1, "P9")):
         e = c[key]
         ex, ey = e["left"] + e["w"] / 2, e["top"] + e["h"] / 2 + 5
-        put(c, f"P11z_glass{side}", "none", 3.2, 28, 26, ex - 14, ey - 13, soft.ellipse_d(28, 26), stroke="#2B2222")
-    gl, gr = c["P11z_glass-1"], c["P11z_glass1"]
-    put(c, "P11z_bridge", "none", 3.2, gr["left"] - gl["left"] - 28 + 4, 6, gl["left"] + 26, gl["top"] + 9,
-        "M1 5 C4 1 10 1 13 5", vw=14, vh=6, stroke="#2B2222")
+        gx, gy = ex - 16, ey - 13
+        put(c, f"GLS1_lens{side}", "#E3F3FF", 0, 32, 27, gx, gy, BOSTON, vw=32, vh=27)
+        put(c, f"GLS2_shineA{side}", WHITE, 0, 5, 12, gx + 20, gy + 4, soft.ellipse_d(5, 12), rot=35)
+        put(c, f"GLS2_shineB{side}", WHITE, 0, 3, 7, gx + 25, gy + 10, soft.ellipse_d(3, 7), rot=35)
+        put(c, f"GLS4_rim{side}", "none", 1.9, 32, 27, gx, gy, BOSTON, vw=32, vh=27, stroke=INK2)
+        tx = gx - 9 if side < 0 else gx + 32
+        put(c, f"GLS3_temple{side}", INK2, 0, 11, 4, tx, gy + 7, soft.ellipse_d(11, 4))
+        rx = gx + 3 if side < 0 else gx + 25
+        put(c, f"GLS5_rivet{side}", GOLD, 1.2, 5, 5, rx, gy + 3, soft.ellipse_d(5, 5))
+    gl, gr = c["GLS4_rim-1"], c["GLS4_rim1"]
+    bw_ = gr["left"] - (gl["left"] + 32) + 6
+    put(c, "GLS4_bridge", "none", 1.9, bw_, 7, gl["left"] + 29, gl["top"] + 7, "M1 2 C5 7 11 7 15 2",
+        vw=16, vh=7, stroke=INK2)
     c["P12"]["left"] += 6
     c["P13"]["left"] -= 6
     # 鼻(目の間の少し下)
@@ -405,15 +421,31 @@ def tree(x, y, k=1.0, lights=0, style="ball"):
                 tp(f"BG7_bowR{j}", RED, 2, 18, 14, ox, oy - 7, winter.LOOP_R)
                 c[f"BG7_bowR{j}"].update(vw=18, vh=14)
                 tp(f"BG7_bowK{j}", GOLD, 1.5, 7, 7, ox - 3.5, oy - 3.5, soft.ellipse_d(7, 7))
-            lcols = [GOLD, RED, "#FFFFFF", "#7FC4FF"]  # 電球はコマごとに色が入れかわる(サンタのツリーと同じ)
-            for j, (ox, oy) in enumerate(((50, 28), (70, 34), (30, 62), (90, 64), (22, 98), (48, 96), (74, 100), (98, 100))):
-                tp(f"BG7_light{j}", lcols[(j + lights) % 4], 1.5, 9, 9, ox - 4.5, oy - 4.5, soft.ellipse_d(9, 9))
-            tp("BG8_topL", RED, 2, 20, 16, 40, -6, winter.LOOP_L)
-            tp("BG8_topR", RED, 2, 20, 16, 60, -6, winter.LOOP_R)
+            for j, (y0, w0) in enumerate(((30, 40), (64, 62), (100, 86))):  # 電球をつなぐ金のひも(ゆるい弧)
+                tp(f"BG7_wire{j}", GOLD, 0, w0, 7, 60 - w0 / 2, y0, "M1 1 C30 9 60 9 89 1 L89 4 C60 12 30 12 1 4 Z")
+                c[f"BG7_wire{j}"].update(vw=90, vh=12)
+            lcols = [GOLD, RED, "#FFFFFF", "#7FC4FF", "#FF9AC8"]  # 電球はコマごとに色が入れかわって点滅
+            lspots = [(44, 32), (60, 34), (76, 32), (32, 66), (50, 70), (70, 70), (88, 66),
+                      (22, 102), (40, 106), (60, 108), (80, 106), (98, 102)]
+            for j, (ox, oy) in enumerate(lspots):
+                tp(f"BG7_light{j}", lcols[(j + lights) % 5], 1.5, 9, 10, ox - 4.5, oy - 3, soft.ellipse_d(9, 10))
+            tp("BG8_topL", RED, 2, 20, 16, 40, 2, winter.LOOP_L)
+            tp("BG8_topR", RED, 2, 20, 16, 60, 2, winter.LOOP_R)
             c["BG8_topL"].update(vw=18, vh=14)
             c["BG8_topR"].update(vw=18, vh=14)
+            tp("BG8_star", GOLD, 2.4, 30, 30, 45, -22, star_path(15))
+            # 根元: 雪の山、杖のキャンディ
+            tp("BG8z_mound", WHITE, 2.4, 150, 22, -15, 138, "M2 20 C20 6 50 2 75 4 C100 2 130 6 148 20 C100 24 50 24 2 20 Z")
+            c["BG8z_mound"].update(vw=150, vh=24)
+            cane = "M14 46 L14 12 C14 6 10 3 6 3 C3 3 1 6 1 9 L5 9 C5 8 5 7 6 7 C8 7 10 9 10 12 L10 46 Z"
+            tp("BG9_cane", WHITE, 2, 16, 48, 112, 96, cane)
+            c["BG9_cane"].update(vw=16, vh=48)
+            for j in range(4):
+                tp(f"BG9_canest{j}", RED, 0, 5, 4, 122, 106 + j * 9, soft.ellipse_d(5, 4))
             tp("BG9_giftA", RED, 2.4, 30, 24, -6, 126, "M3 1 L27 1 C29 1 29 3 29 3 L29 21 C29 23 27 23 27 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
             tp("BG9_ribA", GOLD, 0, 6, 24, 6, 126, soft.ellipse_d(6, 24))
+            tp("BG9_giftC", "#7FC4FF", 2.4, 22, 18, 22, 134, "M3 1 L19 1 C21 1 21 3 21 3 L21 15 C21 17 19 17 19 17 L3 17 C1 17 1 15 1 15 L1 3 C1 1 3 1 3 1 Z")
+            tp("BG9_ribC", WHITE, 0, 22, 4, 22, 141, soft.ellipse_d(22, 4))
             tp("BG9_giftB", GOLD, 2.4, 26, 20, 94, 130, "M3 1 L23 1 C25 1 25 3 25 3 L25 17 C25 19 23 19 23 19 L3 19 C1 19 1 17 1 17 L1 3 C1 1 3 1 3 1 Z")
             tp("BG9_ribB", RED, 0, 5, 20, 104, 130, soft.ellipse_d(5, 20))
     return f
@@ -436,8 +468,8 @@ def draw_marks_x(layer, marks, ox, oy):
 
         def B(x0, y0, x1, y1):
             return (x + x0 * k, y + y0 * k, x + x1 * k, y + y1 * k)
-        for j in range(5):  # うしろ(右)に長い金の星くず(速さを出す)
-            sx, sy, r = 40 + j * 9, 6 - j * 1, 3.6 - j * 0.5
+        for j in range(6):  # うしろ(右)に長い金の星くず(速さを出す)
+            sx, sy, r = 40 + j * 8, 8 + j * 1.5, 3.8 - j * 0.45
             d.ellipse(B(sx - r, sy - r, sx + r, sy + r), fill=GOLD, outline=soft.LINE)
         # すべり木: 金。前(左)は上へくるっと巻く
         d.rounded_rectangle(B(-36, 16, 34, 20), radius=2, fill=GOLD, outline=soft.LINE, width=2)
@@ -523,7 +555,7 @@ def tree_page(px, py, ph, anchor, scale, lights, style="ball"):
 # 05 トナカイ: 右から走ってきて(体がはずむ)、止まって、ぴょんと跳ねる
 # 空を飛ぶ大きなそり: 右から左上へ、波打ちながら(文字の右側の空)。1コマ目は完成形の位置
 # そり: 右から左へ、空を一気に駆け抜ける(1コマ約45px)。駆け抜けたあとは消える。1コマ目は真ん中
-SLEIGH05 = [(170, 50)] + [(196 - k * 40, 62 - k * 5 - 6 * math.sin(k * 1.3)) for k in range(4)] + [None] * 7
+SLEIGH05 = [(190, 47)] + [(200 - k * 13, 66 - k * 1.4 - 5 * math.sin(k * 1.2)) for k in range(11)]
 RUN05 = [(206, 258), (228, 252), (223, 258), (218, 250), (216, 258), (210, 252), (206, 258), (206, 258), (206, 250),
          (206, 245), (206, 252), (206, 258)]
 STAMPS = {
@@ -534,7 +566,7 @@ STAMPS = {
                m=dict(scale=S01, anchor=(132, 256)), x0=18),
     "05": make("xmas", [("おつかれ", 33, True), ("さまです", 27, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
-                          tree_page(30, 46, 206, RUN05[i], S05, i, style="snow")],
+                          tree_page(34, 50, 190, RUN05[i], S05, i, style="snow")],
                lambda i, av: winter.snow(5, 5, i, avoid=av)
                + ([("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 1.3)] if SLEIGH05[i] else []),
                m=dict(scale=S05, anchor=(206, 258)), x0=138),
