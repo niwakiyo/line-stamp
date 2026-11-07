@@ -294,13 +294,14 @@ def santa(c):
     arm_part(c, "P6", bx + 12, by + bh * 0.3, 30 + al, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
     arm_part(c, "P7", bx + bw - 12, by + bh * 0.3, -30 - ar, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
     if p.get("gift", True):  # 右手でプレゼントの箱を持つ(手について行く)
-        h_ = c["P7_hand"]
+        h_ = c["P6_hand"]  # サンタの右手(見て左)に持つ
         hx_, hy_ = h_["left"] + h_["w"] / 2, h_["top"] + h_["h"] / 2
-        put(c, "P7zz_box", GREEN, 2.4, 28, 24, hx_ - 6, hy_ - 22, "M3 1 L25 1 C27 1 27 3 27 3 L27 21 C27 23 25 23 25 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
-        put(c, "P7zz_rib1", GOLD, 0, 6, 24, hx_ + 5, hy_ - 22, soft.ellipse_d(6, 24))
-        put(c, "P7zz_rib2", GOLD, 0, 28, 6, hx_ - 6, hy_ - 13, soft.ellipse_d(28, 6))
-        put(c, "P7zz_bowL", GOLD, 2, 12, 9, hx_ - 4, hy_ - 29, winter.LOOP_L, vw=18, vh=14)
-        put(c, "P7zz_bowR", GOLD, 2, 12, 9, hx_ + 8, hy_ - 29, winter.LOOP_R, vw=18, vh=14)
+        bx_ = hx_ - 22  # 箱は手の外側(見て左)へ
+        put(c, "P7zz_box", GREEN, 2.4, 28, 24, bx_, hy_ - 22, "M3 1 L25 1 C27 1 27 3 27 3 L27 21 C27 23 25 23 25 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
+        put(c, "P7zz_rib1", GOLD, 0, 6, 24, bx_ + 11, hy_ - 22, soft.ellipse_d(6, 24))
+        put(c, "P7zz_rib2", GOLD, 0, 28, 6, bx_, hy_ - 13, soft.ellipse_d(28, 6))
+        put(c, "P7zz_bowL", GOLD, 2, 12, 9, bx_ + 2, hy_ - 29, winter.LOOP_L, vw=18, vh=14)
+        put(c, "P7zz_bowR", GOLD, 2, 12, 9, bx_ + 14, hy_ - 29, winter.LOOP_R, vw=18, vh=14)
     # 顔
     put(c, "FACE1", SKIN, 3.4, 80, 72, 120 + fx, 140 + fy, soft.ellipse_d(80, 72))
     # ひげ: ほっぺの横から胸まで覆う大きなもこもこ。横の白い髪(帽子のふちの下)とつながる
@@ -568,10 +569,10 @@ MOVE01_OLD = [dict(), dict(al=-6, ar=-6, hat=-6), dict(al=30, ar=26, hat=-14, hl
           dict(al=-14, ar=-14, hat=-12), dict(al=-18, ar=-18, hat=8), dict(al=-12, ar=-10, hat=14),
           dict(al=10, ar=-4, hat=-6, hl=3), dict(al=-4, ar=12, hat=4, hr=3)]
 # 左手は大きくふり上げて手をふる、右手は少し遅れて小さく(左右で別の動き)
-MOVE01 = [dict(), dict(al=10, ar=-8, hat=-6, hl=3), dict(al=34, ar=-4, hat=-14), dict(al=50, ar=8, hat=-4, hr=4),
-          dict(al=36, ar=22, hat=12, hl=4), dict(al=52, ar=12, hat=18), dict(al=30, ar=-6, hat=6, hr=3),
-          dict(al=-4, ar=-14, hat=-10), dict(al=-12, ar=-20, hat=6), dict(al=-6, ar=-12, hat=14),
-          dict(al=24, ar=0, hat=-4, hl=3), dict(al=40, ar=10, hat=4, hr=3)]
+MOVE01 = [dict(), dict(ar=10, al=-8, hat=-6, hl=3), dict(ar=34, al=-4, hat=-14), dict(ar=50, al=8, hat=-4, hr=4),
+          dict(ar=36, al=22, hat=12, hl=4), dict(ar=52, al=12, hat=18), dict(ar=30, al=-6, hat=6, hr=3),
+          dict(ar=-4, al=-14, hat=-10), dict(ar=-12, al=-20, hat=6), dict(ar=-6, al=-12, hat=14),
+          dict(ar=24, al=0, hat=-4, hl=3), dict(ar=40, al=10, hat=4, hr=3)]
 # 05 トナカイ「おつかれ/さまです」: 左に置いて、文字は右に。前足を交互に大きく上げて歩く。鼻がぴかっ
 MOVE05_OLD = [dict(), dict(fl=26, lfl=8, el=-14, er=8, bell=3, glow=True), dict(fr=26, lfr=8, el=8, er=-14, bell=-3),
           dict(fl=30, lfl=10, el=-12, er=6, bell=3, glow=True), dict(fr=30, lfr=10, el=6, er=-12, bell=-3),
