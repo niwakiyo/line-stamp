@@ -293,7 +293,7 @@ def block_staggered(pal, lines, x0=28, y0=24, indent=8):
     out, y = [], y0 + 10
     x0 += 12  # 先頭の大きな字とカーブの分だけ内側へ
     for i, (text, size, strong) in enumerate(lines):
-        w = len(text) * size * 0.98
+        w = len(text) * size * (0.6 if text.isascii() else 0.98)  # 英字は字の間がせまい
         cy = y + size * 0.62
         shift = (0, 22, 8, 26)[i % 4]
         out.append((text, x0 + shift + w / 2, cy, size, (-7, 4, -3, 5)[i % 4], strong))

@@ -81,7 +81,9 @@ def say_xmas(pal, *parts):
     ws = newyear.say_curved("xmas", *parts)
     for w, (text, x, y, size, rot, strong, extra) in zip(ws, parts):
         w["colors"] = [RED, GREEN] if strong else [GREEN_D]
-        if size <= 36:  # 小さい文字は白いフチを細く、字の間を少し広げ、ゆれ・大きさの差を小さくして読みやすく
+        if text.isascii():  # 英字は字の間をつめる(日本語と同じ間だとばらばらに見える)
+            w.update(spacing=0.6, outline=6, vary=False)
+        elif size <= 36:  # 小さい文字は白いフチを細く、字の間を少し広げ、ゆれ・大きさの差を小さくして読みやすく
             w.update(outline=5, rim_w=2, spacing=1.06, vary=False)
     return ws
 
@@ -293,15 +295,28 @@ def santa(c):
     al, ar = p.get("al", 0), p.get("ar", 0)
     arm_part(c, "P6", bx + 12, by + bh * 0.3, 30 + al, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
     arm_part(c, "P7", bx + bw - 12, by + bh * 0.3, -30 - ar, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
-    if p.get("gift", True):  # 右手でプレゼントの箱を持つ(手について行く)
-        h_ = c["P6_hand"]  # サンタの右手(見て左)に持つ
+    hold = p.get("hold", "gift" if p.get("gift", True) else None)
+    if hold:  # 右手(見て左)に持つ物。手について行く
+        h_ = c[p.get("hand", "P6") + "_hand"]
         hx_, hy_ = h_["left"] + h_["w"] / 2, h_["top"] + h_["h"] / 2
-        bx_ = hx_ - 22  # 箱は手の外側(見て左)へ
-        put(c, "P7zz_box", GREEN, 2.4, 28, 24, bx_, hy_ - 22, "M3 1 L25 1 C27 1 27 3 27 3 L27 21 C27 23 25 23 25 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z")
-        put(c, "P7zz_rib1", GOLD, 0, 6, 24, bx_ + 11, hy_ - 22, soft.ellipse_d(6, 24))
-        put(c, "P7zz_rib2", GOLD, 0, 28, 6, bx_, hy_ - 13, soft.ellipse_d(28, 6))
-        put(c, "P7zz_bowL", GOLD, 2, 12, 9, bx_ + 2, hy_ - 29, winter.LOOP_L, vw=18, vh=14)
-        put(c, "P7zz_bowR", GOLD, 2, 12, 9, bx_ + 14, hy_ - 29, winter.LOOP_R, vw=18, vh=14)
+        if hold in ("gift", "biggift"):
+            g = 1.0 if hold == "gift" else 1.6
+            bx_ = hx_ - 22 * g
+            put(c, "P7zz_box", GREEN, 2.4, 28 * g, 24 * g, bx_, hy_ - 22 * g,
+                "M3 1 L25 1 C27 1 27 3 27 3 L27 21 C27 23 25 23 25 23 L3 23 C1 23 1 21 1 21 L1 3 C1 1 3 1 3 1 Z", vw=28, vh=24)
+            put(c, "P7zz_rib1", GOLD, 0, 6 * g, 24 * g, bx_ + 11 * g, hy_ - 22 * g, soft.ellipse_d(6, 24), vw=6, vh=24)
+            put(c, "P7zz_rib2", GOLD, 0, 28 * g, 6 * g, bx_, hy_ - 13 * g, soft.ellipse_d(28, 6), vw=28, vh=6)
+            put(c, "P7zz_bowL", GOLD, 2, 12 * g, 9 * g, bx_ + 2 * g, hy_ - 29 * g, winter.LOOP_L, vw=18, vh=14)
+            put(c, "P7zz_bowR", GOLD, 2, 12 * g, 9 * g, bx_ + 14 * g, hy_ - 29 * g, winter.LOOP_R, vw=18, vh=14)
+        elif hold == "glass":  # シャンパングラス(金色の中身と泡)
+            put(c, "P7zz_gbowl", "#F7E3A0", 2.4, 20, 26, hx_ - 10, hy_ - 40,
+                "M2 2 L18 2 C18 14 15 22 10 24 C5 22 2 14 2 2 Z", vw=20, vh=26)
+            put(c, "P7zz_gstem", "#EAF6FF", 2, 4, 14, hx_ - 2, hy_ - 16, soft.ellipse_d(4, 14), vw=4, vh=14)
+            put(c, "P7zz_gbase", "#EAF6FF", 2, 16, 5, hx_ - 8, hy_ - 4, soft.ellipse_d(16, 5), vw=16, vh=5)
+            for j, (dx, dy) in enumerate(((-3, -30), (3, -24), (-1, -20))):
+                put(c, f"P7zz_gb{j}", WHITE, 0, 3, 3, hx_ + dx, hy_ + dy, soft.ellipse_d(3, 3))
+        elif hold == "star":  # ツリーのてっぺんにのせる金の星
+            put(c, "P7zz_star", GOLD, 2.4, 34, 34, hx_ - 17, hy_ - 36, star_path(17), vw=34, vh=34)
     # 顔
     put(c, "FACE1", SKIN, 3.4, 80, 72, 120 + fx, 140 + fy, soft.ellipse_d(80, 72))
     # ひげ: ほっぺの横から胸まで覆う大きなもこもこ。横の白い髪(帽子のふちの下)とつながる
@@ -402,6 +417,21 @@ def tree(x, y, k=1.0, lights=0, style="ball"):
             for j, (ox, oy) in enumerate(spots):
                 tp(f"BG7_orn{j}", cols[(j + lights) % len(cols)], 2, 13, 13, ox - 6.5, oy - 6.5, soft.ellipse_d(13, 13))
             tp("BG8_star", GOLD, 2.4, 32, 32, 44, -10, star_path(16))
+        elif style == "lights":  # 電球のツリー: 電球をたくさん、てっぺんの星から光の線が出る
+            for j, (y0, w0) in enumerate(((36, 40), (70, 62), (106, 86))):
+                tp(f"BG7_wire{j}", GOLD, 0, w0, 7, 60 - w0 / 2, y0, "M1 1 C30 9 60 9 89 1 L89 4 C60 12 30 12 1 4 Z")
+                c[f"BG7_wire{j}"].update(vw=90, vh=12)
+            lc = [GOLD, RED, "#7FC4FF", "#FF9AC8", WHITE]
+            spots = [(42, 38), (58, 42), (76, 38), (30, 72), (46, 76), (62, 78), (80, 76), (94, 72),
+                     (18, 108), (34, 112), (50, 114), (66, 114), (84, 112), (100, 108)]
+            for j, (ox, oy) in enumerate(spots):
+                tp(f"BG7_light{j}", lc[(j + lights) % 5], 1.5, 10, 11, ox - 5, oy - 3, soft.ellipse_d(10, 11))
+            for j, a in enumerate((-150, -110, -70, -30)):  # 星の光の線(長さが交互に変わる)
+                ra = math.radians(a)
+                ln = 14 + 6 * ((j + lights) % 2)
+                tp(f"BG7z_ray{j}", "#FFE27A", 1.5, ln, 5, 60 + 22 * math.cos(ra) - ln / 2, 6 + 22 * math.sin(ra), winter.RAY)
+                c[f"BG7z_ray{j}"].update(vw=14, vh=5, rot=a)
+            tp("BG8_star", GOLD, 2.4, 34, 34, 43, -12, star_path(17))
         else:  # 雪をかぶったツリー: 段の上に白い雪、赤いリボン、てっぺんは赤い大きなリボン、根元にプレゼント
             snowcap = "M2 10 C8 2 20 0 30 4 C40 0 52 2 58 10 C52 14 46 12 42 16 C36 12 24 12 18 16 C14 12 8 14 2 10 Z"
             for j, (oy, w0) in enumerate(((10, 34), (46, 54), (82, 74))):  # 段の上のふちにのる白い雪
