@@ -73,14 +73,17 @@ def mirror(d, width):
                   lambda m: f"{width - float(m.group(1)):g} {m.group(2)}", d)
 
 
-GREEN, GREEN_D = "#2F7D5A", "#245F45"   # 深い緑(背景の緑と区別できる。G-max(R,B)<40)
+GREEN, GREEN_D = "#2F7D5A", "#245F45"
+GOLD_T = "#D08A10"  # 文字用の金(白いフチの上で読める濃さ)
 
 
 def say_xmas(pal, *parts):
     """クリスマスのセリフ: 強調語は赤と緑を1字ずつ交互(金のフチ)、ほかの語は緑。カーブ・段差・大きさ違い。"""
     ws = newyear.say_curved("xmas", *parts)
     for w, (text, x, y, size, rot, strong, extra) in zip(ws, parts):
-        w["colors"] = [RED, GREEN] if strong else [GREEN_D]
+        # 3色以上のクリスマスカラーを1文字ずつ(強調語は赤・緑・金、語尾は深い緑・赤・金)
+        w["colors"] = [RED, GREEN, GOLD_T] if strong else [GREEN_D, RED_D, GOLD_T]
+        w["kanji_font"] = None  # セリフの漢字に筆の書体を使わない(やわらかい手書き風にそろえる)
         if text.isascii():  # 英字は字の間をつめる(日本語と同じ間だとばらばらに見える)
             w.update(spacing=0.6, outline=6, vary=False)
         elif size <= 36:  # 小さい文字は白いフチを細く、字の間を少し広げ、ゆれ・大きさの差を小さくして読みやすく
@@ -293,8 +296,10 @@ def santa(c):
         c[k].update(d=d, fill="#3A2E2E", w=28, h=20, vw=28, vh=20, left=x - 14, top=by + bh - 10 - up, keep=d)
     # 腕: 太い袖(赤)+白い毛の袖口+白い手ぶくろ。肩を支点に大きく動く
     al, ar = p.get("al", 0), p.get("ar", 0)
-    arm_part(c, "P6", bx + 12, by + bh * 0.3, 30 + al, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
-    arm_part(c, "P7", bx + bw - 12, by + bh * 0.3, -30 - ar, 34, 22, RED_D, WHITE, 20, cuff=WHITE)
+    # 肩より上へ上げるときは腕を少しずつ長くする(短いままだと手が顔の横で止まり「上げた」に見えない)
+    lal, lar = 34 + max(0, al - 50) * 0.3, 34 + max(0, ar - 50) * 0.3
+    arm_part(c, "P6", bx + 12, by + bh * 0.3, 30 + al, lal, 22, RED_D, WHITE, 20, cuff=WHITE)
+    arm_part(c, "P7", bx + bw - 12, by + bh * 0.3, -30 - ar, lar, 22, RED_D, WHITE, 20, cuff=WHITE)
     hold = p.get("hold", "gift" if p.get("gift", True) else None)
     if hold:  # 右手(見て左)に持つ物。手について行く
         h_ = c[p.get("hand", "P6") + "_hand"]
@@ -482,7 +487,7 @@ def _bez(p0, p1, p2, p3, n=14):
             for t in [i / n for i in range(n + 1)]]
 
 
-def sleigh_image(k=1.0, tilt=0):
+def sleigh_image(k=1.0, tilt=0, part="all"):
     """そり(右向き)を1枚の画像に描く。3倍の大きさで描いてから縮めて、線をなめらかにする。
     - 本体: 赤。うしろ(左)は丸く高い背もたれ、前(右)は大きく反り上がってくるっと巻く。金のふちどりと金のうず飾り
     - すべり木: 金。前は上へ大きく巻き上がる。本体とは金の支柱2本でつなぐ
@@ -509,9 +514,17 @@ def sleigh_image(k=1.0, tilt=0):
             d.ellipse(P([(cx - 2.5, cy - 4), (cx + 2.5, cy + 1)]), fill=rib, outline=L, width=lw)
 
     # 荷物(本体のうしろにのせる): 左から大・中・上に小
-    box(40, 22, 32, 30, GREEN, GOLD)
-    box(70, 30, 26, 24, GOLD, RED)
-    box(50, 2, 22, 20, "#7FC4FF", WHITE)
+    # part="gifts" は「サンタが乗るとき」の荷物だけ(背もたれの上・うしろに高く積む)、part="body" はそりだけ
+    if part == "all":
+        box(40, 22, 32, 30, GREEN, GOLD)
+        box(70, 30, 26, 24, GOLD, RED)
+        box(50, 2, 22, 20, "#7FC4FF", WHITE)
+    elif part == "gifts":
+        box(4, 20, 30, 30, GREEN, GOLD)
+        box(26, 30, 22, 22, GOLD, RED)
+        box(10, 2, 20, 18, "#7FC4FF", WHITE)
+        im = im.resize((W // 3, H // 3), Image.LANCZOS)
+        return im.rotate(tilt, resample=Image.BICUBIC, expand=True) if tilt else im
     # すべり木(金): 下の線と、前の巻き上がり
     run = _bez((14, 92), (40, 98), (96, 98), (116, 90)) + _bez((116, 90), (134, 84), (140, 64), (128, 60)) \
         + _bez((128, 60), (120, 58), (116, 68), (124, 70))
