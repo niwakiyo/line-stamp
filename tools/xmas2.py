@@ -427,7 +427,8 @@ _STOCK = {}
 def stocking_img(kind, sc, t=0):
     """クリスマスの靴下(1足): ふわふわの白い口(波のふち)、かかと・つま先の別色、柄、口からのぞくプレゼントやキャンディ。
     kind ごとに色・柄・のぞく物を変える。つり下げる点は画像の上の真ん中(ひもの輪)。"""
-    key = (kind, sc, t % 2)
+    key = (kind, sc, 0)
+    t = 0  # 1コマごとに絵を変えない(チカチカさせない)
     if key in _STOCK:
         return _STOCK[key]
     K = 3 * sc
@@ -549,28 +550,22 @@ def fir_garland(layer, pts, i):
         for a in (-0.9, -0.3, 0.3, 0.9):
             a += 0.3 * math.sin(j)
             d.line(P3(x, y, x + 7 * math.sin(a), y - 6 * math.cos(a)), fill="#7CCB9A", width=3)
-    d.line([(x * 3, (y + 2) * 3) for x, y in dense], fill=L, width=9, joint="curve")
-    d.line([(x * 3, (y + 2) * 3) for x, y in dense], fill=GOLD, width=5, joint="curve")
-    lights = ["#FF5A5A", "#FFD24D", "#7FC4FF", "#8FE3B0", "#FF9ED2"]
-    for j, (x, y) in enumerate(dense[2::4]):
-        on = (j + i) % 3 == 0
+    # 電球はついたまま(消えない)。1つだけが順番に少し明るく光る(チカチカさせない)
+    lights = ["#FF6B6B", "#FFD24D", "#7FC4FF"]
+    bulbs = dense[5::10]
+    for j, (x, y) in enumerate(bulbs):
         col = lights[j % len(lights)]
-        if on:
-            d.ellipse(P3(x - 8, y - 2, x + 8, y + 14), fill=col + "55")
-        d.rounded_rectangle(P3(x - 2.5, y + 1, x + 2.5, y + 4), radius=3, fill="#555", outline=L, width=2)
-        d.ellipse(P3(x - 4, y + 3, x + 4, y + 12), fill=col if on else col + "AA", outline=L, width=3)
-        if on:
-            d.ellipse(P3(x - 2, y + 4.5, x, y + 7), fill=WHITE)
-    for j, (x, y) in enumerate(dense[4::8]):  # 大きな赤と金の玉
-        col = RED if j % 2 else GOLD
-        d.ellipse(P3(x - 6, y - 2, x + 6, y + 10), fill=col, outline=L, width=4)
-        d.ellipse(P3(x - 3.5, y, x - 0.5, y + 3), fill=WHITE)
+        if j == (i // 2) % len(bulbs):
+            d.ellipse(P3(x - 9, y, x + 9, y + 20), fill=col + "50")
+        d.rounded_rectangle(P3(x - 3, y + 1, x + 3, y + 5), radius=3, fill="#555", outline=L, width=2)
+        d.ellipse(P3(x - 5, y + 4, x + 5, y + 16), fill=col, outline=L, width=3)
+        d.ellipse(P3(x - 2.5, y + 6, x, y + 9), fill=WHITE)
     layer.alpha_composite(big.resize(layer.size, Image.LANCZOS))
 
 
 # 靴下は5足: 大きさ・色・柄・口からのぞく物(キャンディ・プレゼント・星)をそれぞれ変える
 # (x, 種類, 大きさ, ひもの長さ)
-STOCKS04 = [(44, 0, 1.1, 14), (100, 1, 0.86, 24), (158, 2, 1.18, 22), (216, 3, 0.92, 22), (270, 4, 1.04, 14)]
+STOCKS04 = [(48, 0, 1.3, 6), (122, 1, 1.05, 12), (196, 2, 1.38, 4), (268, 4, 1.12, 10)]
 
 
 def stockings_front(layer, i):
@@ -581,23 +576,19 @@ def stockings_front(layer, i):
     fir_garland(layer, pts, i)
     d = ImageDraw.Draw(layer)
     for j, (x, kind, sc, drop) in enumerate(STOCKS04):
-        im = stocking_img(kind, sc, i + j)
-        ang = 8 * math.sin(i * 2 * math.pi / 12 * (1 + j % 2) + j * 1.3)
+        im = stocking_img(kind, sc)
+        ang = 4 * math.sin(i * 2 * math.pi / 12 + j * 0.8)  # ゆっくり小さく(12コマで1往復)
         top = sag(x) + 4
         hx, hy = im.width * 4 / 52, im.height * 26 / 92  # ひもの輪(画像の中の位置)
         a = math.radians(ang)
         ex, ey = x - drop * math.sin(a), top + drop * math.cos(a)
-        d.line((x, top, ex, ey), fill=L, width=5)
-        d.line((x, top, ex, ey), fill=RED, width=3)
+        d.line((x, top, ex, ey), fill=L, width=4)
+        d.line((x, top, ex, ey), fill=GOLD, width=2)
         pad = int(max(im.size) * 2.2)
         cv = Image.new("RGBA", (pad, pad), (0, 0, 0, 0))
         cv.alpha_composite(im, (round(pad / 2 - hx), round(pad / 2 - hy)))
         cv = cv.rotate(ang, resample=Image.BICUBIC, center=(pad // 2, pad // 2))
         layer.alpha_composite(cv, (round(ex - pad / 2), round(ey - pad / 2)))
-        # つるしたところの小さなリボン結び
-        for sx in (-1, 1):
-            d.ellipse((x + sx * 5 - 4, top - 3, x + sx * 5 + 4, top + 4), fill=RED, outline=L, width=1)
-        d.ellipse((x - 2.5, top - 2, x + 2.5, top + 3), fill=RED_D, outline=L, width=1)
     for x in (16, 304):  # 両はしの大きなリボン
         y = sag(x)
         for sx in (-1, 1):
@@ -609,7 +600,7 @@ def stockings_front(layer, i):
 
 def qmarks_front(layer, i):
     """「?」3つ: 大きさ・色・かたむきを変えて、順番に跳ねる。"""
-    for j, (x, y, sz, col, rot) in enumerate(((70, 136, 48, RED, -14), (130, 128, 38, GREEN, 14), (28, 146, 32, GOLD_T, -8))):
+    for j, (x, y, sz, col, rot) in enumerate(((96, 142, 46, RED, -14), (156, 132, 36, GREEN, 14), (34, 148, 32, GOLD_T, -8))):
         hop = abs(math.sin((i + j * 2) * 0.9)) * 10
         font = ImageFont.truetype(str(soft.HAND_FONT), sz)
         g = Image.new("RGBA", (sz + 30, sz + 30), (0, 0, 0, 0))
@@ -921,7 +912,7 @@ STAMPS["17"] = with_layers(paths(make(
     "xmas", [("Merry", 42, True), ("Christmas", 38, True)], "B",
     lambda i: [S, happy, P(fl=20 * (i % 2), fr=20 * ((i + 1) % 2), lfl=6 * (i % 2), lfr=6 * ((i + 1) % 2), el=-10, er=10),
                reindeer],
-    xmas.bells_travel, m=dict(scale=0.7, anchor=WALK17[0]), x0=18, y0=134), WALK17),
+    both(xmas.bells_travel, xmas.sparkle_field(((40, 40), (282, 150), (290, 214), (30, 110), (250, 22), (70, 120), (250, 120), (160, 18), (196, 240)))), m=dict(scale=0.7, anchor=WALK17[0]), x0=18, y0=134), WALK17),
     back=lambda L_, i: put_img(L_, wreath_big(190, i), 160, 108, GROW[i]))
 DEER.add("17")
 
@@ -1126,8 +1117,8 @@ def card_A():  # 21 Merry Christmas: 赤のカード(白い水玉)。電球の�
         put_img(im, icon_pose("santa", 70, t), x, 208 - abs(math.sin(t * 1.6)) * 12)
         bell_swing(im, 82, 34, 13, t)
         bell_swing(im, 238, 34, 13, t, 1.6)
-        if k:
-            winter.draw_marks2(im, twinkles(((92, 128), (236, 150), (160, 150)), t, 6), 0, 0)
+        winter.draw_marks2(im, [("spark", x, y, (5, 8, 12, 8)[(t + j * 3) % 4]) for j, (x, y) in
+                                enumerate(((92, 128), (236, 150), (160, 150), (84, 240), (240, 240), (150, 196), (230, 104)))], 0, 0)
     return card_frames(paper, (60, 11), (18, 26, 164, [("Merry", 44), ("Christmas", 30)]), XC, scene)
 
 
@@ -1151,6 +1142,8 @@ def card_C():  # 23 メリークリスマス: 白いカードに赤いリボン�
         put_img(im, icon_pose("deer", 62, t), 222, 214 - abs(math.sin(t * 1.4)) * 10)
         bell_swing(im, 96, 130, 13, t)
         bell_swing(im, 226, 132, 13, t, 1.5)
+        winter.draw_marks2(im, [("spark", x, y, (5, 8, 12, 8)[(t + j * 3) % 4]) for j, (x, y) in
+                                enumerate(((84, 170), (232, 170), (150, 132), (110, 246), (196, 150), (186, 244)))], 0, 0)
     return card_frames(paper, (60, 11), (18, 22, 164, [("メリー", 40), ("クリスマス", 32)]), XC, scene)
 
 

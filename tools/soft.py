@@ -236,12 +236,18 @@ def draw_word(layer, w, ox, oy, outline=9):
         y = oy + w["cy"] + lx * math.sin(r) + ly * math.cos(r)
         pad = outline + 8
         g = Image.new("RGBA", (csize + pad * 2, csize + pad * 2), (0, 0, 0, 0))
-        dr = ImageDraw.Draw(g)
         pos = (pad + csize / 2, pad + csize / 2)
         rim, rim_w = w.get("rim") or RIM, w.get("rim_w", 2)
-        dr.text(pos, ch, font=font, anchor="mm", fill=rim, stroke_width=outline + rim_w, stroke_fill=rim)
+        # フチ・白いフチ・文字は別々の層に描いて重ねる(同じ層に描くと、なめらかな縁の半透明が下の色を上書きして
+        # 文字の中やフチに透けた点ができ、透過処理のあとで「かすれ」に見える)
+        ImageDraw.Draw(g).text(pos, ch, font=font, anchor="mm", fill=rim, stroke_width=outline + rim_w, stroke_fill=rim)
         col = w["colors"][i % len(w["colors"])] if w.get("colors") else w["color"]
-        dr.text(pos, ch, font=font, anchor="mm", fill=col, stroke_width=outline, stroke_fill="white")
+        g2 = Image.new("RGBA", g.size, (0, 0, 0, 0))
+        ImageDraw.Draw(g2).text(pos, ch, font=font, anchor="mm", fill="white", stroke_width=outline, stroke_fill="white")
+        g.alpha_composite(g2)
+        g3 = Image.new("RGBA", g.size, (0, 0, 0, 0))
+        ImageDraw.Draw(g3).text(pos, ch, font=font, anchor="mm", fill=col)
+        g.alpha_composite(g3)
         g = g.rotate(-rot, resample=Image.BICUBIC, expand=True)
         layer.alpha_composite(g, (round(x - g.width / 2), round(y - g.height / 2)))
         # 文字の中身だけをもう一度、あとで上に重ねる(隣の文字のフチで欠けないように)

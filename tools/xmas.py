@@ -640,6 +640,12 @@ WALK01 = [(132, 256), (168, 252), (162, 246), (160, 252), (150, 246), (140, 252)
 S01, S05 = 0.92, 0.92
 
 
+def sparkle_field(pts, ph=0):
+    """全体にちりばめるキラキラ: 場所ごとに大きさ(小→中→大→中)が順番に変わってまたたく。消えない。"""
+    sizes = (6, 10, 15, 10)
+    return lambda i, av: [("spark", x, y, sizes[(i + j * 3 + ph) % 4] * (1.0 if j % 3 else 0.8)) for j, (x, y) in enumerate(pts)]
+
+
 def tree_page(px, py, ph, anchor, scale, lights, style="ball"):
     """ツリーを、スタンプの上の位置(左上 px,py・高さ ph)で置く(キャラの拡大・位置に左右されない)。"""
     k = ph / 160 / scale
@@ -655,7 +661,9 @@ STAMPS = {
     "01": make("xmas", [("メリー", 44, True), ("クリスマス", 32, True)], "B",
                lambda i: [POSE01[i], happy, P(**MOVE01[i]), santa,
                           tree_page(120, 34, 222, WALK01[i], S01, i)],
-               both(bells_travel, snowf(1)),
+               both(both(bells_travel, snowf(1)),
+                    sparkle_field(((232, 24), (290, 96), (250, 128), (290, 164), (238, 184), (290, 216), (262, 244),
+                                   (22, 140), (22, 238), (292, 36)))),
                m=dict(scale=S01, anchor=(132, 256)), x0=18),
     "05": make("xmas", [("おつかれ", 34, True), ("さまです", 30, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,

@@ -75,7 +75,9 @@ def fill_holes(img, src, max_area=40, fill=(255, 248, 240), grow=1, green=40):
     外周とつながっていない max_area px 以下の穴だけが対象で、キャラと文字の間の大きなすき間は残す。"""
     arr = np.array(img)
     rgb = np.array(src.convert("RGB")).astype(int)
-    greenish = rgb[:, :, 1] - np.maximum(rgb[:, :, 0], rgb[:, :, 2]) > green
+    # 背景の緑がにじんだ点だけを穴とみなす(明るくて緑がとても強い点)。
+    # 文字やツリーの深い緑(G が 160 未満)まで穴にすると、文字の中が白く抜けて「かすれ」に見える
+    greenish = (rgb[:, :, 1] - np.maximum(rgb[:, :, 0], rgb[:, :, 2]) > max(green, 60)) & (rgb[:, :, 1] > 160)
     clear = (arr[:, :, 3] == 0) | greenish
     h, w = clear.shape
     seen = np.zeros_like(clear)
@@ -95,15 +97,24 @@ def fill_holes(img, src, max_area=40, fill=(255, 248, 240), grow=1, green=40):
                     seen[ny, nx] = True
                     stack.append((ny, nx))
         if not edge and len(comp) <= max_area:
+            # 穴はまわりの色(輪のピクセルで一番多い色)でうめる。白フチの中の穴は白、葉のすき間は緑、線のすき間は線の色。
+            # 決まった白でうめたり、まわりへ広げたりすると、文字や飾りに白い点ができて「かすれ」に見える
+            ring = []
+            for y, x in comp:
+                for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                    if 0 <= ny < h and 0 <= nx < w and not clear[ny, nx]:
+                        ring.append(tuple(arr[ny, nx, :3] // 16))
+            if ring:
+                best = max(set(ring), key=ring.count)
+                pick = [(ny, nx) for y, x in comp for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1))
+                        if 0 <= ny < h and 0 <= nx < w and not clear[ny, nx] and tuple(arr[ny, nx, :3] // 16) == best]
+                col = np.mean([arr[p][:3] for p in pick], axis=0).astype(np.uint8)
+            else:
+                col = np.array(fill, dtype=np.uint8)
             ys, xs = zip(*comp)
+            arr[list(ys), list(xs), :3] = col
+            arr[list(ys), list(xs), 3] = 255
             holes[list(ys), list(xs)] = True
-    if not holes.any():
-        return img
-    for _ in range(grow):
-        g = holes.copy()
-        g[1:] |= holes[:-1]; g[:-1] |= holes[1:]; g[:, 1:] |= holes[:, :-1]; g[:, :-1] |= holes[:, 1:]
-        holes = holes | (g & ~clear)  # 別の穴やすき間には広げない
-    arr[holes] = (*fill, 255)
     return Image.fromarray(arr)
 
 
