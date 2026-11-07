@@ -397,15 +397,19 @@ def wreath_big(sz, t=0):
     return base
 
 
+# リースは小さく現れて、だんだん大きくなる(1コマ目は完成形。2コマ目から小→大、最後は少しふくらんでゆっくり息をする)
+GROW = [1.0, 0.36, 0.46, 0.56, 0.66, 0.76, 0.85, 0.93, 1.0, 1.05, 1.02, 1.0]
+
+
 MV03 = santa_moves([0, 70, 110, 90, 122, 92, 118, 90, 122, 92, 114, 96], [0, 6, 10, 6, 12, 6, 10, 6, 12, 6, 10, 6],
                    [0, 6, -4, -12, -6, 6, 14, 6, -6, -10, 4, 0], gift=False, hold=None)
 POSE03 = [S, S, J0, S, J0, S, S, S, J0, S, J0, S]
 STAMPS["03"] = with_layers(paths(make(
     "xmas", [("今年も", 42, True), ("ありがとう", 34, True)], "A",
     lambda i: [POSE03[i], happy, P(**MV03[i]), santa],
-    lambda i, av: [("heart", 30 + j * 40, 252 - ((i * 14 + j * 40) % 110), 14 + j % 2 * 4) for j in range(3)],
+    lambda i, av: [("heart", 30 + j * 40, 240 - ((i * 14 + j * 40) % 100), 14 + j % 2 * 4) for j in range(3)],
     m=dict(scale=0.9, anchor=(214, 256)), x0=20), [(214 - i * 2 if i < 6 else 202 + (i - 6) * 2, 256) for i in range(12)]),
-    back=lambda L_, i: put_img(L_, wreath_big(170, i), 222, 132))
+    back=lambda L_, i: put_img(L_, wreath_big(170, i), 222, 132 - (1 - GROW[i]) * 86, GROW[i]))  # 上のはしをそろえて大きくなる(サンタにかくれない)
 SANTA.add("03")
 
 # 04 いい子にしてた?: くつしたのガーランドがゆれる。サンタは右から歩いてきて、両手を高く上げて手をふる。
@@ -417,24 +421,196 @@ PATH04 = [(226, 262), (238, 258), (235, 262), (232, 262), (229, 258), (227, 262)
           (226, 256), (226, 262), (226, 262)]
 
 
+_STOCK = {}
+
+
+def stocking_img(kind, sc, t=0):
+    """クリスマスの靴下(1足): ふわふわの白い口(波のふち)、かかと・つま先の別色、柄、口からのぞくプレゼントやキャンディ。
+    kind ごとに色・柄・のぞく物を変える。つり下げる点は画像の上の真ん中(ひもの輪)。"""
+    key = (kind, sc, t % 2)
+    if key in _STOCK:
+        return _STOCK[key]
+    K = 3 * sc
+    W, H = int(52 * K), int(92 * K)
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    P_ = lambda pts: [(x * K, y * K) for x, y in pts]
+    lw = max(2, round(2.2 * K))
+    ox, oy = 8, 26  # 靴下の左上(上にのぞく物と、ひもの輪のぶん空ける)
+    q = lambda pts: P_([(x + ox, y + oy) for x, y in pts])
+    bz = xmas._bez
+    shape = (bz((4, 10), (3, 24), (2, 34), (4, 42)) + bz((4, 42), (6, 56), (22, 60), (34, 58))
+             + bz((34, 58), (44, 56), (44, 44), (34, 42)) + bz((34, 42), (29, 41), (27, 36), (27, 28)) + [(27, 10)])
+    body, heel, pat, cuffdeco, peek = [
+        (RED, GREEN, "snow", "holly", "cane"),
+        (GREEN, RED, "stripe", "bell", "gift"),
+        (WHITE, RED, "candy", "pom", "star"),
+        (RED, GOLD, "zigzag", "holly", "gift2"),
+        (GREEN, GOLD, "dots", "bell", "cane"),
+    ][kind]
+    # のぞく物(靴下のうしろ、口の上へ)
+    if peek == "cane":
+        c = bz((14, 14), (14, -6), (14, -16), (20, -18)) + bz((20, -18), (27, -20), (28, -10), (24, -8))
+        d.line(q(c), fill=L, width=round(7 * K), joint="curve")
+        d.line(q(c), fill=WHITE, width=round(4.4 * K), joint="curve")
+        for j in range(0, len(c) - 2, 3):
+            d.line(q(c[j:j + 2]), fill=RED, width=round(4.4 * K))
+    elif peek in ("gift", "gift2"):
+        col, rib = (GOLD, RED) if peek == "gift" else ("#7FC4FF", WHITE)
+        d.rounded_rectangle(q([(9, -6), (25, 10)]), radius=2 * K, fill=col, outline=L, width=lw)
+        d.rectangle(q([(15.5, -5), (18.5, 9)]), fill=rib)
+        for sx in (-1, 1):
+            d.ellipse(q([(17 + sx * 6 - 4, -12), (17 + sx * 6 + 4, -5)]), fill=rib, outline=L, width=lw)
+    elif peek == "star":
+        pts = [(17 + (9 if j % 2 == 0 else 4) * math.sin(j * math.pi / 5), -6 - (9 if j % 2 == 0 else 4) * math.cos(j * math.pi / 5)) for j in range(10)]
+        d.line(q([(17, 2), (17, 10)]), fill=L, width=round(3 * K))
+        d.polygon(q(pts), fill=GOLD, outline=L, width=lw)
+        d.ellipse(q([(13, -9), (16, -6)]), fill="#FFF6C8")
+    # 本体と柄(柄は靴下の形で切り抜く)
+    mask = Image.new("L", im.size, 0)
+    ImageDraw.Draw(mask).polygon(q(shape), fill=255)
+    pl = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pl)
+    pd.rectangle((0, 0, W, H), fill=body)
+    if pat == "snow":
+        for (x, y) in ((10, 22), (20, 32), (11, 44), (24, 50)):
+            for a in range(3):
+                r = math.radians(a * 60)
+                pd.line(q([(x - 3.5 * math.cos(r), y - 3.5 * math.sin(r)), (x + 3.5 * math.cos(r), y + 3.5 * math.sin(r))]), fill=WHITE, width=round(1.4 * K))
+    elif pat == "stripe":
+        for y in (20, 30, 40):
+            pd.rectangle(q([(0, y), (50, y + 4)]), fill=WHITE)
+            pd.rectangle(q([(0, y + 4), (50, y + 6)]), fill=RED)
+    elif pat == "candy":
+        for x in range(-40, 50, 9):
+            pd.polygon(q([(x, 0), (x + 4, 0), (x + 64, 64), (x + 60, 64)]), fill=RED)
+    elif pat == "zigzag":
+        for y in (22, 36):
+            z = [(x, y + (3 if (x // 4) % 2 else -3)) for x in range(0, 48, 4)]
+            pd.line(q(z), fill=WHITE, width=round(2.4 * K))
+            pd.line(q([(0, y + 6), (48, y + 6)]), fill=GREEN, width=round(1.6 * K))
+    elif pat == "dots":
+        for (x, y) in ((9, 20), (19, 26), (8, 34), (18, 40), (26, 50), (14, 52)):
+            pd.ellipse(q([(x - 2.2, y - 2.2), (x + 2.2, y + 2.2)]), fill=WHITE)
+    # かかと・つま先
+    pd.ellipse(q([(-4, 44), (14, 64)]), fill=heel)
+    pd.ellipse(q([(32, 40), (50, 62)]), fill=heel)
+    im.alpha_composite(Image.composite(pl, Image.new("RGBA", im.size, (0, 0, 0, 0)), mask))
+    d.line(q(shape + shape[:1]), fill=L, width=lw, joint="curve")
+    # ふわふわの白い口(下が波のふち)
+    cuff = [(0, 2), (31, 2)] + [(31 - j * 31 / 8, 14 + (2.2 if j % 2 else -0.4)) for j in range(9)]
+    d.polygon(q(cuff), fill=WHITE, outline=L, width=lw)
+    d.ellipse(q([(4, 4), (10, 9)]), fill="#EEF4FA")
+    if cuffdeco == "holly":
+        for sx in (-1, 1):
+            d.ellipse(q([(15 + sx * 7 - 6, 4), (15 + sx * 7 + 6, 10)]), fill=GREEN, outline=L, width=max(1, lw // 2))
+        for dx in (-2, 2, 0):
+            d.ellipse(q([(15 + dx - 2.4, 4 + (dx == 0) * 2), (15 + dx + 2.4, 8.8 + (dx == 0) * 2)]), fill=RED, outline=L, width=max(1, lw // 2))
+    elif cuffdeco == "bell":
+        sw = 4 if t % 2 else -4
+        d.polygon(q([(24 + sw * 0.2, 8), (20 + sw * 0.4, 18), (30 + sw * 0.4, 18)]), fill=GOLD, outline=L, width=lw)
+        d.ellipse(q([(23 + sw * 0.5, 17), (27 + sw * 0.5, 21)]), fill="#B8860B", outline=L, width=max(1, lw // 2))
+        d.ellipse(q([(21, 5), (27, 10)]), fill=RED, outline=L, width=max(1, lw // 2))
+    elif cuffdeco == "pom":
+        for x in (6, 15, 24):
+            d.ellipse(q([(x - 3, 12), (x + 3, 18)]), fill=RED, outline=L, width=max(1, lw // 2))
+    # つり下げのひもの輪
+    d.ellipse(q([(1, -4), (7, 4)]), outline=L, width=round(2.4 * K))
+    d.ellipse(q([(1, -4), (7, 4)]), outline=GOLD, width=round(1.2 * K))
+    im = im.resize((W // 3, H // 3), Image.LANCZOS)
+    _STOCK[key] = im
+    return im
+
+
+def fir_garland(layer, pts, i):
+    """もみの葉のガーランド: 濃さのちがう緑の葉を重ね、赤と金の玉、点滅する電球、金のビーズのひもを通す。"""
+    big = Image.new("RGBA", (layer.width * 3, layer.height * 3), (0, 0, 0, 0))
+    d = ImageDraw.Draw(big)
+    P3 = lambda *v: [x * 3 for x in v]
+    dense = []
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        for u in range(6):
+            dense.append((x0 + (x1 - x0) * u / 6, y0 + (y1 - y0) * u / 6))
+    dense.append(pts[-1])
+    rnd = random.Random(4)
+    leaves = []
+    for j, (x, y) in enumerate(dense):
+        if j % 2:
+            continue
+        up = -6 if (j // 2) % 2 else 5  # 上下にでこぼこ(葉のふさ)
+        for (dx, dy, r, col) in ((-5, up - 2, 10, GREEN_D), (5, -up * 0.4, 10, GREEN), (0, up + 3, 8, "#3E9A6C"),
+                                 (-1, up * 0.5, 6, "#5DB585")):
+            leaves.append((x + dx + rnd.uniform(-1.5, 1.5), y + dy, r, col))
+    for (x, y, r, col) in leaves:  # 全体の輪郭だけ線を引き、中の葉は線なしで重ねる(黒っぽい帯に見せない)
+        d.ellipse(P3(x - r - 1.2, y - r * 0.7 - 1.2, x + r + 1.2, y + r * 0.7 + 1.2), fill=L)
+    for (x, y, r, col) in leaves:
+        d.ellipse(P3(x - r, y - r * 0.7, x + r, y + r * 0.7), fill=col)
+    for j, (x, y) in enumerate(dense[1::3]):  # もみの葉の針(明るい緑の短い線、ふさごとに向きを変える)
+        for a in (-0.9, -0.3, 0.3, 0.9):
+            a += 0.3 * math.sin(j)
+            d.line(P3(x, y, x + 7 * math.sin(a), y - 6 * math.cos(a)), fill="#7CCB9A", width=3)
+    d.line([(x * 3, (y + 2) * 3) for x, y in dense], fill=L, width=9, joint="curve")
+    d.line([(x * 3, (y + 2) * 3) for x, y in dense], fill=GOLD, width=5, joint="curve")
+    lights = ["#FF5A5A", "#FFD24D", "#7FC4FF", "#8FE3B0", "#FF9ED2"]
+    for j, (x, y) in enumerate(dense[2::4]):
+        on = (j + i) % 3 == 0
+        col = lights[j % len(lights)]
+        if on:
+            d.ellipse(P3(x - 8, y - 2, x + 8, y + 14), fill=col + "55")
+        d.rounded_rectangle(P3(x - 2.5, y + 1, x + 2.5, y + 4), radius=3, fill="#555", outline=L, width=2)
+        d.ellipse(P3(x - 4, y + 3, x + 4, y + 12), fill=col if on else col + "AA", outline=L, width=3)
+        if on:
+            d.ellipse(P3(x - 2, y + 4.5, x, y + 7), fill=WHITE)
+    for j, (x, y) in enumerate(dense[4::8]):  # 大きな赤と金の玉
+        col = RED if j % 2 else GOLD
+        d.ellipse(P3(x - 6, y - 2, x + 6, y + 10), fill=col, outline=L, width=4)
+        d.ellipse(P3(x - 3.5, y, x - 0.5, y + 3), fill=WHITE)
+    layer.alpha_composite(big.resize(layer.size, Image.LANCZOS))
+
+
+# 靴下は5足: 大きさ・色・柄・口からのぞく物(キャンディ・プレゼント・星)をそれぞれ変える
+# (x, 種類, 大きさ, ひもの長さ)
+STOCKS04 = [(44, 0, 1.1, 14), (100, 1, 0.86, 24), (158, 2, 1.18, 22), (216, 3, 0.92, 22), (270, 4, 1.04, 14)]
+
+
 def stockings_front(layer, i):
+    """もみの葉のガーランド(両はしに大きな赤いリボン)に、5足のクリスマスの靴下を赤いリボンでつるす。
+    靴下は大きさ・ひもの長さ・色・柄・のぞく物がちがい、それぞれちがう速さでゆれる。"""
+    sag = lambda x: 20 + 12 * math.sin((x - 16) / 288 * math.pi)
+    pts = [(x, sag(x)) for x in range(16, 305, 18)] + [(304, sag(304))]
+    fir_garland(layer, pts, i)
     d = ImageDraw.Draw(layer)
-    pts = [(14 + j * 29, 26 + 10 * math.sin(j / 10 * math.pi)) for j in range(11)]
-    d.line(pts, fill=L, width=5)
-    d.line(pts, fill=GOLD, width=3)
-    for j, (x, y) in enumerate(pts[1:-1:2]):
-        sw = 5 * math.sin(i * 1.1 + j)
-        col = (RED, GREEN, "#7FC4FF", RED)[j % 4]
-        poly = [(x - 8 + sw * 0.2, y), (x + 8 + sw * 0.2, y), (x + 8 + sw, y + 24), (x + 16 + sw * 1.1, y + 28),
-                (x + 16 + sw * 1.1, y + 36), (x - 2 + sw, y + 36), (x - 8 + sw * 0.9, y + 28)]
-        d.polygon(poly, fill=col, outline=L)
-        d.rounded_rectangle((x - 10, y - 2, x + 10, y + 7), radius=3, fill=WHITE, outline=L, width=2)
+    for j, (x, kind, sc, drop) in enumerate(STOCKS04):
+        im = stocking_img(kind, sc, i + j)
+        ang = 8 * math.sin(i * 2 * math.pi / 12 * (1 + j % 2) + j * 1.3)
+        top = sag(x) + 4
+        hx, hy = im.width * 4 / 52, im.height * 26 / 92  # ひもの輪(画像の中の位置)
+        a = math.radians(ang)
+        ex, ey = x - drop * math.sin(a), top + drop * math.cos(a)
+        d.line((x, top, ex, ey), fill=L, width=5)
+        d.line((x, top, ex, ey), fill=RED, width=3)
+        pad = int(max(im.size) * 2.2)
+        cv = Image.new("RGBA", (pad, pad), (0, 0, 0, 0))
+        cv.alpha_composite(im, (round(pad / 2 - hx), round(pad / 2 - hy)))
+        cv = cv.rotate(ang, resample=Image.BICUBIC, center=(pad // 2, pad // 2))
+        layer.alpha_composite(cv, (round(ex - pad / 2), round(ey - pad / 2)))
+        # つるしたところの小さなリボン結び
+        for sx in (-1, 1):
+            d.ellipse((x + sx * 5 - 4, top - 3, x + sx * 5 + 4, top + 4), fill=RED, outline=L, width=1)
+        d.ellipse((x - 2.5, top - 2, x + 2.5, top + 3), fill=RED_D, outline=L, width=1)
+    for x in (16, 304):  # 両はしの大きなリボン
+        y = sag(x)
+        for sx in (-1, 1):
+            d.polygon((x, y, x + sx * 12, y - 9, x + sx * 13, y + 7), fill=RED, outline=L)
+        d.polygon((x - 2, y + 2, x - 7, y + 20, x - 2, y + 17), fill=RED_D, outline=L)
+        d.polygon((x + 2, y + 2, x + 7, y + 20, x + 2, y + 17), fill=RED_D, outline=L)
+        d.ellipse((x - 4, y - 4, x + 4, y + 4), fill=RED_D, outline=L, width=1)
 
 
 def qmarks_front(layer, i):
     """「?」3つ: 大きさ・色・かたむきを変えて、順番に跳ねる。"""
-    for j, (x, y, sz, col, rot) in enumerate(((70, 106, 58, RED, -14), (132, 88, 44, GREEN, 14), (24, 128, 38, GOLD_T, -8))):
-        hop = abs(math.sin((i + j * 2) * 0.9)) * 16
+    for j, (x, y, sz, col, rot) in enumerate(((70, 136, 48, RED, -14), (130, 128, 38, GREEN, 14), (28, 146, 32, GOLD_T, -8))):
+        hop = abs(math.sin((i + j * 2) * 0.9)) * 10
         font = ImageFont.truetype(str(soft.HAND_FONT), sz)
         g = Image.new("RGBA", (sz + 30, sz + 30), (0, 0, 0, 0))
         ImageDraw.Draw(g).text((g.width / 2, g.height / 2), "?", font=font, anchor="mm", fill=col, stroke_width=5,
@@ -445,7 +621,7 @@ def qmarks_front(layer, i):
 STAMPS["04"] = with_layers(paths(make(
     "xmas", [("いい子に", 32, True), ("してた?", 32, True)], "B",
     lambda i: [POSE04[i], happy, P(**MV04[i]), santa], lambda i, av: [],
-    m=dict(scale=0.86, anchor=PATH04[0]), x0=12, y0=150), PATH04),
+    m=dict(scale=0.86, anchor=PATH04[0]), x0=12, y0=172), PATH04),
     front=lambda L_, i: (stockings_front(L_, i), qmarks_front(L_, i)))
 SANTA.add("04")
 
@@ -746,7 +922,7 @@ STAMPS["17"] = with_layers(paths(make(
     lambda i: [S, happy, P(fl=20 * (i % 2), fr=20 * ((i + 1) % 2), lfl=6 * (i % 2), lfr=6 * ((i + 1) % 2), el=-10, er=10),
                reindeer],
     xmas.bells_travel, m=dict(scale=0.7, anchor=WALK17[0]), x0=18, y0=134), WALK17),
-    back=lambda L_, i: put_img(L_, wreath_big(190, i), 160, 108))
+    back=lambda L_, i: put_img(L_, wreath_big(190, i), 160, 108, GROW[i]))
 DEER.add("17")
 
 # 18 メリクリ!: 大きな文字。小さなサンタが下を走りぬける。跳ねる高さを毎回変える
