@@ -199,12 +199,13 @@ def word(text, cx, cy, size, color, rot=0, scale=1.0, arc=0, seed=0, vertical=Fa
 
 
 def draw_word(layer, w, ox, oy, outline=9):
+    outline = w.get("outline", outline)
     """一文字ずつ、少し傾け・上下にずらして置く。arc>0 で笑った口のような弧になる。"""
     size = round(w["size"] * w["scale"])
     rnd = random.Random(w["seed"])
     shv = random.Random(w["shiver"][2]) if w["shiver"] else None
     n = len(w["text"])
-    adv = size * 0.98
+    adv = size * w.get("spacing", 0.98)
     total = adv * n
     r = math.radians(w["rot"])
     tops = []

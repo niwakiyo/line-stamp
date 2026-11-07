@@ -81,6 +81,8 @@ def say_xmas(pal, *parts):
     ws = newyear.say_curved("xmas", *parts)
     for w, (text, x, y, size, rot, strong, extra) in zip(ws, parts):
         w["colors"] = [RED, GREEN] if strong else [GREEN_D]
+        if size <= 36:  # 小さい文字は白いフチを細く、字の間を少し広げ、ゆれ・大きさの差を小さくして読みやすく
+            w.update(outline=5, rim_w=2, spacing=1.06, vary=False)
     return ws
 
 
@@ -611,12 +613,12 @@ STAMPS = {
                           tree_page(120, 34, 222, WALK01[i], S01, i)],
                both(bells_travel, snowf(1)),
                m=dict(scale=S01, anchor=(132, 256)), x0=18),
-    "05": make("xmas", [("おつかれ", 30, True), ("さまです", 24, False)], "A",
+    "05": make("xmas", [("おつかれ", 34, True), ("さまです", 30, False)], "A",
                lambda i: [S, happy, (lambda c, d=BOB05[i]: inko.move(c, list(c), dy=d)), P(**MOVE05[i]), reindeer,
                           tree_page(30, 70, 176, RUN05[i], S05, i, style="snow")],
                lambda i, av: winter.snow(5, 5, i, avoid=av)
                + ([("sleigh", SLEIGH05[i][0], SLEIGH05[i][1], 0.68, 12)] if SLEIGH05[i] else []),
-               m=dict(scale=S05, anchor=(206, 258)), x0=18, y0=166),
+               m=dict(scale=S05, anchor=(206, 258)), x0=18, y0=156),
 }
 
 for name, path in (("01", WALK01), ("05", RUN05)):
