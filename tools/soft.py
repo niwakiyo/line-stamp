@@ -231,7 +231,7 @@ def draw_word(layer, w, ox, oy, outline=9):
             csize = round(csize * (1.16 if i == 0 else vr.uniform(0.9, 1.06)))
             ly += vr.uniform(-4, 4)  # 少し段差をつける
         is_kanji = "\u4e00" <= ch <= "\u9fff"
-        font = ImageFont.truetype(str(w["kanji_font"] if w.get("kanji_font") and is_kanji else HAND_FONT), csize)
+        font = ImageFont.truetype(str(w["kanji_font"] if w.get("kanji_font") and is_kanji else (w.get("font") or HAND_FONT)), csize)
         x = ox + w["cx"] + lx * math.cos(r) - ly * math.sin(r)
         y = oy + w["cy"] + lx * math.sin(r) + ly * math.cos(r)
         pad = outline + 8

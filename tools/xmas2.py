@@ -1234,6 +1234,10 @@ for name, frames in STAMPS.items():
             fr["poses"] = fr["poses"] + [talk_santa if name in SANTA else talk_deer]
 
 
+FIT_FIXED = None
+FIT_LAST = None
+
+
 def fit_all(cells, m=11):
     """全コマに同じ縮小・移動をかけて、どのコマも縁から m px 以上あける(コマごとに変えないので、ぶれない)。"""
     box = None
@@ -1249,6 +1253,15 @@ def fit_all(cells, m=11):
     # 中心はなるべく元の位置、はみ出す分だけ内側へ
     cx = min(max((box[0] + box[2]) / 2, m + nw / 2), CW - m - nw / 2)
     cy = min(max((box[1] + box[3]) / 2, m + nh / 2), CH - m - nh / 2)
+    global FIT_LAST
+    FIT_LAST = (box, k, cx, cy)
+    if FIT_FIXED:  # 決まった縮小・移動を使う(set05: set04 と絵の位置・大きさを1pxも変えないため。やり方も同じ)
+        box, k, cx, cy = FIT_FIXED
+        nw, nh = (box[2] - box[0]) * k, (box[3] - box[1]) * k
+        for i, c in enumerate(cells):
+            b = c.getbbox()
+            if b and (b[0] < box[0] or b[1] < box[1] or b[2] > box[2] or b[3] > box[3]):
+                print(f"!! {i + 1}コマ目: 文字が set04 の範囲 {box} の外に出ています {b}")
     out = []
     for c in cells:
         part = c.crop(box)

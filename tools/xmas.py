@@ -77,6 +77,9 @@ GREEN, GREEN_D = "#2F7D5A", "#245F45"
 GOLD_T = "#D08A10"  # 文字用の金(白いフチの上で読める濃さ)
 
 
+SAY_FONT = None  # set05 などで、セリフの書体だけを変えるときに外から入れる
+
+
 def say_xmas(pal, *parts):
     """クリスマスのセリフ: 強調語は赤と緑を1字ずつ交互(金のフチ)、ほかの語は緑。カーブ・段差・大きさ違い。"""
     ws = newyear.say_curved("xmas", *parts)
@@ -84,6 +87,8 @@ def say_xmas(pal, *parts):
         # 3色以上のクリスマスカラーを1文字ずつ(強調語は赤・緑・金、語尾は深い緑・赤・金)
         w["colors"] = [RED, GREEN, GOLD_T] if strong else [GREEN_D, RED_D, GOLD_T]
         w["kanji_font"] = None  # セリフの漢字に筆の書体を使わない(やわらかい手書き風にそろえる)
+        if SAY_FONT:  # セリフの書体を外から変えられる(set05 は太い丸ゴシック)
+            w["font"] = SAY_FONT
         if text.isascii():  # 英字は字の間をつめる(日本語と同じ間だとばらばらに見える)
             w.update(spacing=0.6, outline=6, vary=False)
         elif size <= 36:  # 小さい文字は白いフチを細く、字の間を少し広げ、ゆれ・大きさの差を小さくして読みやすく
