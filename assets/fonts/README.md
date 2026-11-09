@@ -10,3 +10,7 @@
   - Copyright 2021 The Yuji Project Authors.
   - SIL Open Font License 1.1(`YujiSyuku-OFL.txt`)。商用利用可。
   - 入手元: https://github.com/google/fonts/tree/main/ofl/yujisyuku
+
+- set05 で使う書体(すべて SIL Open Font License 1.1、商用利用可。入手元 https://github.com/google/fonts/tree/main/ofl/ 。ライセンス文は同じフォルダの `*-OFL.txt`)
+  - Dela Gothic One / DotGothic16 / Hachi Maru Pop / Kaisei Decol / Kiwi Maru / Klee One / Mochiy Pop One / Potta One /
+    Rampart One / Reggae One / RocknRoll One / Stick / Train One / Yomogi / Zen Kaku Gothic New / Zen Kurenaido / Zen Maru Gothic
