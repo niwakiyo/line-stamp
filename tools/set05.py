@@ -45,37 +45,31 @@ def seal(L, cx, cy, r, lines, s=1.0, rot=0.0, col=RED, square=False):
     put(L, box, cx, cy, s, rot)
 
 
-# ==== 01 サンタは70歳から永久に歳を取らない: テレビの「豆知識」テロップ ====
+# ==== 01 俺、いつからか歳取らねええええ: 気づいた一言 → 「ええええ」がどんどん大きく伸びて叫びになる ====
 def s01(L, i, F):
-    u_tab = prog(i, 1, 2)
-    bob = 2 * math.sin(i * 1.05)
-    ty = 12 - (1 - eo(u_tab)) * 34 + bob
-    w = eo(prog(i, 2, 4))
-    l1 = line("サンタは70歳から", "zenkaku", 21, 26, 56, sizes=[21, 21, 21, 21, 26, 26, 21, 21, 21])
-    l2 = line("永久に歳を取らない", "zenkaku", 21, 26, 87)
-    bx1 = 26 + max(width(l1), width(l2)) + 12
+    t = T(i)
+    l1 = line("俺、いつからか", "kiwi", 27, 16, 30)
+    draw(L, l1, "kiwi", dict(fill=NAVY, ow=3, rw=2, thick=1),
+         lambda c: None if t < 1 + c["j"] * 0.35 else (0, -(1 - eo(prog(i, 1 + c["j"] * 0.35, 2 + c["j"] * 0.35))) * 10, 1, 0))
+    if t >= 3:  # ガーンのたて線(気づいた!)
+        vec(L, lambda d: [seg(d, [(x, 14), (x, 14 + ln)], "#7FA7D9", 2.2)
+                          for x, ln in ((226, 22), (236, 30), (246, 18)) if t >= 3])
+    sizes = [34, 34, 34, 34, 34, 37, 40, 44]
+    l2 = line("歳取らねええええ", "rock", 34, 14, 80, sizes=sizes, sp=0.86)
 
-    def bar(d):
-        if w > 0:
-            rrect(d, (12, 36, 12 + (bx1 - 12) * w, 104), 6, WHITE, INK, 2.5)
-            d.rectangle(X.P(14, 39, 20, 101), fill=RED)
-        if u_tab > 0:
-            rrect(d, (14, ty - 2, 100, ty + 24), 6, YEL, INK, 2.2)
-    vec(L, bar)
-    if u_tab > 0:
-        draw(L, line("豆知識", "dela", 17, 57, ty + 11, "c"), "dela", dict(fill=RED))
-    sub = new()
-    m = eo(prog(i, 7, 9))  # 「永久に」に黄色いマーカー
-    if m > 0:
-        x0, x1 = l2[0]["x"] - 10, l2[2]["x"] + 10
-        vec(sub, lambda d: rrect(d, (x0, 76, x0 + (x1 - x0) * m, 99), 3, "#FFE97A", None))
-    d1 = (1 - eo(prog(i, 3, 5))) * 170
-    d2 = -(1 - eo(prog(i, 4, 6))) * 170
-    draw(sub, l1, "zenkaku", lambda c: dict(fill=RED if c["ch"] in "70" else NAVY), lambda c: (d1, 0, 1, 0))
-    draw(sub, l2, "zenkaku", lambda c: dict(fill=RED if c["j"] < 3 else NAVY),
-         lambda c: (d2, 0, 1.0 + (0.08 * math.sin(i * 1.3) if c["j"] < 3 and T(i) > 9 else 0), 0))
-    clip(sub, (14, 38, 12 + (bx1 - 12) * w - 2, 102))
-    L.alpha_composite(sub)
+    def fx(c):
+        t0 = 3.5 + max(0, c["j"] - 3) * 0.9 if c["j"] >= 4 else 3.5
+        u = prog(i, t0, t0 + 0.9)
+        if u <= 0:
+            return None
+        shake = (2 * math.sin(i * 2.3 + c["j"] * 1.7)) if c["j"] >= 4 and t >= 8 else 0
+        return (shake, -abs(shake) * 0.6 - (c["j"] - 3) * 2 if c["j"] >= 4 else 0, back(u),
+                (c["j"] - 3) * 3 if c["j"] >= 4 else -3)
+    draw(L, l2, "rock", lambda c: dict(fill=RED if c["j"] >= 4 else INK, ow=3, rw=2, sh=2 if c["j"] >= 4 else 0, shfill=RED_D), fx)
+    if t >= 8:  # 叫びの線(「ええええ」の上で、のびちぢみ)
+        k = 1 + 0.25 * math.sin(i * 1.7)
+        vec(L, lambda d: [seg(d, [(x, 52), (x + dx * k, 52 - 12 * k)], RED, 2.4)
+                          for x, dx in ((l2[5]["x"], -4), (l2[6]["x"], 0), (l2[7]["x"], 5))])
 
 
 # ==== 02 とりあえずこれ受け取れや / タダではない: ギザギザの叫び吹き出し+赤いはんこ ====
@@ -137,30 +131,29 @@ def s03(L, i, F):
     X.comp(L, sub, 0, drop)
 
 
-# ==== 04 面倒くさいから何も入れないで帰る: だるそうな字が上からぽとぽと落ちる+ためいき雲 ====
+# ==== 04 俺が入れるの? うわっ 帰るわ: 3段階(とまどい → びっくり → とぼとぼ帰る) ====
 def s04(L, i, F):
-    puff = eo(prog(i, 6, 9))
-    if puff > 0:
-        fl = 3 * math.sin(i * 0.9)
-        vec(L, lambda d: cloud(d, 134, 150 - puff * 6 + fl, 18 * puff, 11 * puff, "#EEF1F6", "#8C96A8", 2, 8))
-    rows = [(line("面倒くさいから", "yomogi", 21, 14, 176), 1.0), (line("何も入れないで", "yomogi", 21, 14, 205), 3.4)]
-    st = dict(fill="#56627E", ow=4, rw=1.6, rfill="#8C96A8", thick=1)
-    for chars, t0 in rows:
-        def fx(c, t0=t0):
-            u = prog(i, t0 + c["j"] * 0.32, t0 + c["j"] * 0.32 + 1.6)
-            if u <= 0:
-                return None
-            return (0, c["j"] * 1.3 - (1 - bounce(u)) * 70, 1, -4 + (1 - u) * 25 * (1 if c["j"] % 2 else -1))
-        draw(L, chars, "yomogi", st, fx)
-    kv = line("帰る", "yomogi", 38, 30, 240)
+    t = T(i)
+    l1 = line("俺が入れるの?", "yomogi", 22, 14, 178)
+    draw(L, l1, "yomogi", dict(fill="#56627E", ow=4, rw=1.6, rfill="#8C96A8", thick=1),
+         lambda c: None if t < 1 + c["j"] * 0.3 else
+         (0, -(1 - bounce(prog(i, 1 + c["j"] * 0.3, 2.2 + c["j"] * 0.3))) * 40, 1,
+          (12 * math.sin(i * 1.1) if c["ch"] == "?" else 0)))
+    u = prog(i, 4.5, 5.5)
+    if u > 0:  # うわっ: 赤い字がばんっと出て、ぶるっとふるえる
+        jx = 2 * (1 if i % 2 else -1) if t <= 7 else 0
+        l2 = line("うわっ", "rock", 32, 16, 214)
+        if 5 <= t <= 6:
+            vec(L, lambda d: impact(d, 60, 214, 40, 52, 10, RED, 2.4))
+        draw(L, l2, "rock", dict(fill=RED, ow=3, rw=2), lambda c: (jx, 0, 1 + (1 - eo(u)) * 0.8, -6))
     u = prog(i, 7.5, 9)
-    if u > 0:
+    if u > 0:  # 帰るわ: とぼとぼ歩く
         walk = 4 * math.sin(i * 1.6)
-        draw(L, kv, "yomogi", dict(fill=RED, ow=4, rw=2, thick=1),
-             lambda c: (-(1 - eo(u)) * 40 + walk, -abs(3 * math.sin(i * 1.6 + c["j"])), 1, -6 + 4 * math.sin(i * 1.6)))
-        # 歩いたあとの小さな足あと(だるそうに)
-        vec(L, lambda d: [ell(d, (104 + k * 12, 246 - (k % 2) * 5, 110 + k * 12, 251 - (k % 2) * 5), "#A9B1C2", None)
-                          for k in range(3)])
+        kv = line("帰るわ", "yomogi", 28, 92, 240)
+        draw(L, kv, "yomogi", dict(fill=NAVY, ow=4, rw=2, thick=1),
+             lambda c: (-(1 - eo(u)) * 40 + walk, -abs(3 * math.sin(i * 1.6 + c["j"])), 1, -4 + 4 * math.sin(i * 1.6)))
+        vec(L, lambda d: [ell(d, (76 - k * 12, 250 - (k % 2) * 5, 82 - k * 12, 255 - (k % 2) * 5), "#A9B1C2", None)
+                          for k in range(2)])
 
 
 # ==== 05 自動運転: カーナビの画面(電源が入る→ドットの字が打たれる→ONのランプ) ====
@@ -252,19 +245,19 @@ def s07(L, i, F):
                       if T(i) >= 7])
 
 
-# ==== 08 去年と同じじゃだめだろ!: 怒りの爆発吹き出し(ドーン)+怒りマーク ====
+# ==== 08 年中飾ってろ!!: 怒りの爆発吹き出し(ドーン)+怒りマーク ====
 def s08(L, i, F):
     s = back(prog(i, 1, 2.2), 2.2)
     jit = 3 if T(i) in (5, 6) else 0
     jx = jit * (1 if i % 2 else -1)
     if s > 0.15:
         vec(L, lambda d: poly(d, spiky(108 + jx, 62, 96 * s, 56 * s, 14, 12, 0.2, 0.08), WHITE, INK, 2.8))
-    draw(L, line("去年と同じじゃ", "dela", 22, 108, 42, "c"), "dela", dict(fill=INK, ow=2),
-         lambda c: None if prog(i, 2 + c["j"] * 0.25, 2.5 + c["j"] * 0.25) <= 0 else
-         (jx - (1 - eo(prog(i, 2 + c["j"] * 0.25, 3 + c["j"] * 0.25))) * 30, 0, 1, 0))
+    draw(L, line("年中", "dela", 36, 108, 40, "c"), "dela", dict(fill=GREEN_D, ow=2),
+         lambda c: None if prog(i, 2 + c["j"] * 0.5, 2.6 + c["j"] * 0.5) <= 0 else
+         (jx, 0, back(prog(i, 2 + c["j"] * 0.5, 3 + c["j"] * 0.5)), -4))
     u = prog(i, 5, 6)
     if u > 0:
-        draw(L, line("だめだろ!", "dela", 34, 108, 80, "c"), "dela", dict(fill=RED, ow=3, rw=2),
+        draw(L, line("飾ってろ!!", "dela", 34, 108, 80, "c"), "dela", dict(fill=RED, ow=3, rw=2),
              lambda c: (jx, 0, 1 + (1 - eo(u)) * 0.9, -3 + (1 - eo(u)) * 10))
     if 5 <= T(i) <= 6:
         vec(L, lambda d: impact(d, 108, 62, 108, 122, 12, INK, 2.5, 0.3))
@@ -338,12 +331,12 @@ def s09(L, i, F):
     vec(L, bats)
 
 
-# ==== 10 ブーツの中はムレるわ〜: もわもわの湯気雲+ゆらゆらの字+におい線 ====
+# ==== 10 ブーツむれるわ〜 くさっ: もわもわの湯気雲 → 「くさっ」が緑の字でぶわっと出る+におい線 ====
 def s10(L, i, F):
     g = eo(prog(i, 1, 3))
     if g > 0:
         vec(L, lambda d: cloud(d, 110, 64 + (1 - g) * 40, 98 * g + 1, 54 * g + 1, "#F2F2EE", "#9A9A8C", 2.2, 12, 0.3))
-    for (txt, size, y, t0, col) in (("ブーツの中は", 22, 46, 3, "#7A8B2E"), ("ムレるわ〜", 31, 86, 5, "#B07A2A")):
+    for (txt, size, y, t0, col) in (("ブーツ", 26, 46, 3, "#7A8B2E"), ("むれるわ〜", 31, 86, 4.5, "#B07A2A")):
         chars = line(txt, "kiwi", size, 110, y, "c")
 
         def fx(c, t0=t0):
@@ -352,20 +345,28 @@ def s10(L, i, F):
                 return None
             return (0, (1 - eo(u)) * 26 + 3 * math.sin(i * 1.2 + c["j"] * 0.9), 1, 0, 1 + 0.05 * math.sin(i * 1.1 + c["j"]), 1)
         draw(L, chars, "kiwi", dict(fill=col, ow=3, rw=2, thick=1), fx)
+    u = prog(i, 7.5, 8.5)
+    if u > 0:  # くさっ
+        wob = 6 * math.sin(i * 1.5)
+        draw(L, line("くさっ", "reggae", 30, 256, 32, "c"), "reggae", dict(fill="#6E9B1E", ow=3, rw=2, rfill="#3E5A10"),
+             lambda c: (0, -abs(3 * math.sin(i * 1.4 + c["j"])), 1 + (1 - eo(u)) * 1.0, 10 + wob))
     if T(i) >= 6:  # におい線(くねくね、上へ)
         def stink(d):
-            for k, x in enumerate((40, 176)):
-                pts = [(x + 5 * math.sin(i * 1.3 + y * 0.25 + k), y) for y in range(138, 112, -2)]
+            for k, x in enumerate((40, 176, 222, 286)):
+                if k >= 2 and T(i) < 8:
+                    continue
+                y0 = 138 if k < 2 else 136
+                pts = [(x + 5 * math.sin(i * 1.3 + y * 0.25 + k), y) for y in range(y0, y0 - 26, -2)]
                 seg(d, pts, "#9DB04A", 2.6)
         vec(L, stink)
 
 
-# ==== 13 なにっサーンス!!: 集中線+金の字がズームで飛びこむ+「ー」がのびる ====
+# ==== 13 なにっ サーーンス!!: 集中線+金の字がズームで飛びこむ+「ー」2つが交互にのびる ====
 def s13(L, i, F):
     r = eo(prog(i, 2, 4))
     if r > 0:
         def rays(d):
-            cx, cy = 200, 70
+            cx, cy = 196, 70
             for k in range(14):
                 a = k / 14 * 2 * math.pi + i * 0.08
                 pts = [(cx + 40 * math.cos(a - 0.05), cy + 26 * math.sin(a - 0.05)),
@@ -374,16 +375,16 @@ def s13(L, i, F):
                 poly(d, pts, "#FFF0A0", None)
         vec(L, rays)
         clip(L, (10, 10, 310, 120))
-    draw(L, line("なにっ", "rock", 24, 98, 30, "c"), "rock", dict(fill=RED, ow=3, rw=2),
+    draw(L, line("なにっ", "rock", 24, 92, 30, "c"), "rock", dict(fill=RED, ow=3, rw=2),
          lambda c: None if T(i) < 1 else (0, 0, back(prog(i, 1, 2)), -8))
-    big = line("サーンス!!", "rock", 36, 200, 76, "c")
+    big = line("サーーンス!!", "rock", 32, 192, 78, "c")
 
     def fx(c):
         u = prog(i, 3 + c["j"] * 0.3, 4.2 + c["j"] * 0.3)
         if u <= 0:
             return None
         pul = 1 + 0.05 * math.sin(i * 1.4)
-        st = (1 + 0.35 * (0.5 + 0.5 * math.sin(i * 1.2))) if c["ch"] == "ー" else 1
+        st = (1 + 0.3 * (0.5 + 0.5 * math.sin(i * 1.2 + c["j"] * 3.1))) if c["ch"] == "ー" else 1
         hop = -abs(8 * math.sin(i * 1.5 + c["j"])) if c["ch"] == "!" else 0
         return (0, hop, (0.2 + 0.8 * back(u)) * pul, (1 - u) * -40, st, 1)
     draw(L, big, "rock", lambda c: dict(fill="#F2B705", ow=3, rw=2, sh=3, shfill=RED_D), fx)
@@ -418,49 +419,42 @@ def s14(L, i, F):
     draw(L, line("23:58", "mplus", 11, 20, 140), "mplus", dict(fill="#5E6B7D", ow=2))
 
 
-# ==== 15 双子の兄弟 / 兄は暑がり: 赤いリボンの見出しが広がる+名札が落ちてきてゆれる(矢印で雪だるま)+汗 ====
+# ==== 15 雪だるまって何人いる?: もこもこの考え雲 → 雪だるまの上の数え札が 1人→2人→3人…と回って「?人」で止まる ====
 def s15(L, i, F):
-    w = eo(prog(i, 1, 4))
-    cx = 130
-    if w > 0.05:
-        def rib(d):
-            hw = 104 * w
-            for sg in (-1, 1):
-                poly(d, [(cx + sg * (hw + 20), 26), (cx + sg * hw, 26), (cx + sg * hw, 64), (cx + sg * (hw + 20), 64),
-                         (cx + sg * (hw + 11), 45)], RED_D, INK, 2.2)
-            rrect(d, (cx - hw, 18, cx + hw, 58), 3, RED, INK, 2.4)
-            seg(d, [(cx - hw + 4, 23), (cx + hw - 4, 23)], "#F07A72", 1.6)
-            seg(d, [(cx - hw + 4, 53), (cx + hw - 4, 53)], RED_D, 1.6)
-        vec(L, rib)
-        sub = new()
-        draw(sub, line("双子の兄弟", "zenmaru", 30, cx, 38, "c"), "zenmaru", dict(fill=WHITE, rw=2, rfill=RED_D))
-        clip(sub, (cx - 104 * w, 0, cx + 104 * w, CH))
-        L.alpha_composite(sub)
-    u = prog(i, 5, 6)
+    t = T(i)
+    g = eo(prog(i, 1, 2.5))
+    fl = 2 * math.sin(i * 0.9)
+    if g > 0.1:
+        def bub(d):
+            cloud(d, 118, 56 + fl, 106 * g, 46 * g, WHITE, INK, 2.4, 12, 0.3)
+            if g > 0.9:
+                for x, y, r in ((96, 112, 6), (88, 126, 4)):
+                    ell(d, (x - r, y - r + fl, x + r, y + r + fl), WHITE, INK, 2)
+        vec(L, bub)
+    draw(L, line("雪だるまって", "zenmaru", 27, 118, 36 + fl, "c"), "zenmaru", dict(fill=NAVY),
+         lambda c: None if t < 2.5 + c["j"] * 0.3 else (0, 0, back(prog(i, 2.5 + c["j"] * 0.3, 3.3 + c["j"] * 0.3)), 0))
+    draw(L, line("何人いる?", "zenmaru", 34, 118, 74 + fl, "c"), "zenmaru", lambda c: dict(fill=RED if c["j"] < 2 else GREEN),
+         lambda c: None if t < 5 + c["j"] * 0.3 else
+         (0, -abs(4 * math.sin(i * 1.3)) if c["ch"] == "?" else 0, back(prog(i, 5 + c["j"] * 0.3, 6 + c["j"] * 0.3)),
+          (10 * math.sin(i * 1.1) if c["ch"] == "?" else 0)))
+    u = prog(i, 6, 7)
     if u <= 0:
         return
-    t = T(i)
-    ang = 14 * math.exp(-(t - 6) * 0.5) * math.cos((t - 6) * 1.7) if 6 <= t < 12 else 4 * math.sin(i * 0.9)
+    # 数え札(雪だるまの頭の上): 数字がくるくる変わって、最後は「?人」
+    seq = ["1", "2", "3", "4", "5", "?"]
+    num = "?" if t >= 11 else seq[int(t - 6) % 6]
     sub = new()
-    pin = (252, 68)
+    cx, cy = 236, 104 - (1 - bounce(u)) * 40
 
     def tag(d):
-        seg(d, [pin, (252, 76)], INK, 2)
-        ell(d, (247, 63, 257, 73), GOLD, INK, 1.4)
-        poly(d, [(196, 86), (206, 76), (298, 76), (306, 86), (306, 110), (196, 110)], "#FFF7E6", INK, 2.4)
-        seg(d, [(262, 112), (258, 118)], INK, 2.4)  # 小さな矢印(下の雪だるまへ)
-        poly(d, [(253, 117), (263, 117), (257, 124)], INK, None)
+        rrect(d, (cx - 32, cy - 18, cx + 32, cy + 18), 9, "#FFF7E6", INK, 2.4)
+        poly(d, [(cx - 6, cy + 17), (cx + 6, cy + 17), (cx, cy + 26)], "#FFF7E6", None)
+        seg(d, [(cx - 6, cy + 18.5), (cx, cy + 26), (cx + 6, cy + 18.5)], INK, 2.4)
     vec(sub, tag)
-    l = line("兄は暑がり", "klee", 20, 251, 95, "c")
-    draw(sub, l, "klee", lambda c: dict(fill=INK if c["j"] < 2 else RED, thick=1))
-    sub = sub.rotate(ang, resample=Image.BICUBIC, center=pin)
-    X.comp(L, sub, 0, -(1 - bounce(u)) * 110)
-    if t >= 9:  # 汗
-        def sweat(d):
-            for k, (x, y) in enumerate(((276, 140), (284, 160))):
-                yy = y + ((i * 3 + k * 5) % 8)
-                poly(d, [(x, yy - 7), (x + 4, yy + 1), (x, yy + 4), (x - 4, yy + 1)], "#8FD3FF", INK, 1.4)
-        vec(L, sweat)
+    draw(sub, line(num, "dela", 26, cx - 10, cy, "c"), "dela", dict(fill=RED if num == "?" else NAVY),
+         lambda c: (0, 0, 1, 0, 1, 1 if t >= 11 else 0.7 + 0.3 * abs(math.cos(t * 1.6))))
+    draw(sub, line("人", "zenmaru", 18, cx + 16, cy + 2, "c"), "zenmaru", dict(fill=INK))
+    L.alpha_composite(sub)
 
 
 # ==== 17 トナカイの検索は年イチ: 検索バーで字を打つ→「年イチ」のバッジがくるっと出る ====
@@ -491,7 +485,7 @@ def s17(L, i, F):
             vec(L, lambda d: impact(d, 264, 172, 46, 54, 8, GOLD, 2.4))
 
 
-# ==== 18 12月26日: 日めくりカレンダー(25日がやぶれて飛んでいく→26日) ====
+# ==== 18 クリスマスが終わって喜んでる: 日めくり(25日がやぶれて飛ぶ→26日)+「喜んでる」がぴょんぴょん ====
 def cal_page(day, col):
     sub = new()
 
@@ -506,28 +500,37 @@ def cal_page(day, col):
 
 
 def s18(L, i, F):
+    t = T(i)
+    C = new()  # カレンダー(右上に置く)
+
     def base(d):
         rrect(d, (104, 14, 218, 122), 6, "#F4F4F4", INK, 2.6)
         rrect(d, (104, 14, 218, 46), 6, RED, INK, 2.6)
         d.rectangle(X.P(106, 34, 216, 45), fill=RED)
         for x in (132, 190):
             ell(d, (x - 6, 6, x + 6, 22), "#C9C9C9", INK, 2)
-    vec(L, base)
-    L.alpha_composite(cal_page("26", "#2E6FD8"))
-    draw(L, line("12月", "zenkaku", 18, 161, 31, "c"), "zenkaku", dict(fill=WHITE))
-    t = T(i)
+    vec(C, base)
+    C.alpha_composite(cal_page("26", "#2E6FD8"))
+    draw(C, line("12月", "zenkaku", 18, 161, 31, "c"), "zenkaku", dict(fill=WHITE))
     if t < 8:  # 25日のページ: やぶれて飛んでいく
         old = cal_page("25", INK)
         if t >= 4:
-            u = (t - 4) / 4
-            old = old.rotate(-u * 70, resample=Image.BICUBIC, center=(214, 46))
-            X.comp(L, old, u * 90, u * u * 150)
+            uu = (t - 4) / 4
+            old = old.rotate(-uu * 70, resample=Image.BICUBIC, center=(214, 46))
+            X.comp(C, old, uu * 60, uu * uu * 150)
         else:
-            L.alpha_composite(old)
-    if t >= 8:
-        g = back(prog(i, 8, 9))
-        if T(i) <= 10:
-            vec(L, lambda d: [sparkle(d, x, y, 7 * g) for x, y in ((96, 70), (226, 60), (228, 110))])
+            C.alpha_composite(old)
+    X.comp(L, C, 84, 2)
+    # 文字(左): クリスマスが / 終わって / 喜んでる
+    draw(L, line("クリスマスが", "mochiy", 20, 14, 34), "mochiy", dict(fill=GREEN, ow=3, rw=2),
+         lambda c: None if t < 1 + c["j"] * 0.25 else (0, 0, back(prog(i, 1 + c["j"] * 0.25, 1.8 + c["j"] * 0.25)), 0))
+    draw(L, line("終わって", "mochiy", 24, 14, 66), "mochiy", dict(fill=NAVY, ow=3, rw=2),
+         lambda c: None if t < 3 + c["j"] * 0.3 else (0, 0, back(prog(i, 3 + c["j"] * 0.3, 3.8 + c["j"] * 0.3)), 0))
+    u = prog(i, 8, 9)
+    if u > 0:
+        draw(L, line("喜んでる", "mochiy", 30, 14, 104), "mochiy", dict(fill=RED, ow=3, rw=2, sh=2, shfill=GOLD),
+             lambda c: (0, -abs(7 * math.sin(i * 1.6 + c["j"] * 0.8)) - (1 - bounce(u)) * 30, 1, 5 * math.sin(i * 1.2 + c["j"])))
+        vec(L, lambda d: [sparkle(d, x, y, (6, 9, 12, 9)[(i + k) % 4]) for k, (x, y) in enumerate(((150, 92), (20, 132), (158, 128)))])
 
 
 # ==== カード(20コマ) ====
@@ -707,29 +710,44 @@ def s21(L, i, F):  # 再配達、やってないから: 「再配達」に赤い
     L.alpha_composite(sub)
 
 
-def s22(L, i, F):  # 来年はここには来ません: 上から下へ字が現れる→「来ません」がずーん(たて線)
-    l1 = line("来年はここには", "kaisei", 26, 132, 112, "c")
+# ==== 22 この家来年は通過します: 駅の案内板(LED)。「通過します」が右から流れてきて止まり、▶▶が流れ続ける ====
+def s22(L, i, F):
+    t = T(i)
+    l1 = line("この家", "kaisei", 28, 40, 112)
+    l2 = line("来年は", "kaisei", 28, 40 + width(l1) + 8, 112)
 
-    def wipe(c):
-        u = prog(i, 1 + c["j"] * 0.7, 2 + c["j"] * 0.7)
+    def wipe(c, t0):
+        u = prog(i, t0 + c["j"] * 0.6, t0 + 1 + c["j"] * 0.6)
         if u <= 0:
             return None
         return (0, -(1 - u) * 8, 1, 0, 1, max(0.05, eo(u)))
-    draw(L, l1, "kaisei", dict(fill=NAVY, thick=1), wipe)
-    u = prog(i, 9, 10.5)
-    if u > 0:
-        if T(i) >= 10:
-            def gloom(d):
-                for k in range(7):
-                    x = 70 + k * 20
-                    ln = 9 + 3 * math.sin(i * 0.8 + k)
-                    seg(d, [(x, 131), (x, 131 + ln)], "#9AA6C2", 1.8)
-            vec(L, gloom)
-        draw(L, line("来ません", "kaisei", 38, 132, 172, "c"), "kaisei", dict(fill=RED, ow=2, thick=1),
-             lambda c: (0, -(1 - bounce(u)) * 40 + (2 if T(i) > 11 else 0) * math.sin(i * 0.6 + c["j"]), 1, 0))
+    draw(L, l1, "kaisei", dict(fill=NAVY, thick=1), lambda c: wipe(c, 1))
+    draw(L, l2, "kaisei", lambda c: dict(fill=RED if c["j"] < 2 else NAVY, thick=1), lambda c: wipe(c, 3))
+    b = eo(prog(i, 5, 6.5))
+    if b <= 0.05:
+        return
+    x0, x1, y0, y1 = 36, 36 + 214 * b, 132, 180
+
+    def board(d):
+        rrect(d, (x0, y0, x1, y1), 6, "#1C1F2B", INK, 2.6)
+        rrect(d, (x0 + 4, y0 + 4, x1 - 4, y1 - 4), 4, None, "#3A3F55", 1.4)
+    vec(L, board)
+    if b < 1:
+        return
+    sub = new()
+    tx = 128 + (1 - eo(prog(i, 7, 10))) * 200
+    draw(sub, line("通過します", "dot", 32, tx, 156, "c"), "dot", dict(fill="#FFB547"))
+    if t >= 10:  # ▶▶ が右へ流れ続ける
+        ph = (i * 6) % 24
+        for k in range(2):
+            ax = 214 + ph * 0.5 + k * 11
+            vec(sub, lambda d, ax=ax: poly(d, [(ax, 148), (ax + 9, 156), (ax, 164)], "#5CF2C8", None))
+    clip(sub, (x0 + 5, y0 + 5, x1 - 5, y1 - 5))
+    L.alpha_composite(sub)
 
 
-def s23(L, i, F):  # 今から質屋入れんだけど、たばこ行く?: ひそひそ吹き出し(点線)+ぼやけた字がはっきりする
+# ==== 23 余ったやつとりあえず質屋に流した: ひそひそ吹き出し+ぼやけた字がはっきりする+プレゼントが波に乗って流れていく ====
+def s23(L, i, F):
     n = int(40 * eo(prog(i, 1, 4)))
 
     def bub(d):
@@ -741,7 +759,7 @@ def s23(L, i, F):  # 今から質屋入れんだけど、たばこ行く?: ひ�
             for k, (x, y, r) in enumerate(((104, 130, 4), (96, 140, 2.5))):
                 ell(d, (x - r, y - r, x + r, y + r), None, "#8C7B6B", 1.6)
     vec(L, bub)
-    rows = [("今から質屋に", 21, 50, 4, "#6B5B4E"), ("入れんだけど、", 21, 76, 6.5, "#6B5B4E"), ("たばこ行く?", 24, 104, 9.5, GREEN)]
+    rows = [("余ったやつ", 21, 40, 4, "#6B5B4E"), ("とりあえず", 21, 63, 6, "#6B5B4E"), ("質屋に流した", 23, 87, 8.5, RED_D)]
     for txt, sz, y, t0, col in rows:
         chars = line(txt, "yomogi", sz, 160, y, "c")
         u = prog(i, t0, t0 + 2)
@@ -751,19 +769,33 @@ def s23(L, i, F):  # 今から質屋入れんだけど、たばこ行く?: ひ�
             off = (1 - u) * 6
             for dx in (-off, off):
                 draw(L, chars, "yomogi", dict(fill="#D8CEC4", thick=1), lambda c, dx=dx: (dx, 0, 1, 0))
-        draw(L, chars, "yomogi", dict(fill=col, thick=1),
-             lambda c: (0, 0, 1, (8 * math.sin(i * 1.1) if c["ch"] == "?" else 0)) if u >= 1 or u > 0.5 else None)
+        if u > 0.5:
+            draw(L, chars, "yomogi", dict(fill=col, thick=1),
+                 lambda c: (0, 1.5 * math.sin(i * 1.1 + c["j"]) if txt.startswith("質屋") and c["j"] >= 3 else 0, 1, 0))
+    if T(i) >= 11:  # 小さなプレゼントが波に乗って右へ流れていく
+        p = (T(i) - 11) / 8 if i else 0.5
+        x, y = 122 + 76 * p, 114 + 2 * math.sin(i * 1.4)
+
+        def flow(d):
+            pts = [(114 + k * 4, 118 + 2 * math.sin(k * 0.8 + i)) for k in range(24)]
+            seg(d, pts, "#7FC4FF", 2.4)
+            rrect(d, (x - 8, y - 8, x + 8, y + 6), 2, GREEN, INK, 1.6)
+            d.rectangle(X.P(x - 1.5, y - 8, x + 1.5, y + 6), fill=GOLD)
+            ell(d, (x - 6, y - 13, x, y - 8), GOLD, INK, 1.2)
+            ell(d, (x, y - 13, x + 6, y - 8), GOLD, INK, 1.2)
+        vec(L, flow)
 
 
-def s24(L, i, F):  # 年賀状もクリスマスも、もうやめない? 必要?: ペンで書く→間をおいて「必要?」がどーん
-    l1 = line("年賀状もクリスマスも、", "klee", 21, 158, 70, "c")
-    l2 = line("もうやめない?", "klee", 23, 158, 98, "c")
+# ==== 24 年賀状もクリスマスもやめない? それ必要?: ペンで書く→間をおいて「それ必要?」がどーん ====
+def s24(L, i, F):
+    l1 = line("年賀状もクリスマスも", "klee", 22, 158, 70, "c")
+    l2 = line("やめない?", "klee", 24, 158, 100, "c")
     end = write_on(L, i, l1 + l2, "klee",
                    lambda c: dict(fill=RED if c in l1 and 4 <= c["j"] <= 8 else INK, thick=1), 1, 0.5)
     u = prog(i, end + 1.5, end + 2.5)
     if u > 0:
-        big = line("必要?", "mochiy", 34, 96, 140, "c")
-        draw(L, big, "mochiy", lambda c: dict(fill=GREEN if c["ch"] == "?" else RED, ow=3, rw=2),
+        big = line("それ必要?", "mochiy", 34, 104, 142, "c", sizes=[22, 22, 34, 34, 34])
+        draw(L, big, "mochiy", lambda c: dict(fill=GREEN if c["ch"] == "?" else (NAVY if c["j"] < 2 else RED), ow=3, rw=2),
              lambda c: (0, -abs(5 * math.sin(i * 1.3)) if c["ch"] == "?" else 0, 1 + (1 - eo(u)) * 1.2,
                         (10 * math.sin(i * 0.9) if c["ch"] == "?" else 0)))
 
